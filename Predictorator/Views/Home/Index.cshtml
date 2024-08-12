@@ -43,8 +43,8 @@
                             @fixture.Teams.Home.Name
                         </div>
                         <div class="col-4 text-center">
-                            <input type="text" class="form-control score-input d-inline-block" maxlength="2"/> -
-                            <input type="text" class="form-control score-input d-inline-block" maxlength="2"/>
+                            <input type="text" class="form-control score-input d-inline-block" maxlength="2" pattern="[0-9]*" inputmode="numeric"/> -
+                            <input type="text" class="form-control score-input d-inline-block" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
                         </div>
                         <div class="col-4 d-flex align-items-center">
                             <img src="@fixture.Teams.Away.Logo" alt="@fixture.Teams.Away.Name" class="team-logo img-fluid"/>
