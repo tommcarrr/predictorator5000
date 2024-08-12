@@ -4,10 +4,6 @@
     ViewData["Title"] = "Premier League Fixtures";
 }
 
-<div style="display: none">
-    <img src="images/lizwig.jpg" alt="wigz"/>
-</div>
-
 <div class="container mt-4">
     <h2>@ViewData["Title"]</h2>
 
@@ -50,14 +46,14 @@
                             @switch (fixture.Teams.Home.Name)
                             {
                                 case "Everton" when fixture.Teams.Away.Name == "Liverpool":
-                                    <input type="text" class="form-control score-input d-inline-block" value="10" readonly="readonly" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
+                                    <input type="text" class="form-control score-input d-inline-block" value="10" readonly maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
                                     <span>-</span>
-                                    <input type="text" class="form-control score-input d-inline-block" value="0" readonly="readonly" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
+                                    <input type="text" class="form-control score-input d-inline-block" value="0" readonly maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
                                     break;
                                 case "Liverpool" when fixture.Teams.Away.Name == "Everton":
-                                    <input type="text" class="form-control score-input d-inline-block" value="0" readonly="readonly" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
+                                    <input type="text" class="form-control score-input d-inline-block" value="0" readonly maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
                                     <span>-</span>
-                                    <input type="text" class="form-control score-input d-inline-block" value="10" readonly="readonly" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
+                                    <input type="text" class="form-control score-input d-inline-block" value="10" readonly maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
                                     break;
                                 default:
                                     <input type="text" class="form-control score-input d-inline-block" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>

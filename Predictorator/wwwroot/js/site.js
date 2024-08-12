@@ -53,6 +53,8 @@ document.getElementById('fillRandomBtn').addEventListener('click', () => {
 document.getElementById('clearBtn').addEventListener('click', () => {
     
     document.querySelectorAll('.score-input').forEach(input => {
-        input.value = '';
+        if (!input.readOnly){
+            input.value = '';
+        }
     });
 });
