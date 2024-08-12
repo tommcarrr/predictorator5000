@@ -43,8 +43,24 @@
                             @fixture.Teams.Home.Name
                         </div>
                         <div class="col-4 text-center">
-                            <input type="text" class="form-control score-input d-inline-block" maxlength="2" pattern="[0-9]*" inputmode="numeric"/> -
-                            <input type="text" class="form-control score-input d-inline-block" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
+                            @if (fixture.Teams.Home.Name == "Everton" && fixture.Teams.Away.Name == "Liverpool")
+                            {
+                                <input type="text" class="form-control score-input d-inline-block" value="10" readonly="readonly" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
+                                <span>-</span>
+                                <input type="text" class="form-control score-input d-inline-block" value="0" readonly="readonly" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
+                            }
+                            else if (fixture.Teams.Home.Name == "Liverpool" && fixture.Teams.Away.Name == "Everton")
+                            {
+                                <input type="text" class="form-control score-input d-inline-block" value="0" readonly="readonly" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
+                                <span>-</span>
+                                <input type="text" class="form-control score-input d-inline-block" value="10" readonly="readonly" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
+                            }
+                            else
+                            {
+                                <input type="text" class="form-control score-input d-inline-block" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
+                                <span>-</span>
+                                <input type="text" class="form-control score-input d-inline-block" maxlength="2" pattern="[0-9]*" inputmode="numeric" />
+                            }
                         </div>
                         <div class="col-4 d-flex align-items-center">
                             <img src="@fixture.Teams.Away.Logo" alt="@fixture.Teams.Away.Name" class="team-logo img-fluid"/>
