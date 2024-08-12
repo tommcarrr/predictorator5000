@@ -29,8 +29,9 @@ body {
 }
 
 .score-input {
-  width: 45px;
   text-align: center;
+  width: 30px;
+  padding: 2px;
 }
 
 .date-block {
@@ -51,4 +52,19 @@ body {
 .fixture-header {
   font-weight: bold;
   padding: 0.5rem 0;
+}
+
+@media (max-width: 768px) {
+  .buttons button {
+    width: 100%;
+    display: block;
+    box-sizing: border-box;
+    margin-bottom: 2px;
+  }
+}
+
+@media (min-width: 769px) {
+  .buttons button:last-child {
+    float: right;
+  }
 }
