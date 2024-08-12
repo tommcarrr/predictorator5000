@@ -1,0 +1,7 @@
+C:\Users\TomCarr\AppData\Local\Temp\rider-publish1248303567972560632\Predictorator.exe
+C:\Users\TomCarr\AppData\Local\Temp\rider-publish1248303567972560632\appsettings.Development.json
+C:\Users\TomCarr\AppData\Local\Temp\rider-publish1248303567972560632\appsettings.json
+C:\Users\TomCarr\AppData\Local\Temp\rider-publish1248303567972560632\Predictorator.dll
+C:\Users\TomCarr\AppData\Local\Temp\rider-publish1248303567972560632\Predictorator.deps.json
+C:\Users\TomCarr\AppData\Local\Temp\rider-publish1248303567972560632\Predictorator.runtimeconfig.json
+C:\Users\TomCarr\AppData\Local\Temp\rider-publish1248303567972560632\Predictorator.pdb

@@ -1,0 +1,60 @@
+﻿@model FixturesResponse
+
+@{
+    ViewData["Title"] = "Premier League Fixtures";
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+
+    <form method="get" class="form-inline mb-4">
+        <div class="form-group mr-2">
+            <label for="fromDate">From: </label>
+            <input type="date" class="form-control ml-2" id="fromDate" name="fromDate" value="@ViewBag.FromDate"/>
+        </div>
+        <div class="form-group mr-2">
+            <label for="toDate">To: </label>
+            <input type="date" class="form-control ml-2" id="toDate" name="toDate" value="@ViewBag.ToDate"/>
+        </div>
+        <br/>
+        <button type="submit" class="btn btn-primary">Reload</button>
+    </form>
+
+    @if (Model.Response.Any())
+    {
+        var groupedFixtures = Model.Response.GroupBy(f => f.Fixture.Date.ToString("dddd, MMMM d, yyyy"));
+
+        foreach (var group in groupedFixtures)
+        {
+            <div class="date-block">
+                <h4 class="date-header">@group.Key</h4>
+
+                <div class="row fixture-header">
+                    <div class="col-4">Home Team</div>
+                    <div class="col-4 text-center">Prediction</div>
+                    <div class="col-4">Away Team</div>
+                </div>
+
+                @foreach (var fixture in group)
+                {
+                    <div class="row align-items-center fixture-row">
+                        <div class="col-4 d-flex align-items-center">
+                            <img src="@fixture.Teams.Home.Logo" alt="@fixture.Teams.Home.Name" class="team-logo img-fluid"/>
+                            @fixture.Teams.Home.Name
+                        </div>
+                        <div class="col-4 text-center">
+                            <input type="text" class="form-control score-input d-inline-block" maxlength="2"/> -
+                            <input type="text" class="form-control score-input d-inline-block" maxlength="2"/>
+                        </div>
+                        <div class="col-4 d-flex align-items-center">
+                            <img src="@fixture.Teams.Away.Logo" alt="@fixture.Teams.Away.Name" class="team-logo img-fluid"/>
+                            @fixture.Teams.Away.Name
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+
+    <button id="copyBtn" class="btn btn-success mt-3">Copy Predictions to Clipboard</button>
+</div>

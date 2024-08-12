@@ -1,0 +1,36 @@
+﻿document.getElementById('copyBtn').addEventListener('click', () => {
+    let resultText = '';
+
+    let missingScores = false;
+
+    document.querySelectorAll('.date-block').forEach(dateBlock => {
+        const dateHeader = dateBlock.querySelector('.date-header').innerText;
+        resultText += dateHeader + '\n';
+
+        dateBlock.querySelectorAll('.fixture-row').forEach(row => {
+            const homeTeam = row.children[0].innerText.trim();
+            const homeScore = row.children[1].querySelectorAll('input')[0].value;
+            const awayScore = row.children[1].querySelectorAll('input')[1].value;
+            const awayTeam = row.children[2].innerText.trim();
+
+            if (homeScore === '' || awayScore === '') {
+                missingScores = true;
+            }
+
+            resultText += `${homeTeam}\t${homeScore} - ${awayScore}\t${awayTeam}\n`;
+        });
+
+        resultText += '\n';
+    });
+
+    if (missingScores) {
+        alert('Error: Please fill in all score predictions before copying.');
+        return;
+    }
+
+    navigator.clipboard.writeText(resultText).then(() => {
+        alert('Predictions copied to clipboard!');
+    }).catch(err => {
+        console.error('Could not copy text: ', err);
+    });
+});
