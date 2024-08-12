@@ -1,5 +1,8 @@
 ﻿public class FixturesResponse
 {
+    
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
     public string Get { get; set; }
     public Parameters Parameters { get; set; }
     public List<object> Errors { get; set; }

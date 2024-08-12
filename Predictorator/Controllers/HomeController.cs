@@ -21,6 +21,8 @@ public class HomeController : Controller
         fromDate ??= DateTime.Today;
         toDate ??= DateTime.Today + TimeSpan.FromDays(7);
         var fixtures = await _fixtureService.GetFixturesAsync(fromDate.Value, toDate.Value);
+        fixtures.FromDate = fromDate.Value;
+        fixtures.ToDate = toDate.Value;
         return View(fixtures);
     }
 
