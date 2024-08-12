@@ -38,8 +38,14 @@ body {
 }
 
 .fixture-row {
-  padding: 0.5rem 0;
+  padding: 0.5rem 0 0.2rem;
+}
+
+.details-row{
+  color: #aaa;
+  font-size: smaller;
   border-bottom: 1px solid #ddd;
+  padding: 0 0 0.2rem 0;
 }
 
 .fixture-header {
