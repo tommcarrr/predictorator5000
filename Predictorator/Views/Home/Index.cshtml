@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Premier League Fixtures";
+    
 }
 
 <div class="container mt-4">
@@ -69,7 +70,12 @@
                     </div>
                     <div class="row align-items-center details-row">
                         <div class="col-12 d-flex text-center">
-                            @fixture.Fixture.Date.ToLocalTime().ToString("h:mm tt") - @fixture.Fixture.Venue.Name, @fixture.Fixture.Venue.City
+                            @{
+                            // Assuming fixture.Fixture.Date is in UTC
+                            var ukTimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+                            var ukTime = TimeZoneInfo.ConvertTimeFromUtc(fixture.Fixture.Date, ukTimeZone);
+                            }
+                            @ukTime.ToString("h:mm tt") - @fixture.Fixture.Venue.Name, @fixture.Fixture.Venue.City
                         </div>
                     </div>
                 }
