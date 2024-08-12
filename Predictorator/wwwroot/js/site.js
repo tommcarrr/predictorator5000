@@ -34,3 +34,25 @@
         console.error('Could not copy text: ', err);
     });
 });
+
+document.getElementById('fillRandomBtn').addEventListener('click', () => {
+
+    const possibleScores = [0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4];
+
+    function getRandomScore() {
+        return possibleScores[Math.floor(Math.random() * possibleScores.length)];
+    }
+
+    document.querySelectorAll('.score-input').forEach(input => {
+        if (input.value === '') {
+            input.value = getRandomScore();
+        }
+    });
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+    
+    document.querySelectorAll('.score-input').forEach(input => {
+        input.value = '';
+    });
+});
