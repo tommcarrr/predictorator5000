@@ -1,5 +1,10 @@
+
 html {
   font-size: 14px;
+}
+
+h4 {
+    font-size: 1rem;
 }
 
 @media (min-width: 768px) {
