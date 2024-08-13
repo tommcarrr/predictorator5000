@@ -6,8 +6,8 @@
 
 <div class="container mt-4">
     <h2>@ViewData["Title"]</h2>
-    <br />
-    
+    <br/>
+
     <div class="accordion" id="datesAccordion">
         <div class="accordion-item">
             <h2 class="accordion-header" id="headingOne">
@@ -20,11 +20,11 @@
                     <form method="get" class="mb-4">
                         <div class="form-group me-2">
                             @Html.LabelFor(m => m.FromDate)
-                            @Html.TextBoxFor(m => m.FromDate, "{0:yyyy-MM-dd}", new { id = "fromDate", name = "fromDate", @class = "form-control ms-2", type = "date" })
+                            @Html.TextBoxFor(m => m.FromDate, "{0:yyyy-MM-dd}", new { name = "fromDate", @class = "form-control ms-2", type = "date" })
                         </div>
                         <div class="form-group me-2">
                             @Html.LabelFor(m => m.ToDate)
-                            @Html.TextBoxFor(m => m.ToDate, "{0:yyyy-MM-dd}", new { id = "toDate", name = "toDate", @class = "form-control ms-2", type = "date" })
+                            @Html.TextBoxFor(m => m.ToDate, "{0:yyyy-MM-dd}", new { name = "toDate", @class = "form-control ms-2", type = "date" })
                         </div>
                         <br/>
                         <button type="submit" class="btn btn-primary mt-2">Reload</button>

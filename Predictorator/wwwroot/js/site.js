@@ -1,4 +1,24 @@
-﻿document.getElementById('copyBtn').addEventListener('click', () => {
+﻿const toggleButton = document.getElementById('darkModeToggle');
+const body = document.body;
+const navbar = document.querySelector('.navbar');
+const accordion = document.querySelector('.accordion');
+
+const toggleDarkMode = (enable) => {
+    body.classList.toggle('dark-mode', enable);
+    navbar.classList.toggle('bg-dark', enable);
+    navbar.classList.toggle('navbar-dark', enable);
+    navbar.classList.toggle('bg-white', !enable);
+    navbar.classList.toggle('navbar-light', !enable);
+    accordion.classList.toggle('accordion-dark', enable);
+    toggleButton.textContent = enable ? 'Light Mode' : 'Dark Mode';
+    localStorage.setItem('dark-mode', enable ? 'enabled' : 'disabled');
+};
+
+toggleDarkMode(localStorage.getItem('dark-mode') === 'enabled');
+
+toggleButton.addEventListener('click', () => toggleDarkMode(!body.classList.contains('dark-mode')));
+
+document.getElementById('copyBtn').addEventListener('click', () => {
     let resultText = '';
 
     let missingScores = false;
@@ -51,9 +71,9 @@ document.getElementById('fillRandomBtn').addEventListener('click', () => {
 });
 
 document.getElementById('clearBtn').addEventListener('click', () => {
-    
+
     document.querySelectorAll('.score-input').forEach(input => {
-        if (!input.readOnly){
+        if (!input.readOnly) {
             input.value = '';
         }
     });
