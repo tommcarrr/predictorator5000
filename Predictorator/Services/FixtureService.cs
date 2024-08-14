@@ -7,7 +7,7 @@ namespace Predictorator.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IMemoryCache _cache;
-        private readonly TimeSpan _cacheDuration = TimeSpan.FromHours(6);
+        private readonly TimeSpan _cacheDuration = TimeSpan.FromHours(12);
 
         public FixtureService(IHttpClientFactory httpClientFactory, IMemoryCache cache)
         {
@@ -24,19 +24,17 @@ namespace Predictorator.Services
             var query = new Dictionary<string, string?>()
             {
                 ["league"] = "39",
-                ["season"] = "2024",
+                ["season"] = fromDate.AddMonths(-7).Year.ToString(),
                 ["from"] = fromDate.ToString("yyyy-MM-dd"),
                 ["to"] = toDate.ToString("yyyy-MM-dd")
             };
 
             var url = QueryHelpers.AddQueryString("fixtures", query);
 
-            // Fetch the data from the API
             cachedResponse = await _httpClient.GetFromJsonAsync<FixturesResponse>(url);
             
             if(cachedResponse == null) throw new Exception("Failed to fetch fixtures");
 
-            // Store the data in the cache
             _cache.Set(cacheKey, cachedResponse, _cacheDuration);
 
             return cachedResponse;

@@ -1,32 +1,33 @@
 ﻿@model FixturesResponse
 
 @{
-    ViewData["Title"] = "Premier League Fixtures";
+ViewData["Title"] = "Premier League Fixtures";
 }
 
-<div class="container mt-4">
-    <h2>@ViewData["Title"]</h2>
-    <br/>
+<div class="container mt-5 fixtures-container">
+    <div class="text-center mb-4">
+        <h1 class="display-4 fw-bold">@ViewData["Title"]</h1>
+        <hr class="my-4" />
+    </div>
 
-    <div class="accordion" id="datesAccordion">
+    <div class="accordion mb-4" id="datesAccordion">
         <div class="accordion-item">
             <h2 class="accordion-header" id="headingOne">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseForm" aria-expanded="false" aria-controls="collapseForm">
-                    <h4>@Model.FromDate.ToString("dd/MM/yyyy") - @Model.ToDate.ToString("dd/MM/yyyy")</h4>
+                    <h4 class="mb-0">@Model.FromDate.ToString("dd/MM/yyyy") - @Model.ToDate.ToString("dd/MM/yyyy")</h4>
                 </button>
             </h2>
-            <div id="collapseForm" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+            <div id="collapseForm" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#datesAccordion">
                 <div class="accordion-body">
-                    <form method="get" class="mb-4">
+                    <form method="get" class="d-flex justify-content-around flex-wrap">
                         <div class="form-group me-2">
                             @Html.LabelFor(m => m.FromDate)
-                            @Html.TextBoxFor(m => m.FromDate, "{0:yyyy-MM-dd}", new { name = "fromDate", @class = "form-control ms-2", type = "date" })
+                            @Html.TextBoxFor(m => m.FromDate, "{0:yyyy-MM-dd}", new { name = "fromDate", @class = "form-control", type = "date" })
                         </div>
                         <div class="form-group me-2">
                             @Html.LabelFor(m => m.ToDate)
-                            @Html.TextBoxFor(m => m.ToDate, "{0:yyyy-MM-dd}", new { name = "toDate", @class = "form-control ms-2", type = "date" })
+                            @Html.TextBoxFor(m => m.ToDate, "{0:yyyy-MM-dd}", new { name = "toDate", @class = "form-control", type = "date" })
                         </div>
-                        <br/>
                         <button type="submit" class="btn btn-primary mt-2">Reload</button>
                     </form>
                 </div>
@@ -34,69 +35,71 @@
         </div>
     </div>
 
-
     @if (Model.Response.Any())
     {
-        var groupedFixtures = Model.Response.GroupBy(f => f.Fixture.Date.ToString("dddd, MMMM d, yyyy"));
+    var groupedFixtures = Model.Response.GroupBy(f => f.Fixture.Date.ToString("dddd, MMMM d, yyyy"));
 
-        foreach (var group in groupedFixtures)
-        {
-            <div class="date-block">
-                <h4 class="date-header">@group.Key</h4>
-
-                <div class="row fixture-header">
-                    <div class="col-4">Home Team</div>
-                    <div class="col-4 text-center">Prediction</div>
-                    <div class="col-4">Away Team</div>
-                </div>
-
-                @foreach (var fixture in group)
-                {
-                    <div class="row align-items-center fixture-row">
-                        <div class="col-4 d-flex align-items-center">
-                            <img src="@fixture.Teams.Home.Logo" alt="@fixture.Teams.Home.Name" class="team-logo img-fluid"/>
-                            @fixture.Teams.Home.Name
-                        </div>
-                        <div class="col-4 text-center">
-                            @switch (fixture.Teams.Home.Name)
-                            {
-                                case "Everton" when fixture.Teams.Away.Name == "Liverpool":
-                                    <input type="text" class="form-control score-input d-inline-block" value="10" readonly maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
-                                    <span>-</span>
-                                    <input type="text" class="form-control score-input d-inline-block" value="0" readonly maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
-                                    break;
-                                case "Liverpool" when fixture.Teams.Away.Name == "Everton":
-                                    <input type="text" class="form-control score-input d-inline-block" value="0" readonly maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
-                                    <span>-</span>
-                                    <input type="text" class="form-control score-input d-inline-block" value="10" readonly maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
-                                    break;
-                                default:
-                                    <input type="text" class="form-control score-input d-inline-block" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
-                                    <span>-</span>
-                                    <input type="text" class="form-control score-input d-inline-block" maxlength="2" pattern="[0-9]*" inputmode="numeric"/>
-                                    break;
-                            }
-                        </div>
-                        <div class="col-4 d-flex align-items-center">
-                            <img src="@fixture.Teams.Away.Logo" alt="@fixture.Teams.Away.Name" class="team-logo img-fluid"/>
-                            @fixture.Teams.Away.Name
-                        </div>
-                    </div>
-                    <div class="row align-items-center details-row">
-                        <div class="col-12 d-flex text-center">
-                            @{
-                                var ukTimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
-                                var ukTime = TimeZoneInfo.ConvertTime(fixture.Fixture.Date, ukTimeZone);
-                            }
-                            @ukTime.ToString("h:mm tt") - @fixture.Fixture.Venue.Name, @fixture.Fixture.Venue.City
-                        </div>
-                    </div>
-                }
+    foreach (var group in groupedFixtures)
+    {
+    <div class="card mb-4 date-block">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0 date-header">@group.Key</h5>
+        </div>
+        <div class="card-body">
+            <div class="row fixture-header">
+                <div class="col-4">Home Team</div>
+                <div class="col-4 text-center">Prediction</div>
+                <div class="col-4 text-end">Away Team</div>
             </div>
-        }
+
+            @foreach (var fixture in group)
+            {
+            <div class="row align-items-center fixture-row mb-3">
+                <div class="col-4 d-flex align-items-center">
+                    <img src="@fixture.Teams.Home.Logo" alt="@fixture.Teams.Home.Name" class="team-logo img-fluid me-2" />
+                    <span>@fixture.Teams.Home.Name</span>
+                </div>
+                <div class="col-4 text-center">
+                    @switch (fixture.Teams.Home.Name)
+                    {
+                    case "Everton" when fixture.Teams.Away.Name == "Liverpool":
+                    <input type="text" class="form-control score-input d-inline-block text-center" value="10" readonly />
+                    <span class="mx-2">-</span>
+                    <input type="text" class="form-control score-input d-inline-block text-center" value="0" readonly />
+                    break;
+                    case "Liverpool" when fixture.Teams.Away.Name == "Everton":
+                    <input type="text" class="form-control score-input d-inline-block text-center" value="0" readonly />
+                    <span class="mx-2">-</span>
+                    <input type="text" class="form-control score-input d-inline-block text-center" value="10" readonly />
+                    break;
+                    default:
+                    <input type="text" class="form-control score-input d-inline-block text-center" maxlength="2" />
+                    <span class="mx-2">-</span>
+                    <input type="text" class="form-control score-input d-inline-block text-center" maxlength="2" />
+                    break;
+                    }
+                </div>
+                <div class="col-4 d-flex align-items-center justify-content-end">
+                    <span>@fixture.Teams.Away.Name</span>
+                    <img src="@fixture.Teams.Away.Logo" alt="@fixture.Teams.Away.Name" class="team-logo img-fluid ms-2" />
+                </div>
+            </div>
+            <div class="row align-items-center details-row mb-2">
+                <div class="col-12 text-center">
+                    @{
+                    var ukTimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+                    var ukTime = TimeZoneInfo.ConvertTime(fixture.Fixture.Date, ukTimeZone);
+                    }
+                    @ukTime.ToString("h:mm tt") - @fixture.Fixture.Venue.Name, @fixture.Fixture.Venue.City
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+    }
     }
 
-    <div class="mt-3 buttons">
+    <div class="buttons mt-4">
         <button id="fillRandomBtn" class="btn btn-secondary">Complete with Random Scores</button>
         <button id="clearBtn" class="btn btn-warning">Clear Predictions</button>
         <button id="copyBtn" class="btn btn-success">Copy Predictions to Clipboard</button>

@@ -19,13 +19,20 @@ toggleDarkMode(localStorage.getItem('dark-mode') === 'enabled');
 toggleButton.addEventListener('click', () => toggleDarkMode(!body.classList.contains('dark-mode')));
 
 document.getElementById('copyBtn').addEventListener('click', () => {
-    let resultText = '';
+
+    let resultHtml = '';
 
     let missingScores = false;
-
+    resultHtml += `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">`;
     document.querySelectorAll('.date-block').forEach(dateBlock => {
         const dateHeader = dateBlock.querySelector('.date-header').innerText;
-        resultText += dateHeader + '\n';
+
+        // Start a new table for each date
+
+        resultHtml += `<thead><tr><th colspan="3" style="background-color: #f2f2f2; text-align: center; padding: 10px;">${dateHeader}</th></tr>`;
+        resultHtml += '<tr><th style="background-color: #d9d9d9; text-align: left; padding: 5px; min-width: 120px">Home Team</th>';
+        resultHtml += '<th style="background-color: #d9d9d9; text-align: center; padding: 5px;">Score</th>';
+        resultHtml += '<th style="background-color: #d9d9d9; text-align: right; padding: 5px; min-width: 120px">Away Team</th></tr></thead><tbody>';
 
         dateBlock.querySelectorAll('.fixture-row').forEach(row => {
             const homeTeam = row.children[0].innerText.trim();
@@ -37,23 +44,29 @@ document.getElementById('copyBtn').addEventListener('click', () => {
                 missingScores = true;
             }
 
-            resultText += `${homeTeam}\t${homeScore} - ${awayScore}\t${awayTeam}\n`;
+            resultHtml += `<tr><td style="padding: 5px; text-align: left;">${homeTeam}</td><td style="padding: 5px; text-align: center;">${homeScore} - ${awayScore}</td><td style="padding: 5px; text-align: right;">${awayTeam}</td></tr>`;
         });
 
-        resultText += '\n';
     });
 
+    resultHtml += '</tbody></table><br/>';
     if (missingScores) {
         alert('Error: Please fill in all score predictions before copying.');
         return;
     }
 
-    navigator.clipboard.writeText(resultText).then(() => {
+    // Use the Clipboard API to copy the HTML content
+    navigator.clipboard.write([
+        new ClipboardItem({
+            'text/html': new Blob([resultHtml], { type: 'text/html' })
+        })
+    ]).then(() => {
         alert('Predictions copied to clipboard!');
     }).catch(err => {
         console.error('Could not copy text: ', err);
     });
 });
+
 
 document.getElementById('fillRandomBtn').addEventListener('click', () => {
 

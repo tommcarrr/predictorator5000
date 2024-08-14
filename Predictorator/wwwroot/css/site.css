@@ -1,13 +1,4 @@
-@media (min-width: 768px) {
-    html {
-        font-size: 16px;
-    }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
+/* Base Styles */
 html {
     position: relative;
     min-height: 100%;
@@ -18,14 +9,14 @@ body {
     margin-bottom: 60px;
 }
 
+/* Typography */
 h4 {
     font-size: 1rem;
 }
 
-.team-logo {
-    width: 30px;
-    height: 30px;
-    margin-right: 10px;
+/* Forms */
+.form-control:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
 .score-input {
@@ -34,8 +25,24 @@ h4 {
     padding: 2px;
 }
 
+/* Team Logos */
+.team-logo {
+    max-height: 40px;
+    margin: 0 5px;
+}
+
+/* Fixture Block */
+.card-body {
+    padding-bottom: 0;
+}
+
 .date-block {
     margin-top: 1.5rem;
+}
+
+.fixture-header {
+    font-weight: bold;
+    padding: 0.5rem 0;
 }
 
 .fixture-row {
@@ -46,59 +53,88 @@ h4 {
     color: #aaa;
     font-size: smaller;
     border-bottom: 1px solid #ddd;
-    padding: 0 0 0.2rem 0;
 }
 
-.fixture-header {
-    font-weight: bold;
-    padding: 0.5rem 0;
+.details-row div{
+    padding-bottom: 0.3rem;
+}
+
+.details-row:last-child {
+    border-bottom: none;
+}
+
+/* Buttons */
+.buttons button {
+    flex: 1;
+    margin-right: 10px;
+}
+
+.buttons button:last-child {
+    margin-right: 0;
+}
+
+/* Media Queries */
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+    .buttons {
+        display: flex;
+        justify-content: space-between;
+    }
 }
 
 @media (max-width: 768px) {
     .buttons button {
         width: 100%;
-        display: block;
-        box-sizing: border-box;
         margin-bottom: 2px;
     }
 
-    footer {
-        font-size: smaller;
+    .fixture-row div {
+        padding: 0;
+    }
+
+    .fixtures-container {
+        padding: 0;
     }
 }
 
-@media (min-width: 769px) {
-    .buttons button:last-child {
-        float: right;
-    }
-}
-
+/* Dark Mode */
 body.dark-mode {
     background-color: #121212;
     color: #e0e0e0;
 }
 
 body.dark-mode .score-input {
-    background-color: #232323;
+    background-color: #333;
+    color: #e0e0e0 !important
+}
+
+body.dark-mode .card-header {
+    background-color: #333 !important;
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .card-body {
+    background-color: #222;
     color: #e0e0e0;
 }
 
-
-.navbar-dark.bg-dark {
+body.dark-mode .navbar-dark.bg-dark {
     background-color: #333333 !important;
     border-color: #444444;
 }
 
-.accordion-dark .accordion-item {
+body.dark-mode .accordion-dark .accordion-item {
     background-color: #333333;
     color: #e0e0e0;
 }
 
-.accordion-dark .accordion-button {
+body.dark-mode .accordion-dark .accordion-button {
     background-color: #444444;
     color: #e0e0e0;
 }
 
-.accordion-dark .accordion-button:not(.collapsed) {
+body.dark-mode .accordion-dark .accordion-button:not(.collapsed) {
     background-color: #555555;
 }

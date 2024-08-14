@@ -18,11 +18,22 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate)
     {
-        fromDate ??= DateTime.Today;
-        toDate ??= DateTime.Today + TimeSpan.FromDays(7);
-        var fixtures = await _fixtureService.GetFixturesAsync(fromDate.Value, toDate.Value);
-        fixtures.FromDate = fromDate.Value;
-        fixtures.ToDate = toDate.Value;
+        var effectiveFrom = fromDate;
+        var effectiveTo = toDate;
+        if(effectiveFrom == null || effectiveTo == null)
+        {
+            effectiveFrom = DateTime.Today;
+            while (effectiveFrom.Value.DayOfWeek != DayOfWeek.Tuesday )
+            {
+                effectiveFrom = effectiveFrom.Value.AddDays(-1);
+            }
+            effectiveFrom = effectiveFrom.Value.AddDays(3);
+            effectiveTo = effectiveFrom.Value.AddDays(7);
+        }
+        
+        var fixtures = await _fixtureService.GetFixturesAsync(effectiveFrom.Value, effectiveTo.Value);
+        fixtures.FromDate = fromDate ?? fixtures.Response.Min(x => x.Fixture.Date).Date;
+        fixtures.ToDate = toDate ?? fixtures.Response.Max(x => x.Fixture.Date).Date;
         return View(fixtures);
     }
 
