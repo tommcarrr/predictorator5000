@@ -6,7 +6,7 @@ ViewData["Title"] = "Premier League Fixtures";
 
 <div class="container mt-5 fixtures-container">
     <div class="text-center mb-4">
-        <h1 class="display-4 fw-bold">@ViewData["Title"]</h1>
+        <h3 class="fw-bold title">@ViewData["Title"]</h3>
         <hr class="my-4" />
     </div>
 
@@ -19,13 +19,13 @@ ViewData["Title"] = "Premier League Fixtures";
             </h2>
             <div id="collapseForm" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#datesAccordion">
                 <div class="accordion-body">
-                    <form method="get" class="d-flex justify-content-around flex-wrap">
+                    <form method="get">
                         <div class="form-group me-2">
-                            @Html.LabelFor(m => m.FromDate)
+                            @Html.LabelFor(m => m.FromDate, "From:")
                             @Html.TextBoxFor(m => m.FromDate, "{0:yyyy-MM-dd}", new { name = "fromDate", @class = "form-control", type = "date" })
                         </div>
                         <div class="form-group me-2">
-                            @Html.LabelFor(m => m.ToDate)
+                            @Html.LabelFor(m => m.ToDate, "To:")
                             @Html.TextBoxFor(m => m.ToDate, "{0:yyyy-MM-dd}", new { name = "toDate", @class = "form-control", type = "date" })
                         </div>
                         <button type="submit" class="btn btn-primary mt-2">Reload</button>

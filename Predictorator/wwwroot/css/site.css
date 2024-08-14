@@ -14,6 +14,35 @@ h4 {
     font-size: 1rem;
 }
 
+.navbar-brand {
+    font-size: 2.5rem;
+    font-family: "Courier New", Courier, monospace;
+    font-weight: bold;
+}
+
+.navbar .container-fluid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-direction: row;
+    min-height: 50px;
+}
+
+.navbar-brand.header {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#darkModeToggle {
+    margin-left: auto;
+}
+
+.title {
+    font-size: 2rem;
+}
+
 /* Forms */
 .form-control:focus {
     box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
@@ -85,7 +114,7 @@ h4 {
 }
 
 @media (max-width: 768px) {
-    .buttons button {
+    button {
         width: 100%;
         margin-bottom: 2px;
     }
@@ -97,6 +126,20 @@ h4 {
     .fixtures-container {
         padding: 0;
     }
+    .navbar .container-fluid {
+        flex-direction: column; /* Stack items vertically */
+    }
+
+    .navbar-brand.header {
+        position: relative;
+        left: auto;
+        transform: none; /* Reset transform to normal flow */
+        margin-bottom: 10px; /* Add some space between the text and button */
+    }
+
+    #darkModeToggle {
+        margin-left: 0; /* Reset margin */
+    }
 }
 
 /* Dark Mode */
@@ -105,7 +148,7 @@ body.dark-mode {
     color: #e0e0e0;
 }
 
-body.dark-mode .score-input {
+body.dark-mode input {
     background-color: #333;
     color: #e0e0e0 !important
 }
