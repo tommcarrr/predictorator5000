@@ -83,7 +83,7 @@ function extractFixtureData() {
 
     resultHtml += '</tbody></table><br/>';
 
-    return { text: resultText, html: resultHtml, missingScores };
+    return {text: resultText, html: resultHtml, missingScores};
 }
 
 function createHtmlTableHeader(dateHeader) {
@@ -110,7 +110,7 @@ function copyToClipboardText(text) {
 function copyToClipboardHtml(html) {
     navigator.clipboard.write([
         new ClipboardItem({
-            'text/html': new Blob([html], { type: 'text/html' })
+            'text/html': new Blob([html], {type: 'text/html'})
         })
     ]).then(() => {
         alert('Predictions copied to clipboard!');
@@ -121,7 +121,7 @@ function copyToClipboardHtml(html) {
 
 // Random Score and Clear Functions
 function fillRandomScores() {
-    const possibleScores = [0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4];
+    const possibleScores = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 4, 4, 5];
 
     document.querySelectorAll('.score-input').forEach(input => {
         if (input.value === '') {
