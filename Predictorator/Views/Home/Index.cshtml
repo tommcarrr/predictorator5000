@@ -1,4 +1,5 @@
-﻿@model FixturesResponse
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model Predictorator.Models.Fixtures.FixturesResponse
 
 @{
     ViewData["Title"] = "Premier League Fixtures";
@@ -9,12 +10,21 @@
         <h3 class="fw-bold title">@ViewData["Title"]</h3>
         <hr class="my-4"/>
     </div>
+    @if (Model.AutoWeek)
+    {
+        <div>
+            @Html.ActionLink("<<", "Index", new { weekOffset = Model.CurrentWeekOffset - 1 }, new { @class = "weekJump"})
+            @Html.ActionLink(">>", "Index", new { weekOffset = Model.CurrentWeekOffset + 1 }, new { @class = "weekJump"})
+        </div>
+    }
 
     <div class="accordion mb-4" id="datesAccordion">
         <div class="accordion-item">
             <h2 class="accordion-header" id="headingOne">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseForm" aria-expanded="false" aria-controls="collapseForm">
-                    <h4 class="mb-0">@Model.FromDate.ToString("dd/MM/yyyy") - @Model.ToDate.ToString("dd/MM/yyyy")</h4>
+                    <h4 class="mb-0">
+                        @Model.FromDate.ToString("dd/MM/yyyy") - @Model.ToDate.ToString("dd/MM/yyyy")
+                    </h4>
                 </button>
             </h2>
             <div id="collapseForm" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#datesAccordion">
@@ -60,24 +70,9 @@
                                 <span>@fixture.Teams.Home.Name</span>
                             </div>
                             <div class="col-4 text-center">
-                                @switch (fixture.Teams.Home.Name)
-                                {
-                                    case "Everton" when fixture.Teams.Away.Name == "Liverpool":
-                                        <input type="text" class="form-control score-input d-inline-block text-center" value="10" readonly/>
-                                        <span class="mx-2">-</span>
-                                        <input type="text" class="form-control score-input d-inline-block text-center" value="0" readonly/>
-                                        break;
-                                    case "Liverpool" when fixture.Teams.Away.Name == "Everton":
-                                        <input type="text" class="form-control score-input d-inline-block text-center" value="0" readonly/>
-                                        <span class="mx-2">-</span>
-                                        <input type="text" class="form-control score-input d-inline-block text-center" value="10" readonly/>
-                                        break;
-                                    default:
-                                        <input type="text" class="form-control score-input d-inline-block text-center" maxlength="2"/>
-                                        <span class="mx-2">-</span>
-                                        <input type="text" class="form-control score-input d-inline-block text-center" maxlength="2"/>
-                                        break;
-                                }
+                                <input type="text" class="form-control score-input d-inline-block text-center" maxlength="2" @(fixture.Score?.Fulltime.Home != null ? $"readonly value={fixture.Score.Fulltime.Home}" : "") />
+                                <span class="mx-2">-</span>
+                                <input type="text" class="form-control score-input d-inline-block text-center" maxlength="2" @(fixture.Score?.Fulltime.Away != null ? $"readonly value={fixture.Score.Fulltime.Away}" : "") />
                             </div>
                             <div class="col-4 d-flex align-items-center justify-content-end">
                                 <span>@fixture.Teams.Away.Name</span>

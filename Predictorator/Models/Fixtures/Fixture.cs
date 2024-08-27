@@ -1,4 +1,6 @@
-﻿public class Fixture
+﻿namespace Predictorator.Models.Fixtures;
+
+public class Fixture
 {
     public int Id { get; set; }
     public string Timezone { get; set; }

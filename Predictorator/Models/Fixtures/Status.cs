@@ -1,4 +1,6 @@
-﻿public class Status
+﻿namespace Predictorator.Models.Fixtures;
+
+public class Status
 {
     public string Long { get; set; }
     public string Short { get; set; }

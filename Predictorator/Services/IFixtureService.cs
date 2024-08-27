@@ -1,4 +1,6 @@
-﻿namespace Predictorator.Services;
+﻿using Predictorator.Models.Fixtures;
+
+namespace Predictorator.Services;
 
 public interface IFixtureService
 {

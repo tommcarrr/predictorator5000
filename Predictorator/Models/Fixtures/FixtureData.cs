@@ -1,4 +1,6 @@
-﻿public class FixtureData
+﻿namespace Predictorator.Models.Fixtures;
+
+public class FixtureData
 {
     public Fixture Fixture { get; set; }
     public League League { get; set; }

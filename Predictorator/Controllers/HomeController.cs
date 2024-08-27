@@ -16,25 +16,48 @@ public class HomeController : Controller
         _fixtureService = fixtureService;
     }
 
-    public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate)
+    public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, int? weekOffset)
     {
-        var effectiveFrom = fromDate;
-        var effectiveTo = toDate;
-        if(effectiveFrom == null || effectiveTo == null)
+        var (effectiveFrom, effectiveTo) = GetEffectiveDates(fromDate, toDate, weekOffset);
+
+        var fixtures = await _fixtureService.GetFixturesAsync(effectiveFrom, effectiveTo);
+        
+        fixtures.CurrentWeekOffset = weekOffset ?? 0;
+        fixtures.AutoWeek = fromDate == null && toDate == null;
+
+        if (fixtures.Response.Count == 0)
         {
-            effectiveFrom = DateTime.Today;
-            while (effectiveFrom.Value.DayOfWeek != DayOfWeek.Tuesday )
-            {
-                effectiveFrom = effectiveFrom.Value.AddDays(-1);
-            }
-            effectiveFrom = effectiveFrom.Value.AddDays(3);
-            effectiveTo = effectiveFrom.Value.AddDays(7);
+            fixtures.FromDate = fromDate ?? effectiveFrom;
+            fixtures.ToDate = toDate ?? effectiveTo;
+            return View(fixtures);
         }
         
-        var fixtures = await _fixtureService.GetFixturesAsync(effectiveFrom.Value, effectiveTo.Value);
         fixtures.FromDate = fromDate ?? fixtures.Response.Min(x => x.Fixture.Date).Date;
         fixtures.ToDate = toDate ?? fixtures.Response.Max(x => x.Fixture.Date).Date;
         return View(fixtures);
+    }
+
+    private static (DateTime effectiveFrom, DateTime effectiveTo) GetEffectiveDates(DateTime? fromDate, DateTime? toDate,
+        int? weekOffset)
+    {
+        var effectiveFrom = fromDate;
+        var effectiveTo = toDate;
+        if (effectiveFrom != null && effectiveTo != null) return (effectiveFrom.Value, effectiveTo.Value);
+        
+        effectiveFrom = DateTime.Today;
+        while (effectiveFrom.Value.DayOfWeek != DayOfWeek.Tuesday )
+        {
+            effectiveFrom = effectiveFrom.Value.AddDays(-1);
+        }
+        effectiveFrom = effectiveFrom.Value.AddDays(3);
+            
+        if(weekOffset.HasValue)
+        {
+            effectiveFrom = effectiveFrom.Value.AddDays(weekOffset.Value * 7);
+        }
+        effectiveTo = effectiveFrom.Value.AddDays(7);
+
+        return (effectiveFrom.Value, effectiveTo.Value);
     }
 
     public IActionResult Privacy()

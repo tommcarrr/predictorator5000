@@ -1,6 +1,6 @@
 ﻿namespace Predictorator.Models.Fixtures;
 
-public class Goals
+public class ScoreHomeAway
 {
     public int? Home { get; set; }
     public int? Away { get; set; }

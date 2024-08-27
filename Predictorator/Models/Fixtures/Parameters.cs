@@ -1,4 +1,6 @@
-﻿public class Parameters
+﻿namespace Predictorator.Models.Fixtures;
+
+public class Parameters
 {
     public string League { get; set; }
     public string From { get; set; }

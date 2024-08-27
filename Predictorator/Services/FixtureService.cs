@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Caching.Memory;
+using Predictorator.Models.Fixtures;
 
 namespace Predictorator.Services
 {
