@@ -18,7 +18,7 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, int? weekOffset)
     {
-        if(weekOffset < -10 || weekOffset > 10)
+        if(weekOffset is < -10 or > 10)
         {
             return BadRequest("Week offset must be between -10 and 10");
         }
