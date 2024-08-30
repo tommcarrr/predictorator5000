@@ -1,3 +1,4 @@
+using Predictorator.Middleware;
 using Predictorator.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,8 @@ builder.Services.AddTransient<IFixtureService, FixtureService>();
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+app.UseMiddleware<RateLimitingMiddleware>(100, TimeSpan.FromDays(1));
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

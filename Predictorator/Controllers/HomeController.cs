@@ -18,6 +18,11 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, int? weekOffset)
     {
+        if(weekOffset < -10 || weekOffset > 10)
+        {
+            return BadRequest("Week offset must be between -10 and 10");
+        }
+        
         var (effectiveFrom, effectiveTo) = GetEffectiveDates(fromDate, toDate, weekOffset);
 
         var fixtures = await _fixtureService.GetFixturesAsync(effectiveFrom, effectiveTo);
