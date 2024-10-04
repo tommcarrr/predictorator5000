@@ -62,7 +62,7 @@
                         <div class="col-4 text-end">Away Team</div>
                     </div>
 
-                    @foreach (var fixture in group.OrderBy(x => x.Fixture.Date))
+                    @foreach (var fixture in group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name))
                     {
                         <div class="row align-items-center fixture-row mb-3">
                             <div class="col-4 d-flex align-items-center">
