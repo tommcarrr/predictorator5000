@@ -60,7 +60,7 @@ public class HomeController : Controller
         {
             effectiveFrom = effectiveFrom.Value.AddDays(weekOffset.Value * 7);
         }
-        effectiveTo = effectiveFrom.Value.AddDays(7);
+        effectiveTo = effectiveFrom.Value.AddDays(6);
 
         return (effectiveFrom.Value, effectiveTo.Value);
     }
