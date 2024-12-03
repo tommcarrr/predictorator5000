@@ -70,9 +70,9 @@
                                 <span>@fixture.Teams.Home.Name</span>
                             </div>
                             <div class="col-4 text-center">
-                                <input type="text" class="form-control score-input d-inline-block text-center" maxlength="2" @(fixture.Score?.Fulltime.Home != null ? $"readonly value={fixture.Score.Fulltime.Home}" : "") />
+                                <input type="number" class="form-control score-input d-inline-block text-center" maxlength="2" @(fixture.Score?.Fulltime.Home != null ? $"readonly value={fixture.Score.Fulltime.Home}" : "") />
                                 <span class="mx-2">-</span>
-                                <input type="text" class="form-control score-input d-inline-block text-center" maxlength="2" @(fixture.Score?.Fulltime.Away != null ? $"readonly value={fixture.Score.Fulltime.Away}" : "") />
+                                <input type="number" class="form-control score-input d-inline-block text-center" maxlength="2" @(fixture.Score?.Fulltime.Away != null ? $"readonly value={fixture.Score.Fulltime.Away}" : "") />
                             </div>
                             <div class="col-4 d-flex align-items-center justify-content-end">
                                 <span>@fixture.Teams.Away.Name</span>
