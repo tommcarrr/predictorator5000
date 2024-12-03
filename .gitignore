@@ -153,3 +153,6 @@ $RECYCLE.BIN/
 
 # Build directories for MSBuild, Rider, and similar build tools
 *.vs/
+
+# Dev app settings
+appsettings.Development.json
