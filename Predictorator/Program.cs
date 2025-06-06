@@ -13,13 +13,16 @@ builder.Services.AddHttpClient("fixtures",client =>
 });
 
 builder.Services.AddTransient<IFixtureService, FixtureService>();
+builder.Services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
+builder.Services.AddSingleton<IRateLimitService>(new InMemoryRateLimitService(100, TimeSpan.FromDays(1)));
+builder.Services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-app.UseMiddleware<RateLimitingMiddleware>(100, TimeSpan.FromDays(1));
+app.UseMiddleware<RateLimitingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -41,3 +44,5 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+public partial class Program { }

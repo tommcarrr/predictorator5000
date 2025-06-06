@@ -9,11 +9,13 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly IFixtureService _fixtureService;
+    private readonly IDateRangeCalculator _dateRangeCalculator;
 
-    public HomeController(ILogger<HomeController> logger, IFixtureService fixtureService)
+    public HomeController(ILogger<HomeController> logger, IFixtureService fixtureService, IDateRangeCalculator dateRangeCalculator)
     {
         _logger = logger;
         _fixtureService = fixtureService;
+        _dateRangeCalculator = dateRangeCalculator;
     }
 
     public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, int? weekOffset)
@@ -23,7 +25,7 @@ public class HomeController : Controller
             return BadRequest("Week offset must be between -10 and 10");
         }
         
-        var (effectiveFrom, effectiveTo) = GetEffectiveDates(fromDate, toDate, weekOffset);
+        var (effectiveFrom, effectiveTo) = _dateRangeCalculator.GetDates(fromDate, toDate, weekOffset);
 
         var fixtures = await _fixtureService.GetFixturesAsync(effectiveFrom, effectiveTo);
         
@@ -42,28 +44,6 @@ public class HomeController : Controller
         return View(fixtures);
     }
 
-    private static (DateTime effectiveFrom, DateTime effectiveTo) GetEffectiveDates(DateTime? fromDate, DateTime? toDate,
-        int? weekOffset)
-    {
-        var effectiveFrom = fromDate;
-        var effectiveTo = toDate;
-        if (effectiveFrom != null && effectiveTo != null) return (effectiveFrom.Value, effectiveTo.Value);
-        
-        effectiveFrom = DateTime.Today;
-        while (effectiveFrom.Value.DayOfWeek != DayOfWeek.Tuesday )
-        {
-            effectiveFrom = effectiveFrom.Value.AddDays(-1);
-        }
-        effectiveFrom = effectiveFrom.Value.AddDays(3);
-            
-        if(weekOffset.HasValue)
-        {
-            effectiveFrom = effectiveFrom.Value.AddDays(weekOffset.Value * 7);
-        }
-        effectiveTo = effectiveFrom.Value.AddDays(6);
-
-        return (effectiveFrom.Value, effectiveTo.Value);
-    }
 
     public IActionResult Privacy()
     {

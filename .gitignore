@@ -156,3 +156,4 @@ $RECYCLE.BIN/
 
 # Dev app settings
 appsettings.Development.json
+dotnet-install.sh

@@ -1,19 +1,16 @@
-﻿using System.Collections.Concurrent;
+using Predictorator.Services;
 
 namespace Predictorator.Middleware;
 
 public class RateLimitingMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly int _maxRequests;
-    private readonly TimeSpan _timeWindow;
-    private static readonly ConcurrentDictionary<string, (int Count, DateTime Timestamp)> _requestCounts = new();
+    private readonly IRateLimitService _rateLimitService;
 
-    public RateLimitingMiddleware(RequestDelegate next, int maxRequests, TimeSpan timeWindow)
+    public RateLimitingMiddleware(RequestDelegate next, IRateLimitService rateLimitService)
     {
         _next = next;
-        _maxRequests = maxRequests;
-        _timeWindow = timeWindow;
+        _rateLimitService = rateLimitService;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -28,19 +25,7 @@ public class RateLimitingMiddleware
 
         var now = DateTime.UtcNow;
 
-        _requestCounts.AddOrUpdate(ipAddress, (1, now), (key, value) =>
-        {
-            if (now - value.Timestamp > _timeWindow)
-            {
-                return (1, now);
-            }
-            else
-            {
-                return (value.Count + 1, value.Timestamp);
-            }
-        });
-
-        if (_requestCounts[ipAddress].Count > _maxRequests)
+        if (_rateLimitService.ShouldLimit(ipAddress, now))
         {
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
             return;
