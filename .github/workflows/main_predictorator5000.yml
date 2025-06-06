@@ -51,7 +51,6 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          auth-type: oidc
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_7704324CE11A4DEA9CE542A1A5EEB2BA }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_75BAE784A4F5424088673E7F0A43DC89 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_F50C856937CB466F990D0A60DC555498 }}
