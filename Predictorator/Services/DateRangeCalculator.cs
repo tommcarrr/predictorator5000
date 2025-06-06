@@ -11,24 +11,28 @@ public class DateRangeCalculator : IDateRangeCalculator
 
     public (DateTime From, DateTime To) GetDates(DateTime? fromDate, DateTime? toDate, int? weekOffset)
     {
-        var effectiveFrom = fromDate;
-        var effectiveTo = toDate;
-        if (effectiveFrom != null && effectiveTo != null)
-            return (effectiveFrom.Value, effectiveTo.Value);
+        if (fromDate.HasValue && toDate.HasValue)
+            return (fromDate.Value, toDate.Value);
 
-        effectiveFrom = _dateTimeProvider.Today;
-        while (effectiveFrom.Value.DayOfWeek != DayOfWeek.Tuesday)
+        if (fromDate.HasValue)
+            return (fromDate.Value, fromDate.Value.AddDays(6));
+
+        if (toDate.HasValue)
+            return (toDate.Value.AddDays(-6), toDate.Value);
+
+        var effectiveFrom = _dateTimeProvider.Today;
+        while (effectiveFrom.DayOfWeek != DayOfWeek.Tuesday)
         {
-            effectiveFrom = effectiveFrom.Value.AddDays(-1);
+            effectiveFrom = effectiveFrom.AddDays(-1);
         }
-        effectiveFrom = effectiveFrom.Value.AddDays(3);
+        effectiveFrom = effectiveFrom.AddDays(3);
 
         if (weekOffset.HasValue)
         {
-            effectiveFrom = effectiveFrom.Value.AddDays(weekOffset.Value * 7);
+            effectiveFrom = effectiveFrom.AddDays(weekOffset.Value * 7);
         }
 
-        effectiveTo = effectiveFrom.Value.AddDays(6);
-        return (effectiveFrom.Value, effectiveTo.Value);
+        var effectiveTo = effectiveFrom.AddDays(6);
+        return (effectiveFrom, effectiveTo);
     }
 }
