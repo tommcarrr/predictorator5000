@@ -21,7 +21,7 @@ namespace Predictorator.Services
             var cacheKey = $"{fromDate:yyyy-MM-dd}_{toDate:yyyy-MM-dd}";
 
             if (_cache.TryGetValue(cacheKey, out FixturesResponse? cachedResponse)) return cachedResponse!;
-            
+
             var query = new Dictionary<string, string?>()
             {
                 ["league"] = "39",
@@ -33,8 +33,8 @@ namespace Predictorator.Services
             var url = QueryHelpers.AddQueryString("fixtures", query);
 
             cachedResponse = await _httpClient.GetFromJsonAsync<FixturesResponse>(url);
-            
-            if(cachedResponse == null) throw new Exception("Failed to fetch fixtures");
+
+            if (cachedResponse == null) throw new Exception("Failed to fetch fixtures");
 
             _cache.Set(cacheKey, cachedResponse, _cacheDuration);
 

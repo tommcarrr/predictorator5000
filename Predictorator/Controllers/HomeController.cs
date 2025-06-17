@@ -20,15 +20,15 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index(DateTime? fromDate, DateTime? toDate, int? weekOffset)
     {
-        if(weekOffset is < -10 or > 10)
+        if (weekOffset is < -10 or > 10)
         {
             return BadRequest("Week offset must be between -10 and 10");
         }
-        
+
         var (effectiveFrom, effectiveTo) = _dateRangeCalculator.GetDates(fromDate, toDate, weekOffset);
 
         var fixtures = await _fixtureService.GetFixturesAsync(effectiveFrom, effectiveTo);
-        
+
         fixtures.CurrentWeekOffset = weekOffset ?? 0;
         fixtures.AutoWeek = fromDate == null && toDate == null;
 
@@ -38,7 +38,7 @@ public class HomeController : Controller
             fixtures.ToDate = toDate ?? effectiveTo;
             return View(fixtures);
         }
-        
+
         fixtures.FromDate = fromDate ?? fixtures.Response.Min(x => x.Fixture.Date).Date;
         fixtures.ToDate = toDate ?? fixtures.Response.Max(x => x.Fixture.Date).Date;
         return View(fixtures);

@@ -2,7 +2,7 @@
 
 public class FixturesResponse
 {
-    
+
     public DateTime FromDate { get; set; }
     public DateTime ToDate { get; set; }
     public string Get { get; set; }

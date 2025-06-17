@@ -5,7 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 var rapidApiKey = builder.Configuration["ApiSettings:RapidApiKey"];
 
-builder.Services.AddHttpClient("fixtures",client =>
+builder.Services.AddHttpClient("fixtures", client =>
 {
     client.BaseAddress = new Uri("https://api-football-v1.p.rapidapi.com/v3/");
     client.DefaultRequestHeaders.Add("x-rapidapi-host", "api-football-v1.p.rapidapi.com");
