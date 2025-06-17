@@ -30,6 +30,7 @@
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
         <div class="container-fluid">
             <a class="navbar-brand header" asp-area="" asp-controller="Home" asp-action="Index">Predictotronix</a>
+            <a class="nav-link" asp-controller="Subscription" asp-action="Subscribe">Subscribe</a>
             @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
             {
                 <a class="nav-link" asp-controller="Admin" asp-action="SendNotification">Admin</a>
