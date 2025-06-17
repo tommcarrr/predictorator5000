@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Predictorator.Data;
 using Predictorator.Middleware;
 using Predictorator.Services;
+using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,13 @@ builder.Services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
 builder.Services.AddSingleton<IRateLimitService>(sp =>
     new InMemoryRateLimitService(100, TimeSpan.FromDays(1), sp.GetRequiredService<IDateTimeProvider>()));
 builder.Services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
+builder.Services.AddHttpClient<Resend.ResendClient>();
+builder.Services.Configure<Resend.ResendClientOptions>(o =>
+{
+    o.ApiToken = builder.Configuration["Resend:ApiToken"]!;
+});
+builder.Services.AddTransient<Resend.IResend, Resend.ResendClient>();
+builder.Services.AddTransient<SubscriptionService>();
 
 var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "predictorator.db");
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!.Replace("%DB_PATH%", dbPath);
