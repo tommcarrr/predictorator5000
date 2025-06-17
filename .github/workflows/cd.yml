@@ -38,6 +38,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: app
+      - uses: actions/checkout@v4
       - uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2687F5A3498747E1A95ADE36D92A159E }}
@@ -64,15 +65,16 @@ jobs:
 
       - name: Download database
         run: |
-          curl -L -o predictorator.db \
+          curl -f -L -o predictorator.db \
             -H "Authorization: Basic ${{ steps.get_profile.outputs.auth }}" \
-            "${{ steps.get_profile.outputs.scm_url }}/api/vfs/home/.local/share/predictorator.db"
+            "${{ steps.get_profile.outputs.scm_url }}/api/vfs/home/.local/share/predictorator.db" \
+            || touch predictorator.db
 
       - name: Run Flyway migrations
         uses: joshuaavalon/flyway-action@v3.0.0
         with:
           url: 'jdbc:sqlite:predictorator.db'
-          locations: 'filesystem:flyway/sql'
+          locations: 'filesystem:./flyway/sql'
 
       - name: Upload database
         run: |
