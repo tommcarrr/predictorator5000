@@ -57,7 +57,8 @@ jobs:
           az webapp deployment list-publishing-profiles \
             --name predictorator5000 --resource-group "$RG" \
             --output json > profile.json
-          echo "scm_url=$(jq -r '.[0].scmUri' profile.json)" >> "$GITHUB_OUTPUT"
+          scm_host=$(jq -r '.[0].publishUrl' profile.json | cut -d: -f1)
+          echo "scm_url=https://$scm_host" >> "$GITHUB_OUTPUT"
           auth=$(jq -r '.[0].userName + ":" + .[0].userPWD' profile.json | base64)
           echo "auth=$auth" >> "$GITHUB_OUTPUT"
 
