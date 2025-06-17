@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Predictorator.Data;
 using Predictorator.Middleware;
 using Predictorator.Services;
 
@@ -19,8 +22,16 @@ builder.Services.AddSingleton<IRateLimitService>(sp =>
     new InMemoryRateLimitService(100, TimeSpan.FromDays(1), sp.GetRequiredService<IDateTimeProvider>()));
 builder.Services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseInMemoryDatabase("DefaultDb"));
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultUI()
+    .AddDefaultTokenProviders();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
@@ -39,11 +50,15 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapRazorPages();
+
+await ApplicationDbInitializer.SeedAdminUserAsync(app.Services);
 
 app.Run();
 

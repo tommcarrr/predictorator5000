@@ -30,6 +30,10 @@
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
         <div class="container-fluid">
             <a class="navbar-brand header" asp-area="" asp-controller="Home" asp-action="Index">Predictotronix</a>
+            @if (User.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
+            {
+                <a class="nav-link" asp-controller="Admin" asp-action="SendNotification">Admin</a>
+            }
             <button id="darkModeToggle" class="btn btn-outline-secondary ms-auto">Dark Mode</button>
         </div>
     </nav>
