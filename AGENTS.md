@@ -29,5 +29,6 @@ The following guidelines apply to the entire repository and inform how Codex sho
 
 - Playwright tests live in the `Predictorator.UiTests` project.
 - Keep these tests current and add new coverage whenever the UI changes.
-- The CD workflow deploys to staging and then runs the Playwright tests against
-  that environment.
+- The CD workflow deploys directly to production and then runs the Playwright
+  tests against that environment. There is no staging deployment and the tests
+  use the `TEST_TOKEN` secret to populate `UI_TEST_TOKEN`.
