@@ -69,7 +69,7 @@ jobs:
         run: |
           dotnet tool install --global Microsoft.Playwright.CLI
           export PATH="$PATH:/root/.dotnet/tools"
-          playwright install --with-deps
+          playwright install
       - name: Run all tests
         run: dotnet test Predictorator.sln --logger trx --no-build
 
