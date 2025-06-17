@@ -53,7 +53,7 @@ jobs:
       - name: Get publish profile
         id: get_profile
         run: |
-          RG=$(az webapp show --name predictorator5000 --query resourceGroup -o tsv)
+          RG=$(az webapp list --query "[?name=='predictorator5000'].resourceGroup" -o tsv)
           az webapp deployment list-publishing-profiles \
             --name predictorator5000 --resource-group "$RG" \
             --output json > profile.json
