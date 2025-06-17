@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Predictorator.Models;
 
 namespace Predictorator.Data;
 
@@ -10,4 +11,6 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
         : base(options)
     {
     }
+
+    public DbSet<Subscriber> Subscribers => Set<Subscriber>();
 }

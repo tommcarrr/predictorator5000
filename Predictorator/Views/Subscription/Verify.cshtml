@@ -1,0 +1,13 @@
+@model bool
+@{
+    ViewData["Title"] = "Verification";
+}
+<h2>@ViewData["Title"]</h2>
+@if (Model)
+{
+    <p>Your email has been verified.</p>
+}
+else
+{
+    <p>Invalid verification link.</p>
+}

@@ -70,4 +70,12 @@ public class HomePageTests
             Assert.Pass("No test token provided; skipping row check.");
         }
     }
+
+    [Test]
+    public async Task SubscribePage_Should_Display_Form()
+    {
+        await _page!.GotoAsync($"{BaseUrl}/Subscription/Subscribe");
+        var header = await _page.TextContentAsync("h2");
+        Assert.That(header, Is.EqualTo("Subscribe to Notifications"));
+    }
 }
