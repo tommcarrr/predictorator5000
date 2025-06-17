@@ -20,7 +20,8 @@ public class HomeControllerTests : IClassFixture<WebApplicationFactory<Program>>
             {
                 services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
                 services.AddSingleton<IDateTimeProvider>(new SystemDateTimeProvider());
-                services.AddSingleton<IRateLimitService>(new InMemoryRateLimitService(100, TimeSpan.FromMinutes(1)));
+                services.AddSingleton<IRateLimitService>(sp =>
+                    new InMemoryRateLimitService(100, TimeSpan.FromMinutes(1), sp.GetRequiredService<IDateTimeProvider>()));
 
                 services.AddTransient<IFixtureService>(_ => new FakeFixtureService(
                     new FixturesResponse
