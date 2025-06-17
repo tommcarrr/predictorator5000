@@ -75,6 +75,7 @@ jobs:
         with:
           url: 'jdbc:sqlite:predictorator.db'
           locations: 'filesystem:./flyway/sql'
+          flyway-version: '11.9.1'
 
       - name: Upload database
         run: |

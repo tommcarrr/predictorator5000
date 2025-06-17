@@ -1,8 +1,3 @@
-﻿CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
-    "MigrationId" TEXT NOT NULL CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY,
-    "ProductVersion" TEXT NOT NULL
-);
-
 BEGIN TRANSACTION;
 
 CREATE TABLE "AspNetRoles" (
@@ -85,9 +80,6 @@ CREATE INDEX "IX_AspNetUserRoles_RoleId" ON "AspNetUserRoles" ("RoleId");
 CREATE INDEX "EmailIndex" ON "AspNetUsers" ("NormalizedEmail");
 
 CREATE UNIQUE INDEX "UserNameIndex" ON "AspNetUsers" ("NormalizedUserName");
-
-INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-VALUES ('20250617125725_InitialCreate', '8.0.4');
 
 COMMIT;
 
