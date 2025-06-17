@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+# Required for Azure login using OIDC
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
