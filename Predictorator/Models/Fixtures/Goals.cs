@@ -2,6 +2,6 @@
 
 public class Goals
 {
-    public int? Home { get; set; }
-    public int? Away { get; set; }
+    public int? Home { get; set; } = default!;
+    public int? Away { get; set; } = default!;
 }

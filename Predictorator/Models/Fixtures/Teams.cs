@@ -2,6 +2,6 @@
 
 public class Teams
 {
-    public Team Home { get; set; }
-    public Team Away { get; set; }
+    public Team Home { get; set; } = default!;
+    public Team Away { get; set; } = default!;
 }

@@ -2,8 +2,8 @@
 
 public class Score
 {
-    public ScoreHomeAway Halftime { get; set; }
-    public ScoreHomeAway Fulltime { get; set; }
-    public ScoreHomeAway Extratime { get; set; }
-    public Penalty Penalty { get; set; }
+    public ScoreHomeAway Halftime { get; set; } = default!;
+    public ScoreHomeAway Fulltime { get; set; } = default!;
+    public ScoreHomeAway Extratime { get; set; } = default!;
+    public Penalty Penalty { get; set; } = default!;
 }
