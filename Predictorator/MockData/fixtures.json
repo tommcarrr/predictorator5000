@@ -1,0 +1,44 @@
+{
+  "FromDate": "2024-04-20T00:00:00Z",
+  "ToDate": "2024-04-26T00:00:00Z",
+  "Get": "fixtures",
+  "Parameters": {},
+  "Errors": [],
+  "Results": 1,
+  "Paging": { "Current": 1, "Total": 1 },
+  "CurrentWeekOffset": 0,
+  "AutoWeek": false,
+  "Response": [
+    {
+      "Fixture": {
+        "Id": 1,
+        "Timezone": "UTC",
+        "Date": "2024-04-21T12:00:00Z",
+        "Timestamp": 0,
+        "Periods": { "First": null, "Second": null },
+        "Venue": { "Id": 1, "Name": "Mock Stadium", "City": "Mock City" },
+        "Status": { "Long": "Not Started", "Short": "NS", "Elapsed": null }
+      },
+      "League": {
+        "Id": 39,
+        "Name": "Premier League",
+        "Country": "England",
+        "Logo": "",
+        "Flag": "",
+        "Season": 2024,
+        "Round": "Regular Season - 1"
+      },
+      "Teams": {
+        "Home": { "Id": 1, "Name": "Home", "Logo": "", "Winner": null },
+        "Away": { "Id": 2, "Name": "Away", "Logo": "", "Winner": null }
+      },
+      "Goals": { "Home": null, "Away": null },
+      "Score": {
+        "Halftime": { "Home": null, "Away": null },
+        "Fulltime": { "Home": null, "Away": null },
+        "Extratime": { "Home": null, "Away": null },
+        "Penalty": { "Home": null, "Away": null }
+      }
+    }
+  ]
+}

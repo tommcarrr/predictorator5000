@@ -12,6 +12,7 @@ builder.Services.AddHttpClient("fixtures", client =>
     client.DefaultRequestHeaders.Add("x-rapidapi-key", rapidApiKey);
 });
 
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<IFixtureService, FixtureService>();
 builder.Services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
 builder.Services.AddSingleton<IRateLimitService>(new InMemoryRateLimitService(100, TimeSpan.FromDays(1)));
