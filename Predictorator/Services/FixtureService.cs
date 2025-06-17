@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
@@ -13,7 +13,7 @@ namespace Predictorator.Services
     public class FixtureService : IFixtureService
     {
         private readonly HttpClient _httpClient;
-        private readonly IMemoryCache _cache;
+        private readonly HybridCache _cache;
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _environment;
@@ -21,7 +21,7 @@ namespace Predictorator.Services
 
         public FixtureService(
             IHttpClientFactory httpClientFactory,
-            IMemoryCache cache,
+            HybridCache cache,
             IHttpContextAccessor contextAccessor,
             IConfiguration configuration,
             IWebHostEnvironment environment)
@@ -37,37 +37,37 @@ namespace Predictorator.Services
         {
             var cacheKey = $"{fromDate:yyyy-MM-dd}_{toDate:yyyy-MM-dd}";
 
-            if (_cache.TryGetValue(cacheKey, out FixturesResponse? cachedResponse)) return cachedResponse!;
+            var options = new HybridCacheEntryOptions { Expiration = _cacheDuration, LocalCacheExpiration = _cacheDuration };
 
-            var token = _configuration["ApiSettings:TestToken"];
-            var headerToken = _contextAccessor.HttpContext?.Request.Headers["X-Test-Token"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(token) && headerToken == token)
+            return await _cache.GetOrCreateAsync(cacheKey, async ct =>
             {
-                var path = Path.Combine(_environment.ContentRootPath, "MockData", "fixtures.json");
-                await using var stream = File.OpenRead(path);
-                cachedResponse = await JsonSerializer.DeserializeAsync<FixturesResponse>(stream);
-                if (cachedResponse == null) throw new Exception("Failed to load mock fixtures");
-                _cache.Set(cacheKey, cachedResponse, _cacheDuration);
-                return cachedResponse;
-            }
+                var token = _configuration["ApiSettings:TestToken"];
+                var headerToken = _contextAccessor.HttpContext?.Request.Headers["X-Test-Token"].FirstOrDefault();
+                if (!string.IsNullOrEmpty(token) && headerToken == token)
+                {
+                    var path = Path.Combine(_environment.ContentRootPath, "MockData", "fixtures.json");
+                    await using var stream = File.OpenRead(path);
+                    var mockResponse = await JsonSerializer.DeserializeAsync<FixturesResponse>(stream, cancellationToken: ct);
+                    if (mockResponse == null) throw new Exception("Failed to load mock fixtures");
+                    return mockResponse;
+                }
 
-            var query = new Dictionary<string, string?>()
-            {
-                ["league"] = "39",
-                ["season"] = fromDate.AddMonths(-7).Year.ToString(),
-                ["from"] = fromDate.ToString("yyyy-MM-dd"),
-                ["to"] = toDate.ToString("yyyy-MM-dd")
-            };
+                var query = new Dictionary<string, string?>()
+                {
+                    ["league"] = "39",
+                    ["season"] = fromDate.AddMonths(-7).Year.ToString(),
+                    ["from"] = fromDate.ToString("yyyy-MM-dd"),
+                    ["to"] = toDate.ToString("yyyy-MM-dd")
+                };
 
-            var url = QueryHelpers.AddQueryString("fixtures", query);
+                var url = QueryHelpers.AddQueryString("fixtures", query);
 
-            cachedResponse = await _httpClient.GetFromJsonAsync<FixturesResponse>(url);
+                var fetchedResponse = await _httpClient.GetFromJsonAsync<FixturesResponse>(url, cancellationToken: ct);
 
-            if (cachedResponse == null) throw new Exception("Failed to fetch fixtures");
+                if (fetchedResponse == null) throw new Exception("Failed to fetch fixtures");
 
-            _cache.Set(cacheKey, cachedResponse, _cacheDuration);
-
-            return cachedResponse;
+                return fetchedResponse;
+            }, options);
         }
     }
 }

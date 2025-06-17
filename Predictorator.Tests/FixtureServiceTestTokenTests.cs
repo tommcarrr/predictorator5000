@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Hosting;
 using NSubstitute;
@@ -35,7 +36,9 @@ public class FixtureServiceTestTokenTests
         var httpClientFactory = Substitute.For<IHttpClientFactory>();
         var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
         httpClientFactory.CreateClient("fixtures").Returns(client);
-        var cache = new MemoryCache(new MemoryCacheOptions());
+        var services = new ServiceCollection();
+        services.AddHybridCache();
+        var cache = services.BuildServiceProvider().GetRequiredService<HybridCache>();
 
         var service = new FixtureService(httpClientFactory, cache, accessor, config, env);
 
