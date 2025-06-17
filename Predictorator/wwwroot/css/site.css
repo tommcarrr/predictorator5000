@@ -1,22 +1,72 @@
-/* Base Styles */
+/*
+    -------------------------------------
+    Theme Variables
+    -------------------------------------
+*/
+
+:root {
+    --font-size: 14px;
+    --font-family-mono: "Courier New", Courier, monospace;
+    --primary-color: #258cfb;
+    --bg-body: #fff;
+    --text-color: #000;
+    --input-bg: #fff;
+    --input-bg-readonly: #f3f3f3;
+    --input-focus-bg: #fff;
+    --input-focus-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--primary-color);
+    --card-header-bg: #f8f9fa;
+    --card-body-bg: #fff;
+    --navbar-bg: #fff;
+    --navbar-border: #e5e5e5;
+    --accordion-item-bg: #fff;
+    --accordion-button-bg: #fff;
+    --accordion-button-active-bg: #e6e6e6;
+    --weekJump-color: inherit;
+    --weekJump-hover-color: inherit;
+}
+
+body.dark-mode {
+    --bg-body: #121212;
+    --text-color: #e0e0e0;
+    --input-bg: #333;
+    --input-bg-readonly: #666;
+    --input-focus-bg: #999;
+    --input-focus-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #bbb;
+    --card-header-bg: #333;
+    --card-body-bg: #222;
+    --navbar-bg: #333333;
+    --navbar-border: #444444;
+    --accordion-item-bg: #333333;
+    --accordion-button-bg: #444444;
+    --accordion-button-active-bg: #555555;
+    --weekJump-color: #999;
+    --weekJump-hover-color: #aaa;
+}
+
+/*
+    -------------------------------------
+    Base
+    -------------------------------------
+*/
+
 html {
-    position: relative;
     min-height: 100%;
-    font-size: 14px;
+    font-size: var(--font-size);
 }
 
 body {
     margin-bottom: 60px;
+    background-color: var(--bg-body);
+    color: var(--text-color);
 }
 
-/* Typography */
 h4 {
     font-size: 1rem;
 }
 
 .navbar-brand {
     font-size: 2.5rem;
-    font-family: "Courier New", Courier, monospace;
+    font-family: var(--font-family-mono);
     font-weight: bold;
 }
 
@@ -46,32 +96,67 @@ h4 {
 .weekJump {
     font-size: 1.5rem;
     text-decoration: none;
+    color: var(--weekJump-color);
 }
 
 .weekJump:last-child {
     float: right;
 }
 
-/* Forms */
+.weekJump:hover {
+    color: var(--weekJump-hover-color);
+}
+
+/*
+    -------------------------------------
+    Forms
+    -------------------------------------
+*/
+
 .form-control:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: var(--input-focus-shadow);
 }
 
 .score-input {
     text-align: center;
     width: 30px;
     padding: 2px;
+    background-color: var(--input-bg);
 }
 
-/* Team Logos */
+.score-input[readonly] {
+    background-color: var(--input-bg-readonly);
+}
+
+.score-input:focus {
+    background-color: var(--input-focus-bg);
+}
+
+/*
+    -------------------------------------
+    Team Logos
+    -------------------------------------
+*/
+
 .team-logo {
     max-height: 40px;
     margin: 0 5px;
 }
 
-/* Fixture Block */
+/*
+    -------------------------------------
+    Fixture Block
+    -------------------------------------
+*/
+
+.card-header {
+    background-color: var(--card-header-bg) !important;
+    color: var(--text-color) !important;
+}
+
 .card-body {
     padding-bottom: 0;
+    background-color: var(--card-body-bg);
 }
 
 .date-block {
@@ -101,7 +186,12 @@ h4 {
     border-bottom: none;
 }
 
-/* Buttons */
+/*
+    -------------------------------------
+    Buttons
+    -------------------------------------
+*/
+
 .buttons button {
     flex: 1;
     margin-right: 10px;
@@ -111,7 +201,28 @@ h4 {
     margin-right: 0;
 }
 
-/* Media Queries */
+/*
+    -------------------------------------
+    Remove number input spinners
+    -------------------------------------
+*/
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
+/*
+    -------------------------------------
+    Responsive
+    -------------------------------------
+*/
+
 @media (min-width: 768px) {
     html {
         font-size: 16px;
@@ -138,90 +249,17 @@ h4 {
     }
 
     .navbar .container-fluid {
-        flex-direction: column; /* Stack items vertically */
+        flex-direction: column;
     }
 
     .navbar-brand.header {
         position: relative;
         left: auto;
-        transform: none; /* Reset transform to normal flow */
-        margin-bottom: 10px; /* Add some space between the text and button */
+        transform: none;
+        margin-bottom: 10px;
     }
 
     #darkModeToggle {
-        margin-left: 0; /* Reset margin */
+        margin-left: 0;
     }
-}
-
-/* Dark Mode */
-body.dark-mode {
-    background-color: #121212;
-    color: #e0e0e0;
-}
-
-body.dark-mode input {
-    background-color: #333;
-    color: #e0e0e0 !important
-}
-
-body.dark-mode input[readonly] {
-    background-color: #666;
-}
-
-body.dark-mode input:focus {
-    background-color: #999;
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #bbb;
-    border-color: #333;
-}
-
-body.dark-mode .card-header {
-    background-color: #333 !important;
-    color: #e0e0e0 !important;
-}
-
-body.dark-mode .card-body {
-    background-color: #222;
-    color: #e0e0e0;
-}
-
-body.dark-mode .navbar-dark.bg-dark {
-    background-color: #333333 !important;
-    border-color: #444444;
-}
-
-body.dark-mode .accordion-dark .accordion-item {
-    background-color: #333333;
-    color: #e0e0e0;
-}
-
-body.dark-mode .accordion-dark .accordion-button {
-    background-color: #444444;
-    color: #e0e0e0;
-}
-
-body.dark-mode .accordion-dark .accordion-button:not(.collapsed) {
-    background-color: #555555;
-}
-
-body.dark-mode .weekJump {
-    color: #999;
-}
-
-body.dark-mode .weekJump:hover {
-    color: #aaa;
-}
-
-
-/* Remove Spinners */
-
-/* Chrome, Safari, Edge, Opera */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-/* Firefox */
-input[type=number] {
-    -moz-appearance: textfield;
 }
