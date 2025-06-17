@@ -26,7 +26,15 @@ public class HomePageTests
 
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
-        var context = await _browser.NewContextAsync();
+
+        var headers = new Dictionary<string, string>();
+        var token = Environment.GetEnvironmentVariable("UI_TEST_TOKEN");
+        if (!string.IsNullOrEmpty(token))
+        {
+            headers["X-Test-Token"] = token;
+        }
+
+        var context = await _browser.NewContextAsync(new() { ExtraHTTPHeaders = headers });
         _page = await context.NewPageAsync();
     }
 
@@ -46,5 +54,20 @@ public class HomePageTests
         await _page!.GotoAsync(BaseUrl);
         var header = await _page.TextContentAsync("h1");
         Assert.That(header, Is.EqualTo("Premier League Fixtures"));
+    }
+
+    [Test]
+    public async Task Index_Should_Display_Fixture_Row_When_Using_Mock_Data()
+    {
+        await _page!.GotoAsync(BaseUrl);
+        var rows = await _page.QuerySelectorAllAsync("table tbody tr");
+        if (Environment.GetEnvironmentVariable("UI_TEST_TOKEN") != null)
+        {
+            Assert.IsNotEmpty(rows);
+        }
+        else
+        {
+            Assert.Pass("No test token provided; skipping row check.");
+        }
     }
 }

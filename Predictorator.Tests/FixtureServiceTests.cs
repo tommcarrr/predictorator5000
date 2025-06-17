@@ -3,6 +3,10 @@ using NSubstitute;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
 
 namespace Predictorator.Tests;
 
@@ -17,7 +21,11 @@ public class FixtureServiceTests
         var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
         httpClientFactory.CreateClient("fixtures").Returns(client);
         var cache = new MemoryCache(new MemoryCacheOptions());
-        var service = new FixtureService(httpClientFactory, cache);
+        var accessor = Substitute.For<IHttpContextAccessor>();
+        var config = Substitute.For<IConfiguration>();
+        var env = Substitute.For<IWebHostEnvironment>();
+        env.ContentRootPath.Returns(Directory.GetCurrentDirectory());
+        var service = new FixtureService(httpClientFactory, cache, accessor, config, env);
 
         var result1 = await service.GetFixturesAsync(DateTime.Today, DateTime.Today);
         var result2 = await service.GetFixturesAsync(DateTime.Today, DateTime.Today);
