@@ -2,9 +2,9 @@
 
 public class FixtureData
 {
-    public Fixture Fixture { get; set; }
-    public League League { get; set; }
-    public Teams Teams { get; set; }
-    public Goals Goals { get; set; }
-    public Score Score { get; set; }
+    public Fixture Fixture { get; set; } = default!;
+    public League League { get; set; } = default!;
+    public Teams Teams { get; set; } = default!;
+    public Goals Goals { get; set; } = default!;
+    public Score Score { get; set; } = default!;
 }

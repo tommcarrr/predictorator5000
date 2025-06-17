@@ -2,7 +2,7 @@
 
 public class Status
 {
-    public string Long { get; set; }
-    public string Short { get; set; }
-    public object Elapsed { get; set; }
+    public string Long { get; set; } = default!;
+    public string Short { get; set; } = default!;
+    public object Elapsed { get; set; } = default!;
 }

@@ -2,6 +2,6 @@
 
 public class Periods
 {
-    public object First { get; set; }
-    public object Second { get; set; }
+    public object First { get; set; } = default!;
+    public object Second { get; set; } = default!;
 }

@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Predictorator", "Predictora
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Predictorator.Tests", "Predictorator.Tests\Predictorator.Tests.csproj", "{F541117F-2A6B-4C52-A5D2-AA1862DE245A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Predictorator.UiTests", "Predictorator.UiTests\Predictorator.UiTests.csproj", "{F76B25B1-9631-493C-8BC7-AF727EC6EDA9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,6 +20,10 @@ Global
 		{F541117F-2A6B-4C52-A5D2-AA1862DE245A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F541117F-2A6B-4C52-A5D2-AA1862DE245A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F541117F-2A6B-4C52-A5D2-AA1862DE245A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F541117F-2A6B-4C52-A5D2-AA1862DE245A}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
+                {F541117F-2A6B-4C52-A5D2-AA1862DE245A}.Release|Any CPU.Build.0 = Release|Any CPU
+                {F76B25B1-9631-493C-8BC7-AF727EC6EDA9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+                {F76B25B1-9631-493C-8BC7-AF727EC6EDA9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+                {F76B25B1-9631-493C-8BC7-AF727EC6EDA9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+                {F76B25B1-9631-493C-8BC7-AF727EC6EDA9}.Release|Any CPU.Build.0 = Release|Any CPU
+        EndGlobalSection
 EndGlobal

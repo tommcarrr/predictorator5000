@@ -2,8 +2,8 @@
 
 public class Parameters
 {
-    public string League { get; set; }
-    public string From { get; set; }
-    public string To { get; set; }
-    public string Season { get; set; }
+    public string League { get; set; } = default!;
+    public string From { get; set; } = default!;
+    public string To { get; set; } = default!;
+    public string Season { get; set; } = default!;
 }

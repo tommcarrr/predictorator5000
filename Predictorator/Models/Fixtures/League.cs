@@ -2,11 +2,11 @@
 
 public class League
 {
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public string Country { get; set; }
-    public string Logo { get; set; }
-    public string Flag { get; set; }
-    public int Season { get; set; }
-    public string Round { get; set; }
+    public int Id { get; set; } = default!;
+    public string Name { get; set; } = default!;
+    public string Country { get; set; } = default!;
+    public string Logo { get; set; } = default!;
+    public string Flag { get; set; } = default!;
+    public int Season { get; set; } = default!;
+    public string Round { get; set; } = default!;
 }
