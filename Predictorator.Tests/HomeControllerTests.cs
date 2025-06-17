@@ -1,6 +1,9 @@
 using AngleSharp.Html.Parser;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.EntityFrameworkCore;
+using Predictorator.Data;
 using System.Collections.Generic;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
@@ -18,6 +21,9 @@ public class HomeControllerTests : IClassFixture<WebApplicationFactory<Program>>
         {
             builder.ConfigureServices(services =>
             {
+                services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
+                services.AddDbContext<ApplicationDbContext>(options =>
+                    options.UseInMemoryDatabase("TestDb"));
                 services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
                 services.AddSingleton<IDateTimeProvider>(new SystemDateTimeProvider());
                 services.AddSingleton<IRateLimitService>(sp =>

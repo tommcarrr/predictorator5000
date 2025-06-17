@@ -22,8 +22,10 @@ builder.Services.AddSingleton<IRateLimitService>(sp =>
     new InMemoryRateLimitService(100, TimeSpan.FromDays(1), sp.GetRequiredService<IDateTimeProvider>()));
 builder.Services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
+var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "predictorator.db");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!.Replace("%DB_PATH%", dbPath);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseInMemoryDatabase("DefaultDb"));
+    options.UseSqlite(connectionString));
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultUI()
