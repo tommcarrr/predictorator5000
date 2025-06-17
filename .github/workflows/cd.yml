@@ -23,10 +23,10 @@ jobs:
           name: app
           path: publish
 
-  deploy_staging:
+  deploy_prod:
     runs-on: ubuntu-latest
     needs: build
-    environment: staging
+    environment: production
     outputs:
       url: ${{ steps.deploy.outputs.webapp-url }}
     steps:
@@ -38,17 +38,18 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - name: Deploy to staging
+      - name: Deploy to production
         id: deploy
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'predictorator5000'
-          slot-name: 'staging'
+          slot-name: 'Production'
           package: ./
 
   tests:
     runs-on: ubuntu-latest
-    needs: deploy_staging
+    needs: deploy_prod
+    if: always()
     env:
       RUN_UI_TESTS: 'true'
     steps:
@@ -62,25 +63,20 @@ jobs:
           export PATH="$PATH:/root/.dotnet/tools"
           playwright install --with-deps
       - name: Run all tests
-        run: dotnet test Predictorator.sln --logger trx -- RunConfiguration.TestRunParameters.Parameter(name=BaseUrl,value=${{ needs.deploy_staging.outputs.url }})
+        run: dotnet test Predictorator.sln --logger trx -- RunConfiguration.TestRunParameters.Parameter(name=BaseUrl,value=${{ needs.deploy_prod.outputs.url }})
 
-  deploy_prod:
+  rollback:
+    if: failure() && needs.tests.result == 'failure'
     runs-on: ubuntu-latest
-    needs: tests
-    environment: production
+    needs: [deploy_prod, tests]
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: app
       - uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      - name: Deploy to production
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'predictorator5000'
-          slot-name: 'Production'
-          package: ./
-
+      - name: Rollback deployment
+        run: |
+          echo "Rolling back to previous deployment"
+          # Implement rollback logic here, for example using az webapp deployment
+          # az webapp deployment source config-zip --src <previous package>
