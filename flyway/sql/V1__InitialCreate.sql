@@ -1,5 +1,3 @@
-BEGIN TRANSACTION;
-
 CREATE TABLE "AspNetRoles" (
     "Id" TEXT NOT NULL CONSTRAINT "PK_AspNetRoles" PRIMARY KEY,
     "Name" TEXT NULL,
@@ -80,6 +78,4 @@ CREATE INDEX "IX_AspNetUserRoles_RoleId" ON "AspNetUserRoles" ("RoleId");
 CREATE INDEX "EmailIndex" ON "AspNetUsers" ("NormalizedEmail");
 
 CREATE UNIQUE INDEX "UserNameIndex" ON "AspNetUsers" ("NormalizedUserName");
-
-COMMIT;
 
