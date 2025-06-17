@@ -15,10 +15,5 @@ jobs:
           dotnet-version: '8.0'
       - name: Restore
         run: dotnet restore Predictorator.sln
-      - name: Run Flyway migrations
-        uses: flyway/flyway-action@v3
-        with:
-          url: 'jdbc:sqlite:${{ env.HOME }}/predictorator.db'
-          locations: 'filesystem:flyway/sql'
       - name: Run unit tests
         run: dotnet test Predictorator.sln

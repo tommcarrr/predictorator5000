@@ -23,7 +23,7 @@ jobs:
       - name: Publish
         run: dotnet publish Predictorator.sln -c Release -o publish
       - name: Run Flyway migrations
-        uses: flyway/flyway-action@v3
+        uses: joshuaavalon/flyway-action@v3
         with:
           url: 'jdbc:sqlite:${{ env.HOME }}/predictorator.db'
           locations: 'filesystem:flyway/sql'
