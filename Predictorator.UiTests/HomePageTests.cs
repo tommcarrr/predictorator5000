@@ -12,7 +12,9 @@ public class HomePageTests
     private IBrowser? _browser;
     private IPage? _page;
 
-    private string BaseUrl => TestContext.Parameters.Get("BaseUrl", "http://localhost:5000");
+    private string BaseUrl =>
+        Environment.GetEnvironmentVariable("BASE_URL") ??
+        TestContext.Parameters.Get("BaseUrl", "http://localhost:5000");
 
     [OneTimeSetUp]
     public async Task SetupAsync()

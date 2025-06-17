@@ -51,6 +51,7 @@ jobs:
     needs: deploy_staging
     env:
       RUN_UI_TESTS: 'true'
+      BASE_URL: ${{ needs.deploy_staging.outputs.url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -62,7 +63,7 @@ jobs:
           export PATH="$PATH:/root/.dotnet/tools"
           playwright install --with-deps
       - name: Run all tests
-        run: dotnet test Predictorator.sln --logger trx -- RunConfiguration.TestRunParameters.Parameter(name=BaseUrl,value=${{ needs.deploy_staging.outputs.url }})
+        run: dotnet test Predictorator.sln --logger trx
 
   deploy_prod:
     runs-on: ubuntu-latest
