@@ -23,9 +23,7 @@ public class RateLimitingMiddleware
             return;
         }
 
-        var now = DateTime.UtcNow;
-
-        if (_rateLimitService.ShouldLimit(ipAddress, now))
+        if (_rateLimitService.ShouldLimit(ipAddress))
         {
             context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
             return;

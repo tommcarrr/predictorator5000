@@ -15,7 +15,8 @@ builder.Services.AddHttpClient("fixtures", client =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<IFixtureService, FixtureService>();
 builder.Services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
-builder.Services.AddSingleton<IRateLimitService>(new InMemoryRateLimitService(100, TimeSpan.FromDays(1)));
+builder.Services.AddSingleton<IRateLimitService>(sp =>
+    new InMemoryRateLimitService(100, TimeSpan.FromDays(1), sp.GetRequiredService<IDateTimeProvider>()));
 builder.Services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
 // Add services to the container.

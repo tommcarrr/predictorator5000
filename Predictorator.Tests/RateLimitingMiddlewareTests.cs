@@ -11,7 +11,7 @@ public class RateLimitingMiddlewareTests
     public async Task Returns_429_when_limit_exceeded()
     {
         var service = Substitute.For<IRateLimitService>();
-        service.ShouldLimit(Arg.Any<string>(), Arg.Any<DateTime>()).Returns(true);
+        service.ShouldLimit(Arg.Any<string>()).Returns(true);
         var middleware = new RateLimitingMiddleware(_ => Task.CompletedTask, service);
         var context = new DefaultHttpContext();
         context.Connection.RemoteIpAddress = System.Net.IPAddress.Loopback;
@@ -25,7 +25,7 @@ public class RateLimitingMiddlewareTests
     public async Task Invokes_next_when_not_limited()
     {
         var service = Substitute.For<IRateLimitService>();
-        service.ShouldLimit(Arg.Any<string>(), Arg.Any<DateTime>()).Returns(false);
+        service.ShouldLimit(Arg.Any<string>()).Returns(false);
         var called = false;
         var middleware = new RateLimitingMiddleware(ctx => { called = true; return Task.CompletedTask; }, service);
         var context = new DefaultHttpContext();
