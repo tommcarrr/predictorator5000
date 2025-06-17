@@ -16,4 +16,4 @@ jobs:
       - name: Restore
         run: dotnet restore Predictorator.sln
       - name: Run unit tests
-        run: dotnet test Predictorator.sln --no-build
+        run: dotnet test Predictorator.sln
