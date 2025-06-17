@@ -64,14 +64,14 @@ jobs:
         with:
           dotnet-version: '8.0'
       - name: Build tests
-        run: dotnet build Predictorator.UiTests/Predictorator.UiTests.csproj --configuration Release
+        run: dotnet build Predictorator.sln --configuration Release
       - name: Install Playwright browsers
         run: |
           dotnet tool install --global Microsoft.Playwright.CLI
           export PATH="$PATH:/root/.dotnet/tools"
           playwright install
       - name: Run all tests
-        run: dotnet test Predictorator.sln --logger trx --no-build
+        run: dotnet test Predictorator.sln --logger trx --no-build --configuration Release
 
 
   rollback:
