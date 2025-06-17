@@ -22,11 +22,6 @@ jobs:
         run: dotnet build Predictorator.sln --configuration Release
       - name: Publish
         run: dotnet publish Predictorator.sln -c Release -o publish
-      - name: Run Flyway migrations
-        uses: joshuaavalon/flyway-action@v3
-        with:
-          url: 'jdbc:sqlite:${{ env.HOME }}/predictorator.db'
-          locations: 'filesystem:flyway/sql'
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -55,6 +50,34 @@ jobs:
           app-name: 'predictorator5000'
           slot-name: 'Production'
           package: ./
+      - name: Get publish profile
+        id: get_profile
+        run: |
+          RG=$(az webapp show --name predictorator5000 --query resourceGroup -o tsv)
+          az webapp deployment list-publishing-profiles \
+            --name predictorator5000 --resource-group "$RG" \
+            --output json > profile.json
+          echo "scm_url=$(jq -r '.[0].scmUri' profile.json)" >> "$GITHUB_OUTPUT"
+          auth=$(jq -r '.[0].userName + ":" + .[0].userPWD' profile.json | base64)
+          echo "auth=$auth" >> "$GITHUB_OUTPUT"
+
+      - name: Download database
+        run: |
+          curl -L -o predictorator.db \
+            -H "Authorization: Basic ${{ steps.get_profile.outputs.auth }}" \
+            "${{ steps.get_profile.outputs.scm_url }}/api/vfs/home/.local/share/predictorator.db"
+
+      - name: Run Flyway migrations
+        uses: joshuaavalon/flyway-action@v3.0.0
+        with:
+          url: 'jdbc:sqlite:predictorator.db'
+          locations: 'filesystem:flyway/sql'
+
+      - name: Upload database
+        run: |
+          curl -T predictorator.db \
+            -H "Authorization: Basic ${{ steps.get_profile.outputs.auth }}" \
+            "${{ steps.get_profile.outputs.scm_url }}/api/vfs/home/.local/share/predictorator.db"
 
   tests:
     runs-on: ubuntu-latest
