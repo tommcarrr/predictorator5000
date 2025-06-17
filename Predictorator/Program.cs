@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Predictorator.Data;
 using Predictorator.Middleware;
 using Predictorator.Services;
+using Microsoft.Extensions.Caching.Hybrid;
 using Resend;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,6 +23,7 @@ builder.Services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
 builder.Services.AddSingleton<IRateLimitService>(sp =>
     new InMemoryRateLimitService(100, TimeSpan.FromDays(1), sp.GetRequiredService<IDateTimeProvider>()));
 builder.Services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
+builder.Services.AddHybridCache();
 builder.Services.AddHttpClient<Resend.ResendClient>();
 builder.Services.Configure<Resend.ResendClientOptions>(o =>
 {
@@ -68,7 +70,8 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
 
-await ApplicationDbInitializer.SeedAdminUserAsync(app.Services);
+if (!app.Environment.IsEnvironment("Testing"))
+    await ApplicationDbInitializer.SeedAdminUserAsync(app.Services);
 
 app.Run();
 

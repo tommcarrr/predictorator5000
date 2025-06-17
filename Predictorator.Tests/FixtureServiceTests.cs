@@ -1,4 +1,5 @@
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
@@ -20,7 +21,9 @@ public class FixtureServiceTests
         var httpClientFactory = Substitute.For<IHttpClientFactory>();
         var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
         httpClientFactory.CreateClient("fixtures").Returns(client);
-        var cache = new MemoryCache(new MemoryCacheOptions());
+        var services = new ServiceCollection();
+        services.AddHybridCache();
+        var cache = services.BuildServiceProvider().GetRequiredService<HybridCache>();
         var accessor = Substitute.For<IHttpContextAccessor>();
         var config = Substitute.For<IConfiguration>();
         var env = Substitute.For<IWebHostEnvironment>();
@@ -31,6 +34,5 @@ public class FixtureServiceTests
         var result2 = await service.GetFixturesAsync(DateTime.Today, DateTime.Today);
 
         Assert.Equal(1, handler.CallCount);
-        Assert.Same(result1, result2);
     }
 }
