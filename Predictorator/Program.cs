@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Predictorator.Data;
 using Predictorator.Middleware;
 using Predictorator.Services;
+using Predictorator.Components;
+using MudBlazor.Services;
 using Microsoft.Extensions.Caching.Hybrid;
 using Resend;
 
@@ -42,6 +44,9 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddDefaultTokenProviders();
 
 // Add services to the container.
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+builder.Services.AddMudServices();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
@@ -64,10 +69,14 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
+
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "mvc/{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
 
 if (!app.Environment.IsEnvironment("Testing"))

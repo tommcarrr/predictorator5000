@@ -12,11 +12,11 @@ using Predictorator.Tests.Helpers;
 
 namespace Predictorator.Tests;
 
-public class HomeControllerTests : IClassFixture<WebApplicationFactory<Program>>
+public class HomePageTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;
 
-    public HomeControllerTests(WebApplicationFactory<Program> factory)
+    public HomePageTests(WebApplicationFactory<Program> factory)
     {
         _factory = factory.WithWebHostBuilder(builder =>
         {
