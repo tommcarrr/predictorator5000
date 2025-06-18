@@ -9,6 +9,7 @@ using MudBlazor.Services;
 using Microsoft.Extensions.Caching.Hybrid;
 using Resend;
 using Predictorator.Startup;
+using Predictorator.Options;
 using Serilog;
 using Serilog.Events;
 
@@ -69,6 +70,12 @@ builder.Services.Configure<Resend.ResendClientOptions>(o =>
 });
 builder.Services.AddTransient<Resend.IResend, Resend.ResendClient>();
 builder.Services.AddTransient<SubscriptionService>();
+builder.Services.Configure<AdminUserOptions>(options =>
+{
+    builder.Configuration.GetSection(AdminUserOptions.SectionName).Bind(options);
+    options.Email = builder.Configuration["ADMIN_EMAIL"] ?? options.Email;
+    options.Password = builder.Configuration["ADMIN_PASSWORD"] ?? options.Password;
+});
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
