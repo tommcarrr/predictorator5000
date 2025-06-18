@@ -66,6 +66,7 @@ builder.Services.AddRazorPages();
 var app = builder.Build();
 
 app.UseRateLimiter();
+app.UseMiddleware<MaintenanceMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
