@@ -72,25 +72,6 @@ jobs:
           auth=$(jq -r '.[0].userName + ":" + .[0].userPWD' profile.json | base64)
           echo "auth=$auth" >> "$GITHUB_OUTPUT"
 
-      - name: Download database
-        run: |
-          curl -f -L -o predictorator.db \
-            -H "Authorization: Basic ${{ steps.get_profile.outputs.auth }}" \
-            "${{ steps.get_profile.outputs.scm_url }}/api/vfs/home/.local/share/predictorator.db" \
-            || touch predictorator.db
-
-      - name: Run Flyway migrations
-        uses: joshuaavalon/flyway-action@v3.0.0
-        with:
-          url: 'jdbc:sqlite:predictorator.db'
-          locations: 'filesystem:./flyway/sql'
-          flyway-version: '11.9.1'
-
-      - name: Upload database
-        run: |
-          curl -T predictorator.db \
-            -H "Authorization: Basic ${{ steps.get_profile.outputs.auth }}" \
-            "${{ steps.get_profile.outputs.scm_url }}/api/vfs/home/.local/share/predictorator.db"
       - name: Disable maintenance mode
         run: |
           RG=$(az webapp list --query "[?name=='predictorator5000'].resourceGroup" -o tsv)
