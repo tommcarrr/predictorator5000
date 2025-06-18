@@ -35,4 +35,25 @@ public class AdminUserSeedingTests
         await Assert.ThrowsAsync<InvalidOperationException>(
             () => ApplicationDbInitializer.SeedAdminUserAsync(provider));
     }
+
+    [Fact]
+    public async Task Does_not_throw_when_database_unavailable()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseSqlServer("Server=localhost;Database=invalid;" +
+                                  "User Id=sa;Password=bad;Connect Timeout=1"));
+        services.AddIdentity<IdentityUser, IdentityRole>()
+            .AddEntityFrameworkStores<ApplicationDbContext>();
+        services.Configure<AdminUserOptions>(o =>
+        {
+            o.Email = "admin@example.com";
+            o.Password = "Admin123!";
+        });
+        await using var provider = services.BuildServiceProvider();
+
+        await ApplicationDbInitializer.SeedAdminUserAsync(provider);
+    }
 }
+
