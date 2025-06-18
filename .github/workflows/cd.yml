@@ -21,7 +21,7 @@ jobs:
       - name: Build
         run: dotnet build Predictorator.sln --configuration Release
       - name: Publish
-        run: dotnet publish Predictorator.sln -c Release -o publish
+        run: dotnet publish Predictorator/Predictorator.csproj -c Release -o publish
 
   deploy_prod:
     runs-on: ubuntu-latest
@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Publish
-        run: dotnet publish Predictorator.sln -c Release -o publish
+        run: dotnet publish Predictorator/Predictorator.csproj -c Release -o publish
       - uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2687F5A3498747E1A95ADE36D92A159E }}
