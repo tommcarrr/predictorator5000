@@ -11,3 +11,6 @@ Tests can be executed with:
 ```bash
 dotnet test Predictorator.sln
 ```
+
+Admin user credentials can be customized by setting `ADMIN_EMAIL` and
+`ADMIN_PASSWORD` environment variables before running the application.

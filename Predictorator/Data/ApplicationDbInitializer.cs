@@ -14,8 +14,12 @@ public static class ApplicationDbInitializer
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
         const string adminRole = "Admin";
-        const string adminEmail = "admin@example.com";
-        const string adminPassword = "Admin123!";
+        var adminEmail =
+            Environment.GetEnvironmentVariable("ADMIN_EMAIL") ??
+            "admin@example.com";
+        var adminPassword =
+            Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ??
+            "Admin123!";
 
         if (!await roleManager.RoleExistsAsync(adminRole))
         {
