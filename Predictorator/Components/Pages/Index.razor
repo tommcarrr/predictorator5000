@@ -1,0 +1,70 @@
+@page "/"
+@inject IFixtureService FixtureService
+@inject IDateRangeCalculator DateRangeCalculator
+
+<h1>Premier League Fixtures</h1>
+
+@if (_fixtures == null)
+{
+    <p>Loading...</p>
+}
+else if (_fixtures.Response.Any())
+{
+    var groups = _fixtures.Response.GroupBy(f => f.Fixture.Date.Date).OrderBy(g => g.Key);
+    foreach (var group in groups)
+    {
+        <MudCard Class="mb-4">
+            <MudCardHeader>
+                <MudText Typo="Typo.h6">@group.Key.ToString("dddd, MMMM d, yyyy")</MudText>
+            </MudCardHeader>
+            <MudCardContent>
+                <div class="row fixture-header">
+                    <div class="col-4">Home Team</div>
+                    <div class="col-4 text-center">Prediction</div>
+                    <div class="col-4 text-end">Away Team</div>
+                </div>
+                @foreach (var fixture in group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name))
+                {
+                    <div class="row align-items-center fixture-row mb-3">
+                        <div class="col-4 d-flex align-items-center">
+                            <img src="@fixture.Teams.Home.Logo" alt="@fixture.Teams.Home.Name" class="team-logo img-fluid me-2" />
+                            <span>@fixture.Teams.Home.Name</span>
+                        </div>
+                        <div class="col-4 text-center">
+                            <input type="number" class="form-control score-input d-inline-block text-center" maxlength="2" @(fixture.Score?.Fulltime.Home != null ? $"readonly value={fixture.Score.Fulltime.Home}" : "") />
+                            <span class="mx-2">-</span>
+                            <input type="number" class="form-control score-input d-inline-block text-center" maxlength="2" @(fixture.Score?.Fulltime.Away != null ? $"readonly value={fixture.Score.Fulltime.Away}" : "") />
+                        </div>
+                        <div class="col-4 d-flex align-items-center justify-content-end">
+                            <span>@fixture.Teams.Away.Name</span>
+                            <img src="@fixture.Teams.Away.Logo" alt="@fixture.Teams.Away.Name" class="team-logo img-fluid ms-2" />
+                        </div>
+                    </div>
+                    <div class="row align-items-center details-row mb-2">
+                        <div class="col-12 text-center">
+                            @{ var ukTz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+                               var uk = TimeZoneInfo.ConvertTime(fixture.Fixture.Date, ukTz); }
+                            @uk.ToString("h:mm tt") - @fixture.Fixture.Venue.Name, @fixture.Fixture.Venue.City
+                        </div>
+                    </div>
+                }
+            </MudCardContent>
+        </MudCard>
+    }
+}
+
+<div class="buttons mt-4">
+    <button class="mud-button mud-button-filled mud-theme-secondary" id="fillRandomBtn">Complete with Random Scores</button>
+    <button class="mud-button mud-button-filled mud-theme-warning" id="clearBtn">Clear Predictions</button>
+    <button class="mud-button mud-button-filled mud-theme-success" id="copyBtn">Copy Predictions to Clipboard</button>
+</div>
+
+@code {
+    private FixturesResponse? _fixtures;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var (from, to) = DateRangeCalculator.GetDates(null, null, null);
+        _fixtures = await FixtureService.GetFixturesAsync(from, to);
+    }
+}

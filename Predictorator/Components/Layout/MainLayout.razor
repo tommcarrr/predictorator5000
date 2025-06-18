@@ -1,0 +1,13 @@
+@inherits LayoutComponentBase
+<MudLayout>
+    <MudAppBar Elevation="0" Color="Color.Primary">
+        <MudText Typo="Typo.h5" Class="ml-2">Predictotronix</MudText>
+        <MudSpacer />
+        <MudLink Href="/Subscription/Subscribe">Subscribe</MudLink>
+    </MudAppBar>
+    <MudMainContent>
+        <div class="container mt-4">
+            @Body
+        </div>
+    </MudMainContent>
+</MudLayout>

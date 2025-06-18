@@ -60,7 +60,7 @@ public class HomePageTests
     public async Task Index_Should_Display_Fixture_Row_When_Using_Mock_Data()
     {
         await _page!.GotoAsync(BaseUrl);
-        var rows = await _page.QuerySelectorAllAsync("table tbody tr");
+        var rows = await _page.QuerySelectorAllAsync(".fixture-row");
         if (Environment.GetEnvironmentVariable("UI_TEST_TOKEN") != null)
         {
             Assert.IsNotEmpty(rows);
@@ -74,7 +74,7 @@ public class HomePageTests
     [Test]
     public async Task SubscribePage_Should_Display_Form()
     {
-        await _page!.GotoAsync($"{BaseUrl}/Subscription/Subscribe");
+        await _page!.GotoAsync($"{BaseUrl}/mvc/Subscription/Subscribe");
         var header = await _page.TextContentAsync("h2");
         Assert.That(header, Is.EqualTo("Subscribe to Notifications"));
     }
