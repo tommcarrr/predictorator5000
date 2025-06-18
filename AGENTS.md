@@ -8,6 +8,7 @@ This repository hosts a Blazor Server-Side Rendering (SSR) application.
 - After modifying files, run `dotnet format --no-restore` to keep style consistent.
 - Run `dotnet restore` and then `dotnet test <solutionPath>` to verify the solution builds and tests succeed.
 - Run `dotnet build <solutionPath> -c Release -warnaserror` to ensure there are no Roslyn warnings.
+- If tests fail, keep working to resolve the issues rather than simply reporting the failure.
 - If these commands fail because the environment lacks `dotnet`, note this in the PR's testing section.
 
 ## Commit guidelines
