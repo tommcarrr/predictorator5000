@@ -25,6 +25,7 @@ builder.Services.AddTransient<IFixtureService, FixtureService>();
 builder.Services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
 builder.Services.AddRateLimiter(options =>
 {
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
     {
         var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";

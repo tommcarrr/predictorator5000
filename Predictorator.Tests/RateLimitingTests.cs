@@ -2,7 +2,15 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Builder;
 using System.Threading.RateLimiting;
+using Predictorator.Services;
+using Predictorator.Models.Fixtures;
+using Predictorator.Tests.Helpers;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Predictorator.Data;
 
 namespace Predictorator.Tests;
 
@@ -17,8 +25,14 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
             builder.UseEnvironment("Testing");
             builder.ConfigureServices(services =>
             {
+                services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
+                services.AddDbContext<ApplicationDbContext>(options =>
+                    options.UseInMemoryDatabase("TestDb"));
+                services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
+                services.AddSingleton<IDateTimeProvider>(new SystemDateTimeProvider());
                 services.AddRateLimiter(options =>
                 {
+                    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
                     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
                     {
                         var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
@@ -31,6 +45,8 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
                         });
                     });
                 });
+                services.AddTransient<IFixtureService>(_ => new FakeFixtureService(
+                    new FixturesResponse { Response = new List<FixtureData>() }));
             });
         });
     }

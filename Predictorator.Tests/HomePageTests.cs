@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Predictorator.Data;
@@ -33,6 +34,7 @@ public class HomePageTests : IClassFixture<WebApplicationFactory<Program>>
                 services.AddSingleton<IDateTimeProvider>(new SystemDateTimeProvider());
                 services.AddRateLimiter(options =>
                 {
+                    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
                     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
                     {
                         var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
