@@ -45,6 +45,12 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2687F5A3498747E1A95ADE36D92A159E }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F68BC6B164FA4A818B4561CE37FB31B5 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_E02E41A1857446D5AE38550D3A7CF31C }}
+      - name: Enable maintenance mode
+        run: |
+          RG=$(az webapp list --query "[?name=='predictorator5000'].resourceGroup" -o tsv)
+          az webapp config appsettings set \
+            --name predictorator5000 --resource-group "$RG" \
+            --settings Maintenance__Enabled=true
       - name: Deploy to production
         id: deploy
         uses: azure/webapps-deploy@v3
@@ -83,6 +89,12 @@ jobs:
           curl -T predictorator.db \
             -H "Authorization: Basic ${{ steps.get_profile.outputs.auth }}" \
             "${{ steps.get_profile.outputs.scm_url }}/api/vfs/home/.local/share/predictorator.db"
+      - name: Disable maintenance mode
+        run: |
+          RG=$(az webapp list --query "[?name=='predictorator5000'].resourceGroup" -o tsv)
+          az webapp config appsettings set \
+            --name predictorator5000 --resource-group "$RG" \
+            --settings Maintenance__Enabled=false
 
   tests:
     runs-on: ubuntu-latest
