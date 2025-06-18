@@ -82,4 +82,13 @@ public class HomePageTests
         var header = await _page.TextContentAsync("h2");
         Assert.That(header, Is.EqualTo("Subscribe to Notifications"));
     }
+
+    [Test]
+    public async Task Admin_Route_Should_Display_Login_Page()
+    {
+        await _page!.GotoAsync($"{BaseUrl}/admin");
+        await _page.Locator("h1").WaitForAsync();
+        var header = await _page.TextContentAsync("h1");
+        Assert.That(header, Does.Contain("Log in"));
+    }
 }
