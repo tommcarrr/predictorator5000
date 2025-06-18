@@ -12,5 +12,6 @@ Tests can be executed with:
 dotnet test Predictorator.sln
 ```
 
-Admin user credentials can be customized by setting `ADMIN_EMAIL` and
+The seeded admin account credentials are configured via `AdminUser` settings.
+You can override these values by setting the `ADMIN_EMAIL` and
 `ADMIN_PASSWORD` environment variables before running the application.

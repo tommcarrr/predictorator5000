@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Predictorator.Options;
 
 namespace Predictorator.Data;
 
@@ -14,12 +16,10 @@ public static class ApplicationDbInitializer
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
         const string adminRole = "Admin";
-        var adminEmail =
-            Environment.GetEnvironmentVariable("ADMIN_EMAIL") ??
-            "admin@example.com";
-        var adminPassword =
-            Environment.GetEnvironmentVariable("ADMIN_PASSWORD") ??
-            "Admin123!";
+        var options = scope.ServiceProvider
+            .GetRequiredService<IOptions<AdminUserOptions>>().Value;
+        var adminEmail = options.Email;
+        var adminPassword = options.Password;
 
         if (!await roleManager.RoleExistsAsync(adminRole))
         {
