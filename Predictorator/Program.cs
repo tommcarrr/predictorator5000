@@ -85,6 +85,11 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddDefaultUI()
     .AddDefaultTokenProviders();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/admin";
+});
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -121,6 +126,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "mvc/{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
+app.MapGet("/admin", () => Results.Redirect("/Identity/Account/Login"));
 
 if (!app.Environment.IsEnvironment("Testing"))
     await ApplicationDbInitializer.SeedAdminUserAsync(app.Services);
