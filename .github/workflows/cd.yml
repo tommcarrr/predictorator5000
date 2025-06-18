@@ -46,12 +46,6 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2687F5A3498747E1A95ADE36D92A159E }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F68BC6B164FA4A818B4561CE37FB31B5 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_E02E41A1857446D5AE38550D3A7CF31C }}
-      - name: Enable maintenance mode
-        run: |
-          RG=$(az webapp list --query "[?name=='predictorator5000'].resourceGroup" -o tsv)
-          az webapp config appsettings set \
-            --name predictorator5000 --resource-group "$RG" \
-            --settings Maintenance__Enabled=true
       - name: Deploy to production
         id: deploy
         uses: azure/webapps-deploy@v3
@@ -60,24 +54,6 @@ jobs:
           slot-name: 'Production'
           package: ./app
           clean: true
-      - name: Get publish profile
-        id: get_profile
-        run: |
-          RG=$(az webapp list --query "[?name=='predictorator5000'].resourceGroup" -o tsv)
-          az webapp deployment list-publishing-profiles \
-            --name predictorator5000 --resource-group "$RG" \
-            --output json > profile.json
-          scm_host=$(jq -r '.[0].publishUrl' profile.json | cut -d: -f1)
-          echo "scm_url=https://$scm_host" >> "$GITHUB_OUTPUT"
-          auth=$(jq -r '.[0].userName + ":" + .[0].userPWD' profile.json | base64)
-          echo "auth=$auth" >> "$GITHUB_OUTPUT"
-
-      - name: Disable maintenance mode
-        run: |
-          RG=$(az webapp list --query "[?name=='predictorator5000'].resourceGroup" -o tsv)
-          az webapp config appsettings set \
-            --name predictorator5000 --resource-group "$RG" \
-            --settings Maintenance__Enabled=false
 
   tests:
     runs-on: ubuntu-latest
