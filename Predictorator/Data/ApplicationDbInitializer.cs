@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using Predictorator.Options;
 using System.Linq;
 
@@ -11,8 +12,19 @@ public static class ApplicationDbInitializer
     public static async Task SeedAdminUserAsync(IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
+        var logger = scope.ServiceProvider
+            .GetService<ILoggerFactory>()?
+            .CreateLogger("ApplicationDbInitializer");
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await context.Database.EnsureCreatedAsync();
+        try
+        {
+            await context.Database.EnsureCreatedAsync();
+        }
+        catch (Exception ex)
+        {
+            logger?.LogError(ex, "Unable to connect to database");
+            return;
+        }
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
