@@ -4,6 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 using Predictorator.Data;
 using System.Collections.Generic;
 using Predictorator.Models.Fixtures;
@@ -28,8 +31,20 @@ public class HomePageTests : IClassFixture<WebApplicationFactory<Program>>
                     options.UseInMemoryDatabase("TestDb"));
                 services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
                 services.AddSingleton<IDateTimeProvider>(new SystemDateTimeProvider());
-                services.AddSingleton<IRateLimitService>(sp =>
-                    new InMemoryRateLimitService(100, TimeSpan.FromMinutes(1), sp.GetRequiredService<IDateTimeProvider>()));
+                services.AddRateLimiter(options =>
+                {
+                    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+                    {
+                        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 100,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        });
+                    });
+                });
 
                 services.AddTransient<IFixtureService>(_ => new FakeFixtureService(
                     new FixturesResponse
