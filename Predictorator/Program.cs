@@ -70,7 +70,7 @@ builder.Services.Configure<Resend.ResendClientOptions>(o =>
 builder.Services.AddTransient<Resend.IResend, Resend.ResendClient>();
 builder.Services.AddTransient<SubscriptionService>();
 
-var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "predictorator.db");
+var dbPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "predictorator.db");
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!.Replace("%DB_PATH%", dbPath);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
