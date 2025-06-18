@@ -50,7 +50,7 @@ jobs:
         with:
           app-name: 'predictorator5000'
           slot-name: 'Production'
-          package: ./
+          package: ./app/publish
       - name: Get publish profile
         id: get_profile
         run: |
