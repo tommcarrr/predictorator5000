@@ -1,6 +1,7 @@
 # AGENTS Instructions
 
 The following guidelines apply to the entire repository and inform how Codex should work.
+This repository hosts a Blazor Server-Side Rendering (SSR) application.
 
 ## Development workflow
 
