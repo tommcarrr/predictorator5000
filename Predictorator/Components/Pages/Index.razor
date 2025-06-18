@@ -1,8 +1,26 @@
 @page "/"
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager NavigationManager
 @inject IFixtureService FixtureService
 @inject IDateRangeCalculator DateRangeCalculator
 
 <h1>Premier League Fixtures</h1>
+
+@if (_autoWeek)
+{
+    <div>
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Class="weekJump" OnClick="@(() => ChangeWeek(-1))" />
+        <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" Class="weekJump" OnClick="@(() => ChangeWeek(1))" />
+    </div>
+}
+
+<MudExpansionPanels Class="mb-4">
+    <MudExpansionPanel Text="@($"{_fromDate:dd/MM/yyyy} - {_toDate:dd/MM/yyyy}")">
+        <MudDatePicker @bind-Date="_fromDate" Label="From" Class="me-2" PickerVariant="PickerVariant.Static" />
+        <MudDatePicker @bind-Date="_toDate" Label="To" Class="me-2" PickerVariant="PickerVariant.Static" />
+        <MudButton OnClick="Reload" Color="Color.Primary" Variant="Variant.Filled" Class="mt-2">Reload</MudButton>
+    </MudExpansionPanel>
+</MudExpansionPanels>
 
 @if (_fixtures == null)
 {
@@ -61,10 +79,42 @@ else if (_fixtures.Response.Any())
 
 @code {
     private FixturesResponse? _fixtures;
+    private DateTime? _fromDate;
+    private DateTime? _toDate;
+    private bool _autoWeek;
+    private int _currentWeekOffset;
 
-    protected override async Task OnInitializedAsync()
+    [Parameter, SupplyParameterFromQuery(Name = "fromDate")] public DateTime? FromDate { get; set; }
+    [Parameter, SupplyParameterFromQuery(Name = "toDate")] public DateTime? ToDate { get; set; }
+    [Parameter, SupplyParameterFromQuery(Name = "weekOffset")] public int? WeekOffset { get; set; }
+
+    protected override async Task OnParametersSetAsync()
     {
-        var (from, to) = DateRangeCalculator.GetDates(null, null, null);
+        var (from, to) = DateRangeCalculator.GetDates(FromDate, ToDate, WeekOffset);
+        _fromDate = from;
+        _toDate = to;
+        _currentWeekOffset = WeekOffset ?? 0;
+        _autoWeek = FromDate == null && ToDate == null;
         _fixtures = await FixtureService.GetFixturesAsync(from, to);
+    }
+
+    private void Reload()
+    {
+        var uri = QueryHelpers.AddQueryString("/", new Dictionary<string, string?>
+        {
+            ["fromDate"] = _fromDate?.ToString("yyyy-MM-dd"),
+            ["toDate"] = _toDate?.ToString("yyyy-MM-dd")
+        });
+        NavigationManager.NavigateTo(uri);
+    }
+
+    private void ChangeWeek(int delta)
+    {
+        var offset = _currentWeekOffset + delta;
+        var uri = QueryHelpers.AddQueryString("/", new Dictionary<string, string?>
+        {
+            ["weekOffset"] = offset.ToString()
+        });
+        NavigationManager.NavigateTo(uri);
     }
 }
