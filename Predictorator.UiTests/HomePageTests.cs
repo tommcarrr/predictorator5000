@@ -36,6 +36,7 @@ public class HomePageTests
 
         var context = await _browser.NewContextAsync(new() { ExtraHTTPHeaders = headers });
         _page = await context.NewPageAsync();
+        _page.SetDefaultTimeout(60000);
     }
 
     [OneTimeTearDown]
@@ -52,6 +53,7 @@ public class HomePageTests
     public async Task Index_Should_Display_Title()
     {
         await _page!.GotoAsync(BaseUrl);
+        await _page.Locator("h1").WaitForAsync();
         var header = await _page.TextContentAsync("h1");
         Assert.That(header, Is.EqualTo("Premier League Fixtures"));
     }
@@ -60,6 +62,7 @@ public class HomePageTests
     public async Task Index_Should_Display_Fixture_Row_When_Using_Mock_Data()
     {
         await _page!.GotoAsync(BaseUrl);
+        await _page.Locator(".fixture-row").First.WaitForAsync(new() { State = WaitForSelectorState.Visible });
         var rows = await _page.QuerySelectorAllAsync(".fixture-row");
         if (Environment.GetEnvironmentVariable("UI_TEST_TOKEN") != null)
         {
@@ -75,6 +78,7 @@ public class HomePageTests
     public async Task SubscribePage_Should_Display_Form()
     {
         await _page!.GotoAsync($"{BaseUrl}/mvc/Subscription/Subscribe");
+        await _page.Locator("h2").WaitForAsync();
         var header = await _page.TextContentAsync("h2");
         Assert.That(header, Is.EqualTo("Subscribe to Notifications"));
     }
