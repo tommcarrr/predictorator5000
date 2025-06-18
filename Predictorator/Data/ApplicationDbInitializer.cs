@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Predictorator.Options;
+using System.Linq;
 
 namespace Predictorator.Data;
 
@@ -30,7 +31,16 @@ public static class ApplicationDbInitializer
         if (user == null)
         {
             user = new IdentityUser { UserName = adminEmail, Email = adminEmail, EmailConfirmed = true };
-            await userManager.CreateAsync(user, adminPassword);
+            var result = await userManager.CreateAsync(user, adminPassword);
+            if (!result.Succeeded)
+            {
+                user = await userManager.FindByEmailAsync(adminEmail);
+                if (user == null)
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    throw new InvalidOperationException($"Failed to create admin user: {errors}");
+                }
+            }
         }
 
         if (!await userManager.IsInRoleAsync(user, adminRole))
