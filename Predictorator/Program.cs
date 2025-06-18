@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Predictorator.Data;
-using Predictorator.Middleware;
 using Predictorator.Services;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Predictorator.Components;
 using MudBlazor.Services;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -22,8 +23,21 @@ builder.Services.AddHttpClient("fixtures", client =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<IFixtureService, FixtureService>();
 builder.Services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
-builder.Services.AddSingleton<IRateLimitService>(sp =>
-    new InMemoryRateLimitService(100, TimeSpan.FromDays(1), sp.GetRequiredService<IDateTimeProvider>()));
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 100,
+            Window = TimeSpan.FromDays(1),
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit = 0
+        });
+    });
+});
 builder.Services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 builder.Services.AddHybridCache();
 builder.Services.AddHttpClient<Resend.ResendClient>();
@@ -52,8 +66,8 @@ builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
-app.UseMiddleware<RateLimitingMiddleware>();
-app.UseMiddleware<MaintenanceMiddleware>();
+
+app.UseRateLimiter();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

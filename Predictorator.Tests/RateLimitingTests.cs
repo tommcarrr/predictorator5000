@@ -1,26 +1,24 @@
-using AngleSharp.Html.Parser;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Builder;
 using System.Threading.RateLimiting;
-using Predictorator.Data;
-using System.Collections.Generic;
-using Predictorator.Models.Fixtures;
 using Predictorator.Services;
+using Predictorator.Models.Fixtures;
 using Predictorator.Tests.Helpers;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Predictorator.Data;
 
 namespace Predictorator.Tests;
 
-public class HomePageTests : IClassFixture<WebApplicationFactory<Program>>
+public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;
 
-    public HomePageTests(WebApplicationFactory<Program> factory)
+    public RateLimitingTests(WebApplicationFactory<Program> factory)
     {
         _factory = factory.WithWebHostBuilder(builder =>
         {
@@ -40,43 +38,26 @@ public class HomePageTests : IClassFixture<WebApplicationFactory<Program>>
                         var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
                         return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
                         {
-                            PermitLimit = 100,
+                            PermitLimit = 1,
                             Window = TimeSpan.FromMinutes(1),
                             QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                             QueueLimit = 0
                         });
                     });
                 });
-
                 services.AddTransient<IFixtureService>(_ => new FakeFixtureService(
-                    new FixturesResponse
-                    {
-                        Response = new List<FixtureData>
-                        {
-                            new()
-                            {
-                                Fixture = new Fixture { Date = DateTime.UtcNow, Venue = new Venue { Name="A", City="B" } },
-                                Teams = new Teams { Home = new Team { Name="Home", Logo="" }, Away = new Team { Name="Away", Logo="" } },
-                                Score = new Score { Fulltime = new ScoreHomeAway { Home = null, Away = null } }
-                            }
-                        }
-                    }));
+                    new FixturesResponse { Response = new List<FixtureData>() }));
             });
         });
     }
 
     [Fact]
-    public async Task Index_returns_view_with_buttons()
+    public async Task Returns_429_after_limit_exceeded()
     {
         var client = _factory.CreateClient();
-        var response = await client.GetAsync("/");
-        response.EnsureSuccessStatusCode();
-        var html = await response.Content.ReadAsStringAsync();
+        var first = await client.GetAsync("/");
+        var second = await client.GetAsync("/");
 
-        var parser = new HtmlParser();
-        var doc = parser.ParseDocument(html);
-        Assert.NotNull(doc.QuerySelector("#copyBtn"));
-        Assert.NotNull(doc.QuerySelector("#fillRandomBtn"));
-        Assert.NotNull(doc.QuerySelector("#clearBtn"));
+        Assert.Equal(System.Net.HttpStatusCode.TooManyRequests, second.StatusCode);
     }
 }
