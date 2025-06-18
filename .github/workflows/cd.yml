@@ -23,6 +23,11 @@ jobs:
         run: dotnet build Predictorator.sln --configuration Release
       - name: Publish
         run: dotnet publish Predictorator/Predictorator.csproj -c Release -o publish
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: publish
 
   deploy_prod:
     runs-on: ubuntu-latest
@@ -32,8 +37,9 @@ jobs:
       url: ${{ steps.deploy.outputs.webapp-url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Publish
-        run: dotnet publish Predictorator/Predictorator.csproj -c Release -o publish
+      - uses: actions/download-artifact@v4
+        with:
+          name: app
       - uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2687F5A3498747E1A95ADE36D92A159E }}
@@ -45,7 +51,7 @@ jobs:
         with:
           app-name: 'predictorator5000'
           slot-name: 'Production'
-          package: ./publish
+          package: ./app
       - name: Get publish profile
         id: get_profile
         run: |
