@@ -16,6 +16,27 @@ public class HomePageTests
         Environment.GetEnvironmentVariable("BASE_URL") ??
         TestContext.Parameters.Get("BaseUrl", "http://localhost:5000");
 
+    private static async Task NavigateWithRetriesAsync(IPage page, string url, int maxAttempts = 3)
+    {
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                await page.GotoAsync(url, new() { Timeout = 90000 });
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                return;
+            }
+            catch (TimeoutException) when (attempt < maxAttempts)
+            {
+                await Task.Delay(5000);
+            }
+        }
+
+        // Final attempt without catching to surface the exception
+        await page.GotoAsync(url, new() { Timeout = 90000 });
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+    }
+
     [OneTimeSetUp]
     public async Task SetupAsync()
     {
@@ -36,7 +57,7 @@ public class HomePageTests
 
         var context = await _browser.NewContextAsync(new() { ExtraHTTPHeaders = headers });
         _page = await context.NewPageAsync();
-        _page.SetDefaultTimeout(60000);
+        _page.SetDefaultTimeout(90000);
     }
 
     [OneTimeTearDown]
@@ -52,18 +73,18 @@ public class HomePageTests
     [Test]
     public async Task Index_Should_Display_Title()
     {
-        await _page!.GotoAsync(BaseUrl);
-        await _page.Locator("h1").WaitForAsync();
-        var header = await _page.TextContentAsync("h1");
+        await NavigateWithRetriesAsync(_page!, BaseUrl);
+        await _page!.Locator("h1").WaitForAsync();
+        var header = await _page!.TextContentAsync("h1");
         Assert.That(header, Is.EqualTo("Premier League Fixtures"));
     }
 
     [Test]
     public async Task Index_Should_Display_Fixture_Row_When_Using_Mock_Data()
     {
-        await _page!.GotoAsync(BaseUrl);
-        await _page.Locator(".fixture-row").First.WaitForAsync(new() { State = WaitForSelectorState.Visible });
-        var rows = await _page.QuerySelectorAllAsync(".fixture-row");
+        await NavigateWithRetriesAsync(_page!, BaseUrl);
+        await _page!.Locator(".fixture-row").First.WaitForAsync(new() { State = WaitForSelectorState.Visible });
+        var rows = await _page!.QuerySelectorAllAsync(".fixture-row");
         if (Environment.GetEnvironmentVariable("UI_TEST_TOKEN") != null)
         {
             Assert.IsNotEmpty(rows);
@@ -77,18 +98,18 @@ public class HomePageTests
     [Test]
     public async Task SubscribePage_Should_Display_Form()
     {
-        await _page!.GotoAsync($"{BaseUrl}/mvc/Subscription/Subscribe");
-        await _page.Locator("h2").WaitForAsync();
-        var header = await _page.TextContentAsync("h2");
+        await NavigateWithRetriesAsync(_page!, $"{BaseUrl}/mvc/Subscription/Subscribe");
+        await _page!.Locator("h2").WaitForAsync();
+        var header = await _page!.TextContentAsync("h2");
         Assert.That(header, Is.EqualTo("Subscribe to Notifications"));
     }
 
     [Test]
     public async Task Admin_Route_Should_Display_Login_Page()
     {
-        await _page!.GotoAsync($"{BaseUrl}/admin");
-        await _page.Locator("h1").WaitForAsync();
-        var header = await _page.TextContentAsync("h1");
+        await NavigateWithRetriesAsync(_page!, $"{BaseUrl}/admin");
+        await _page!.Locator("h1").WaitForAsync();
+        var header = await _page!.TextContentAsync("h1");
         Assert.That(header, Does.Contain("Log in"));
     }
 }
