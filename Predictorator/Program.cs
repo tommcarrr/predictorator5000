@@ -8,8 +8,30 @@ using Predictorator.Components;
 using MudBlazor.Services;
 using Microsoft.Extensions.Caching.Hybrid;
 using Resend;
+using Predictorator.Startup;
+using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    var logDir = Path.Combine(context.HostingEnvironment.ContentRootPath, "logs");
+    Directory.CreateDirectory(logDir);
+    configuration
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+        .Enrich.FromLogContext()
+        .ReadFrom.Configuration(context.Configuration)
+        .WriteTo.File(Path.Combine(logDir, "app.log"), rollingInterval: RollingInterval.Day);
+});
+
+var error = StartupValidator.Validate(builder);
+if (error.HasValue)
+{
+    Console.Error.WriteLine($"Error {(int)error.Value}: {error.Value}");
+    Environment.Exit((int)error.Value);
+}
 
 var rapidApiKey = builder.Configuration["ApiSettings:RapidApiKey"];
 
