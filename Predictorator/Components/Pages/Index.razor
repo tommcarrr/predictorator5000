@@ -31,11 +31,12 @@ else if (_fixtures.Response.Any())
     var groups = _fixtures.Response.GroupBy(f => f.Fixture.Date.Date).OrderBy(g => g.Key);
     foreach (var group in groups)
     {
-        <MudCard Class="mb-4">
-            <MudCardHeader>
-                <MudText Typo="Typo.h6">@group.Key.ToString("dddd, MMMM d, yyyy")</MudText>
-            </MudCardHeader>
-            <MudCardContent>
+        <div class="date-block">
+            <MudCard Class="mb-4">
+                <MudCardHeader>
+                    <MudText Typo="Typo.h6" Class="date-header">@group.Key.ToString("dddd, MMMM d, yyyy")</MudText>
+                </MudCardHeader>
+                <MudCardContent>
                 <div class="row fixture-header">
                     <div class="col-4">Home Team</div>
                     <div class="col-4 text-center">Prediction</div>
@@ -66,8 +67,9 @@ else if (_fixtures.Response.Any())
                         </div>
                     </div>
                 }
-            </MudCardContent>
-        </MudCard>
+                </MudCardContent>
+            </MudCard>
+        </div>
     }
 }
 
