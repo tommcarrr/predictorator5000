@@ -112,4 +112,18 @@ public class HomePageTests
         var header = await _page!.TextContentAsync("h1");
         Assert.That(header, Does.Contain("Log in"));
     }
+
+    [Test]
+    public async Task FillRandomButton_Should_Populate_Scores_When_Using_Mock_Data()
+    {
+        await NavigateWithRetriesAsync(_page!, BaseUrl);
+        if (Environment.GetEnvironmentVariable("UI_TEST_TOKEN") == null)
+        {
+            Assert.Pass("No test token provided; skipping random score test.");
+        }
+
+        await _page!.Locator("#fillRandomBtn").ClickAsync();
+        var value = await _page!.Locator(".score-input").First.InputValueAsync();
+        Assert.IsNotEmpty(value);
+    }
 }

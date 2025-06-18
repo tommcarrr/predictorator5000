@@ -21,20 +21,29 @@ function initializeDarkMode() {
 
 function toggleDarkMode(enable) {
     body.classList.toggle('dark-mode', enable);
-    navbar.classList.toggle('bg-dark', enable);
-    navbar.classList.toggle('navbar-dark', enable);
-    navbar.classList.toggle('bg-white', !enable);
-    navbar.classList.toggle('navbar-light', !enable);
-    accordion.classList.toggle('accordion-dark', enable);
-    toggleButton.textContent = enable ? 'Light Mode' : 'Dark Mode';
+    if (navbar) {
+        navbar.classList.toggle('bg-dark', enable);
+        navbar.classList.toggle('navbar-dark', enable);
+        navbar.classList.toggle('bg-white', !enable);
+        navbar.classList.toggle('navbar-light', !enable);
+    }
+    if (accordion) {
+        accordion.classList.toggle('accordion-dark', enable);
+    }
+    if (toggleButton) {
+        toggleButton.textContent = enable ? 'Light Mode' : 'Dark Mode';
+    }
     localStorage.setItem('dark-mode', enable ? 'enabled' : 'disabled');
 }
 
 // Event Listeners Initialization
 function initializeEventListeners() {
-    document.getElementById('copyBtn').addEventListener('click', handleCopyButtonClick);
-    document.getElementById('fillRandomBtn').addEventListener('click', fillRandomScores);
-    document.getElementById('clearBtn').addEventListener('click', clearScores);
+    const copyBtn = document.getElementById('copyBtn');
+    if (copyBtn) copyBtn.addEventListener('click', handleCopyButtonClick);
+    const fillRandomBtn = document.getElementById('fillRandomBtn');
+    if (fillRandomBtn) fillRandomBtn.addEventListener('click', fillRandomScores);
+    const clearBtn = document.getElementById('clearBtn');
+    if (clearBtn) clearBtn.addEventListener('click', clearScores);
 }
 
 // Copy Data Functions
