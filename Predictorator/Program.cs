@@ -92,7 +92,11 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents(options =>
+    {
+        // Enable detailed circuit errors so they surface in the browser.
+        options.DetailedErrors = true;
+    });
 builder.Services.AddMudServices();
 builder.Services.AddScoped<BrowserInteropService>();
 builder.Services.AddRazorPages();
