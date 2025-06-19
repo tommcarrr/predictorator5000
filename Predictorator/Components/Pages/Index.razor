@@ -10,12 +10,17 @@
 <MudPaper Class="d-flex align-center justify-center gap-2 my-4" Elevation="1">
     <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(-1))"
                    UserAttributes="@(new Dictionary<string, object>{{"id","prevWeekBtn"}})" />
-    <MudText Typo="Typo.h6">@($"{_fromDate:dd/MM/yyyy} - {_toDate:dd/MM/yyyy}")</MudText>
+    <MudText Typo="Typo.h6" Class="d-flex align-center cursor-pointer" OnClick="TogglePicker">
+        @($"{_fromDate:dd/MM/yyyy} - {_toDate:dd/MM/yyyy}")
+        <MudIcon Icon="@(_showPicker ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Class="ml-1" />
+    </MudText>
     <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(1))"
                    UserAttributes="@(new Dictionary<string, object>{{"id","nextWeekBtn"}})" />
 </MudPaper>
-<MudDateRangePicker DateRange="_selectedRange" DateRangeChanged="RangeChanged" Class="my-2"
-                   UserAttributes="@(new Dictionary<string, object>{{"id","dateRangePicker"}})" />
+<MudCollapse Expanded="_showPicker">
+    <MudDateRangePicker DateRange="_selectedRange" DateRangeChanged="RangeChanged" Class="my-2"
+                       UserAttributes="@(new Dictionary<string, object>{{"id","dateRangePicker"}})" />
+</MudCollapse>
 
 @if (_fixtures == null)
 {
@@ -44,11 +49,11 @@ else if (_fixtures.Response.Any())
                                 </MudItem>
                             </MudTd>
                             <MudTd align="center">
-                                <MudNumericField T="int?" Class="score-input" Immediate="true"
+                                <MudNumericField T="int?" Class="score-input" Immediate="true" Style="width:2.5rem"
                                                  @bind-Value="_predictions[fixture.Fixture.Id].Home"
                                                  Disabled="@(fixture.Score?.Fulltime.Home != null)" Max="20" Min="0" />
                                 <span class="mx-1">-</span>
-                                <MudNumericField T="int?" Class="score-input" Immediate="true"
+                                <MudNumericField T="int?" Class="score-input" Immediate="true" Style="width:2.5rem"
                                                  @bind-Value="_predictions[fixture.Fixture.Id].Away"
                                                  Disabled="@(fixture.Score?.Fulltime.Away != null)" Max="20" Min="0" />
                             </MudTd>
@@ -87,6 +92,7 @@ else if (_fixtures.Response.Any())
     private DateTime? _fromDate;
     private DateTime? _toDate;
     private bool _autoWeek;
+    private bool _showPicker;
     private int _currentWeekOffset;
     private readonly Dictionary<int, PredictionInput> _predictions = new();
     private MudBlazor.DateRange _selectedRange = new(null, null);
@@ -137,6 +143,11 @@ else if (_fixtures.Response.Any())
             _toDate = range.End.Value.Date;
             Reload();
         }
+    }
+
+    private void TogglePicker()
+    {
+        _showPicker = !_showPicker;
     }
 
     private void ChangeWeek(int delta)
