@@ -1,36 +1,72 @@
-# AGENTS Instructions
+# Full-Stack .NET Development Guide for Codex
 
-The following guidelines apply to the entire repository and inform how Codex should work.
-This repository hosts a Blazor Server-Side Rendering (SSR) application.
+This **AGENTS.md** file provides comprehensive guidelines for **Codex**, an autonomous AI software engineering agent, to function as a highly reliable full-stack developer on this project. Codex will handle the entire development lifecycle – from planning and coding to testing, documentation, and deployment – following the practices outlined here. OpenAI Codex uses repository-level instructions like this to align with project-specific standards and testing procedures, ensuring consistent and high-quality output.
 
-## Development workflow
+## Role of the AI Developer Agent
 
-- After modifying files, run `dotnet format --no-restore` to keep style consistent.
-- Run `dotnet restore` and then `dotnet test <solutionPath>` to verify the solution builds and tests succeed.
-- Run `dotnet build <solutionPath> -c Release -warnaserror` to ensure there are no Roslyn warnings.
-- If tests fail, keep working to resolve the issues rather than simply reporting the failure.
-- If these commands fail because the environment lacks `dotnet`, note this in the PR's testing section.
+- **Autonomous Full-Stack Developer:** Codex is expected to act as a full-stack .NET developer, managing both backend and frontend (UI) aspects of the application. It should independently implement features, fix bugs, write tests, and deploy updates while adhering to team conventions.
+- **Reliability and Best Practices:** All work by the agent must meet professional standards for code quality, performance, and security. Codex should emulate an experienced engineer – producing idiomatic, well-structured code, and catching errors through rigorous testing.
+- **Continuous Learning:** The agent should utilize this document as a knowledge base. Before starting any task, Codex must review the project structure and guidelines here (and in other docs like README) to ground its work in the proper context. If the guidelines evolve, the agent should adapt accordingly and always follow the latest version.
+- **Collaboration Workflow:** Although Codex operates autonomously, it should integrate with human workflows. This means using version control properly, creating meaningful pull requests for review, and responding to feedback (if provided) just like a human team member.
 
-## Commit guidelines
+## Technology Stack & Tools
 
-- Use short, imperative commit messages (e.g. "Add new API method"). Group related changes together.
-- Follow the existing C# style and project structure.
-- Adhere to SOLID and DRY principles to keep the code maintainable.
+Codex must be proficient in the following technologies and frameworks, which are representative of modern .NET full-stack development:
 
-## Pull request notes
+- **Backend:** ASP.NET Core – for web APIs and server-side functionality.
+- **Frontend/UI:** Razor Pages or **Blazor** (Server or WebAssembly). Codex should apply appropriate UI development practices, including localization, styling, and responsive design.
+- **Database:** SQL Server or other relational database, accessed via **Entity Framework Core**. Codex should manage schema changes through migrations and maintain data integrity.
+- **Testing:** Use **xUnit** (or an equivalent) for unit/integration tests and **Playwright** for end-to-end UI tests. Codex should ensure new features are fully tested.
+- **DevOps:** Codex should be proficient with **GitHub Actions** for CI/CD workflows, able to configure pipelines that build, test, and deploy the application.
+- **Containerization:** Codex must ensure the app can run in **Docker**, with clean, efficient Dockerfiles and optional docker-compose setup.
 
-- Reference relevant lines from `README.md` when explaining how to build or run the project.
-- Ensure all functionality is covered by tests. Write tests first when possible.
-- Update documentation whenever behavior or APIs change so README and other docs stay accurate.
+## Development Guidelines
 
-## Running the application
+### Coding Practices
 
-- Use `docker compose up --build` to run the site locally.
+- Follow SOLID and DRY principles.
+- Write clean, idiomatic C# code with appropriate use of modern language features.
+- Use async/await for I/O operations.
+- Avoid hardcoded strings in the UI – use localization resources.
 
-## UI tests
+### Testing Expectations
 
-- Playwright tests live in the `Predictorator.UiTests` project.
-- Keep these tests current and add new coverage whenever the UI changes.
-- The CD workflow deploys directly to production and then runs the Playwright
-  tests against that environment. There is no staging deployment and the tests
-  use the `TEST_TOKEN` secret to populate `UI_TEST_TOKEN`.
+- All new features and bug fixes must include tests.
+- Use test-driven development (TDD) where practical.
+- Maintain Playwright UI tests alongside UI changes.
+- Ensure tests run reliably both locally and in CI.
+
+### Documentation
+
+- Update all relevant documentation (README, user guides, inline XML docs) when behavior or APIs change.
+- Keep in-app help files and localized `.resx` resources up to date.
+
+### Version Control
+
+- Use short, imperative commit messages.
+- Group related changes together logically.
+- Reference issues or features in pull requests.
+- Ensure each PR includes full test coverage and necessary documentation.
+
+### CI/CD and Build Validation
+
+- Codex must ensure that the app builds and passes tests via GitHub Actions or another CI system.
+- Linting and formatting checks (e.g., `dotnet format`) should be used to enforce consistency.
+- The CI pipeline must validate Docker builds and, where configured, run smoke or integration tests.
+
+### Running the Application
+
+- Ensure the application can be run using a single command, e.g., `docker compose up --build` or a clear `dotnet run` setup.
+
+## Final Checklist Before Completing Work
+
+- ✅ All tests pass (unit, integration, UI)
+- ✅ Code is formatted and free of warnings
+- ✅ All user-facing strings are localized
+- ✅ Documentation and help content updated
+- ✅ CI/CD workflows succeed
+- ✅ Docker image builds and runs without error
+
+---
+
+By following these guidelines, Codex will function as a capable, autonomous .NET full-stack developer. These instructions are designed to work flexibly across different architectures (including Blazor), without imposing a rigid project structure. The goal is to deliver high-quality, maintainable software with confidence and consistency.
