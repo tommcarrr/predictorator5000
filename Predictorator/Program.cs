@@ -92,14 +92,11 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // Add services to the container.
 var razorComponentsBuilder = builder.Services.AddRazorComponents();
-if (!builder.Environment.IsEnvironment("Testing"))
+razorComponentsBuilder.AddInteractiveServerComponents(options =>
 {
-    razorComponentsBuilder.AddInteractiveServerComponents(options =>
-    {
-        // Enable detailed circuit errors so they surface in the browser.
-        options.DetailedErrors = true;
-    });
-}
+    // Enable detailed circuit errors so they surface in the browser.
+    options.DetailedErrors = true;
+});
 builder.Services.AddMudServices();
 builder.Services.AddScoped<BrowserInteropService>();
 builder.Services.AddRazorPages();
@@ -127,8 +124,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 var razorComponents = app.MapRazorComponents<App>();
-if (!app.Environment.IsEnvironment("Testing"))
-    razorComponents.AddInteractiveServerRenderMode();
+razorComponents.AddInteractiveServerRenderMode();
 
 app.MapRazorPages();
 app.MapGet("/admin", () => Results.Redirect("/Identity/Account/Login"));
