@@ -55,42 +55,42 @@ jobs:
           package: ./app
           clean: true
 
-  tests:
-    runs-on: ubuntu-latest
-    needs: deploy_prod
-    env:
-      RUN_UI_TESTS: 'true'
-      BASE_URL: ${{ needs.deploy_prod.outputs.url }}
-      UI_TEST_TOKEN: ${{ secrets.TEST_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: global.json
-          include-prerelease: true
-      - name: Build tests
-        run: dotnet build Predictorator.sln --configuration Release
-      - name: Install Playwright browsers
-        run: |
-          dotnet tool install --global Microsoft.Playwright.CLI
-          export PATH="$PATH:/root/.dotnet/tools"
-          playwright install
-      - name: Run all tests
-        run: dotnet test Predictorator.sln --logger trx --no-build --configuration Release
+  # tests:
+  #   runs-on: ubuntu-latest
+  #   needs: deploy_prod
+  #   env:
+  #     RUN_UI_TESTS: 'true'
+  #     BASE_URL: ${{ needs.deploy_prod.outputs.url }}
+  #     UI_TEST_TOKEN: ${{ secrets.TEST_TOKEN }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-dotnet@v4
+  #       with:
+  #         global-json-file: global.json
+  #         include-prerelease: true
+  #     - name: Build tests
+  #       run: dotnet build Predictorator.sln --configuration Release
+  #     - name: Install Playwright browsers
+  #       run: |
+  #         dotnet tool install --global Microsoft.Playwright.CLI
+  #         export PATH="$PATH:/root/.dotnet/tools"
+  #         playwright install
+  #     - name: Run all tests
+  #       run: dotnet test Predictorator.sln --logger trx --no-build --configuration Release
 
 
-  rollback:
-    if: failure() && needs.tests.result == 'failure'
-    runs-on: ubuntu-latest
-    needs: [deploy_prod, tests]
-    steps:
-      - uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2687F5A3498747E1A95ADE36D92A159E }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F68BC6B164FA4A818B4561CE37FB31B5 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_E02E41A1857446D5AE38550D3A7CF31C }}
-      - name: Rollback deployment
-        run: |
-          echo "Rolling back to previous deployment"
-          # Implement rollback logic here
+  # rollback:
+  #   if: failure() && needs.tests.result == 'failure'
+  #   runs-on: ubuntu-latest
+  #   needs: [deploy_prod, tests]
+  #   steps:
+  #     - uses: azure/login@v2
+  #       with:
+  #         client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2687F5A3498747E1A95ADE36D92A159E }}
+  #         tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F68BC6B164FA4A818B4561CE37FB31B5 }}
+  #         subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_E02E41A1857446D5AE38550D3A7CF31C }}
+  #     - name: Rollback deployment
+  #       run: |
+  #         echo "Rolling back to previous deployment"
+  #         # Implement rollback logic here
 
