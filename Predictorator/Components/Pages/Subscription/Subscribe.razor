@@ -1,0 +1,35 @@
+@page "/Subscription/Subscribe"
+@inject SubscriptionService SubscriptionService
+@inject NavigationManager Navigation
+
+<h2>Subscribe to Notifications</h2>
+
+@if (_submitted)
+{
+    <p>A verification link has been sent to your email address.</p>
+}
+else
+{
+    <EditForm Model="this" OnValidSubmit="HandleSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="mb-3">
+            <label for="email" class="form-label">Email address</label>
+            <InputText id="email" class="form-control" @bind-Value="Email" />
+        </div>
+        <button type="submit" class="btn btn-primary">Subscribe</button>
+    </EditForm>
+}
+
+@code {
+    [Required, EmailAddress]
+    public string Email { get; set; } = string.Empty;
+    private bool _submitted;
+
+    private async Task HandleSubmit()
+    {
+        var baseUrl = Navigation.BaseUri.TrimEnd('/');
+        await SubscriptionService.AddSubscriberAsync(Email, baseUrl);
+        _submitted = true;
+    }
+}

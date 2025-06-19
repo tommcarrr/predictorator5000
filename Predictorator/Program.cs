@@ -95,7 +95,6 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddMudServices();
 builder.Services.AddScoped<BrowserInteropService>();
-builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
@@ -106,7 +105,7 @@ app.UseRateLimiter();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
@@ -123,9 +122,6 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "mvc/{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
 app.MapGet("/admin", () => Results.Redirect("/Identity/Account/Login"));
 
