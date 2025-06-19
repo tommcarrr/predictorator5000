@@ -11,7 +11,8 @@
     <HeadOutlet />
 </head>
 <body>
-    <MudThemeProvider IsDarkMode="@ThemeService.IsDarkMode" />
+    <MudThemeProvider IsDarkMode="@ThemeService.IsDarkMode"
+                      IsDarkModeChanged="@ThemeService.SetDarkModeAsync" />
     <MudSnackbarProvider />
     <Routes @rendermode="InteractiveServer" />
     <script src="_framework/blazor.server.js"></script>
