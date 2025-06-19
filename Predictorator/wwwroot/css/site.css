@@ -14,10 +14,22 @@ html, body {
 
 /* Ensure fixture details stay on one horizontal line */
 .fixture-line {
-    display: flex;
+    display: grid;
+    grid-template-columns: 30px 1fr 2.5rem 1rem 2.5rem 1fr 30px;
     align-items: center;
     gap: 0.5rem;
-    flex-wrap: nowrap;
+}
+
+.home-name {
+    text-align: left;
+}
+
+.away-name {
+    text-align: right;
+}
+
+.hyphen {
+    text-align: center;
 }
 
 /* Allow team names to wrap while keeping the fixture on one line */

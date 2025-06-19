@@ -40,15 +40,15 @@ else if (_fixtures.Response.Any())
                             <td colspan="3">
                                 <div class="fixture-line">
                                     <MudImage Src="@fixture.Teams.Home.Logo" Alt="@fixture.Teams.Home.Name" Width="30" Height="30" />
-                                    <span class="team-name">@fixture.Teams.Home.Name</span>
+                                    <span class="team-name home-name">@fixture.Teams.Home.Name</span>
                                     <MudNumericField T="int?" Class="score-input" Immediate="true"
                                                      @bind-Value="_predictions[fixture.Fixture.Id].Home"
                                                      Disabled="@(fixture.Score?.Fulltime.Home != null)" Max="20" Min="0" />
-                                    <span>-</span>
+                                    <span class="hyphen">-</span>
                                     <MudNumericField T="int?" Class="score-input" Immediate="true"
                                                      @bind-Value="_predictions[fixture.Fixture.Id].Away"
                                                      Disabled="@(fixture.Score?.Fulltime.Away != null)" Max="20" Min="0" />
-                                    <span class="team-name">@fixture.Teams.Away.Name</span>
+                                    <span class="team-name away-name">@fixture.Teams.Away.Name</span>
                                     <MudImage Src="@fixture.Teams.Away.Logo" Alt="@fixture.Teams.Away.Name" Width="30" Height="30" />
                                 </div>
                             </td>
