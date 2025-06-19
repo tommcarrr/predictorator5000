@@ -1,5 +1,6 @@
 @inherits LayoutComponentBase
 @inject IHttpContextAccessor HttpContextAccessor
+@inject BrowserInteropService Browser
 <MudLayout>
     <MudAppBar Elevation="0" Color="Color.Primary">
         <div class="container-fluid d-flex align-items-center">
@@ -11,7 +12,9 @@
             }
             <MudLink Href="/mvc/Subscription/Subscribe" Class="nav-link">Subscribe</MudLink>
             <MudSpacer />
-            <MudButton Variant="Variant.Outlined" UserAttributes="@(new Dictionary<string, object> { { "id", "darkModeToggle" } })">Dark Mode</MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       UserAttributes="@(new Dictionary<string, object> { { "id", "darkModeToggle" } })"
+                       OnClick="ToggleDarkMode">@(_darkMode ? "Light Mode" : "Dark Mode")</MudButton>
         </div>
     </MudAppBar>
     <MudMainContent>
@@ -20,3 +23,24 @@
         </div>
     </MudMainContent>
 </MudLayout>
+
+@code {
+    private bool _darkMode;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _darkMode = await Browser.GetDarkModeAsync();
+            await Browser.SetDarkModeAsync(_darkMode);
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        _darkMode = !_darkMode;
+        await Browser.SetDarkModeAsync(_darkMode);
+        await Browser.SaveDarkModeAsync(_darkMode);
+    }
+}

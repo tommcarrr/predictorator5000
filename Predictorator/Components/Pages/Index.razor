@@ -3,6 +3,7 @@
 @inject NavigationManager NavigationManager
 @inject IFixtureService FixtureService
 @inject IDateRangeCalculator DateRangeCalculator
+@inject BrowserInteropService Browser
 
 <h1>Premier League Fixtures</h1>
 
@@ -50,9 +51,15 @@ else if (_fixtures.Response.Any())
                             <span>@fixture.Teams.Home.Name</span>
                         </div>
                         <div class="col-4 text-center">
-                            <input type="number" class="form-control score-input d-inline-block text-center" maxlength="2" @(fixture.Score?.Fulltime.Home != null ? $"readonly value={fixture.Score.Fulltime.Home}" : "") />
+                            <input type="number" class="form-control score-input d-inline-block text-center" maxlength="2"
+                                   @bind="_predictions[fixture.Fixture.Id].Home"
+                                   @bind:event="oninput"
+                                   readonly="@(fixture.Score?.Fulltime.Home != null)" />
                             <span class="mx-2">-</span>
-                            <input type="number" class="form-control score-input d-inline-block text-center" maxlength="2" @(fixture.Score?.Fulltime.Away != null ? $"readonly value={fixture.Score.Fulltime.Away}" : "") />
+                            <input type="number" class="form-control score-input d-inline-block text-center" maxlength="2"
+                                   @bind="_predictions[fixture.Fixture.Id].Away"
+                                   @bind:event="oninput"
+                                   readonly="@(fixture.Score?.Fulltime.Away != null)" />
                         </div>
                         <div class="col-4 d-flex align-items-center justify-content-end">
                             <span>@fixture.Teams.Away.Name</span>
@@ -74,9 +81,9 @@ else if (_fixtures.Response.Any())
 }
 
 <div class="buttons mt-4">
-    <button class="mud-button mud-button-filled mud-theme-secondary" id="fillRandomBtn">Complete with Random Scores</button>
-    <button class="mud-button mud-button-filled mud-theme-warning" id="clearBtn">Clear Predictions</button>
-    <button class="mud-button mud-button-filled mud-theme-success" id="copyBtn">Copy Predictions to Clipboard</button>
+    <button class="mud-button mud-button-filled mud-theme-secondary" id="fillRandomBtn" @onclick="FillRandomScores">Complete with Random Scores</button>
+    <button class="mud-button mud-button-filled mud-theme-warning" id="clearBtn" @onclick="ClearScores">Clear Predictions</button>
+    <button class="mud-button mud-button-filled mud-theme-success" id="copyBtn" @onclick="CopyPredictionsAsync">Copy Predictions to Clipboard</button>
 </div>
 
 @code {
@@ -85,6 +92,7 @@ else if (_fixtures.Response.Any())
     private DateTime? _toDate;
     private bool _autoWeek;
     private int _currentWeekOffset;
+    private readonly Dictionary<int, PredictionInput> _predictions = new();
 
     [Parameter, SupplyParameterFromQuery(Name = "fromDate")] public DateTime? FromDate { get; set; }
     [Parameter, SupplyParameterFromQuery(Name = "toDate")] public DateTime? ToDate { get; set; }
@@ -98,6 +106,18 @@ else if (_fixtures.Response.Any())
         _currentWeekOffset = WeekOffset ?? 0;
         _autoWeek = FromDate == null && ToDate == null;
         _fixtures = await FixtureService.GetFixturesAsync(from, to);
+
+        if (_fixtures?.Response != null)
+        {
+            foreach (var f in _fixtures.Response)
+            {
+                if (!_predictions.ContainsKey(f.Fixture.Id))
+                    _predictions[f.Fixture.Id] = new PredictionInput();
+
+                _predictions[f.Fixture.Id].Home = f.Score?.Fulltime.Home;
+                _predictions[f.Fixture.Id].Away = f.Score?.Fulltime.Away;
+            }
+        }
     }
 
     private void Reload()
@@ -118,5 +138,91 @@ else if (_fixtures.Response.Any())
             ["weekOffset"] = offset.ToString()
         });
         NavigationManager.NavigateTo(uri);
+    }
+
+    private void FillRandomScores()
+    {
+        var possible = new[] { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,4,4,5 };
+        var rnd = new Random();
+        if (_fixtures == null) return;
+
+        foreach (var f in _fixtures.Response)
+        {
+            var pred = _predictions[f.Fixture.Id];
+            if (f.Score?.Fulltime.Home == null && pred.Home == null)
+                pred.Home = possible[rnd.Next(possible.Length)];
+            if (f.Score?.Fulltime.Away == null && pred.Away == null)
+                pred.Away = possible[rnd.Next(possible.Length)];
+        }
+    }
+
+    private void ClearScores()
+    {
+        if (_fixtures == null) return;
+        foreach (var f in _fixtures.Response)
+        {
+            var pred = _predictions[f.Fixture.Id];
+            if (f.Score?.Fulltime.Home == null)
+                pred.Home = null;
+            if (f.Score?.Fulltime.Away == null)
+                pred.Away = null;
+        }
+    }
+
+    private async Task CopyPredictionsAsync()
+    {
+        if (_fixtures == null) return;
+
+        var sbText = new System.Text.StringBuilder();
+        var sbHtml = new System.Text.StringBuilder();
+        bool missing = false;
+        sbHtml.Append("<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse: collapse;\">");
+
+        var groups = _fixtures.Response.GroupBy(f => f.Fixture.Date.Date).OrderBy(g => g.Key);
+        foreach (var group in groups)
+        {
+            var dateHeader = group.Key.ToString("dddd, MMMM d, yyyy");
+            sbText.AppendLine(dateHeader);
+            sbHtml.Append($"<thead><tr><th colspan=\"3\" style=\"background-color: #f2f2f2; text-align: center; padding: 10px;\">{dateHeader}</th></tr>");
+            sbHtml.Append("<tr><th style=\"background-color: #d9d9d9; text-align: left; padding: 5px; min-width: 120px\">Home Team</th>");
+            sbHtml.Append("<th style=\"background-color: #d9d9d9; text-align: center; padding: 5px;\">Score</th>");
+            sbHtml.Append("<th style=\"background-color: #d9d9d9; text-align: right; padding: 5px; min-width: 120px\">Away Team</th></tr></thead><tbody>");
+
+            foreach (var fixture in group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name))
+            {
+                var pred = _predictions[fixture.Fixture.Id];
+                var homeScore = pred.Home;
+                var awayScore = pred.Away;
+                if (homeScore == null || awayScore == null)
+                    missing = true;
+
+                var homeTeam = fixture.Teams.Home.Name.Trim();
+                var awayTeam = fixture.Teams.Away.Name.Trim();
+                sbText.AppendLine($"{homeTeam}    {homeScore} - {awayScore}    {awayTeam}");
+                sbHtml.Append($"<tr><td style=\"padding: 5px; text-align: left;\">{homeTeam}</td><td style=\"padding: 5px; text-align: center;\">{homeScore} - {awayScore}</td><td style=\"padding: 5px; text-align: right;\">{awayTeam}</td></tr>");
+            }
+
+            sbText.AppendLine();
+        }
+
+        sbHtml.Append("</tbody></table><br/>");
+
+        if (missing)
+        {
+            await Browser.AlertAsync("Error: Please fill in all score predictions before copying.");
+            return;
+        }
+
+        var mobile = await Browser.IsMobileDeviceAsync();
+        if (mobile)
+            await Browser.CopyToClipboardTextAsync(sbText.ToString());
+        else
+            await Browser.CopyToClipboardHtmlAsync(sbHtml.ToString());
+    }
+
+    private class PredictionInput
+    {
+        public int? Home { get; set; }
+        public int? Away { get; set; }
     }
 }

@@ -94,6 +94,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddMudServices();
+builder.Services.AddScoped<BrowserInteropService>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
