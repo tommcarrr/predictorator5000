@@ -13,11 +13,8 @@ else
     <EditForm Model="this" OnValidSubmit="HandleSubmit">
         <DataAnnotationsValidator />
         <ValidationSummary />
-        <div class="mb-3">
-            <label for="email" class="form-label">Email address</label>
-            <InputText id="email" class="form-control" @bind-Value="Email" />
-        </div>
-        <button type="submit" class="btn btn-primary">Subscribe</button>
+        <MudTextField @bind-Value="Email" Label="Email address" For="@(() => Email)" />
+        <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Subscribe</MudButton>
     </EditForm>
 }
 
