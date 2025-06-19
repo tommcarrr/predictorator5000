@@ -23,7 +23,7 @@ public class HomePageTests
             try
             {
                 await page.GotoAsync(url, new() { Timeout = 90000 });
-                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
                 return;
             }
             catch (TimeoutException) when (attempt < maxAttempts)
@@ -34,7 +34,7 @@ public class HomePageTests
 
         // Final attempt without catching to surface the exception
         await page.GotoAsync(url, new() { Timeout = 90000 });
-        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
     }
 
     [OneTimeSetUp]
