@@ -1,13 +1,4 @@
 window.app = (() => {
-    const body = document.body;
-    const toggleButton = document.getElementById('darkModeToggle');
-
-    function setDarkMode(enable) {
-        body.classList.toggle('dark-mode', enable);
-        if (toggleButton) {
-            toggleButton.textContent = enable ? 'Light Mode' : 'Dark Mode';
-        }
-    }
 
     function saveDarkMode(enable) {
         localStorage.setItem('dark-mode', enable ? 'enabled' : 'disabled');
@@ -43,7 +34,6 @@ window.app = (() => {
     }
 
     return {
-        setDarkMode,
         saveDarkMode,
         getDarkMode,
         copyToClipboardText,

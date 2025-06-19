@@ -3,7 +3,7 @@
 @inject BrowserInteropService Browser
 @inject IDialogService DialogService
 @using Predictorator.Components.Pages.Subscription
-<MudLayout>
+<MudLayout Class="@LayoutClass">
     <MudDialogProvider />
     <MudAppBar Elevation="1" Color="Color.Primary">
         <MudText Typo="Typo.h5" Class="ml-2">Predictotronix</MudText>
@@ -15,7 +15,8 @@
         }
         <MudButton Variant="Variant.Text" OnClick="OpenSubscribe">Subscribe</MudButton>
         <MudIconButton Icon="@(_darkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
-                       OnClick="ToggleDarkMode" />
+                       OnClick="ToggleDarkMode"
+                       UserAttributes="@(new Dictionary<string, object>{{"id","darkModeToggle"}})" />
     </MudAppBar>
 
     <MudMainContent>
@@ -34,7 +35,6 @@
         if (firstRender)
         {
             _darkMode = await Browser.GetDarkModeAsync();
-            await Browser.SetDarkModeAsync(_darkMode);
             StateHasChanged();
         }
     }
@@ -42,7 +42,6 @@
     private async Task ToggleDarkMode()
     {
         _darkMode = !_darkMode;
-        await Browser.SetDarkModeAsync(_darkMode);
         await Browser.SaveDarkModeAsync(_darkMode);
     }
 
@@ -50,4 +49,6 @@
     {
         DialogService.Show<Subscribe>("Subscribe");
     }
+
+    private string? LayoutClass => _darkMode ? "mud-theme-dark" : null;
 }

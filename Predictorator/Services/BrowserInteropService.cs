@@ -13,8 +13,6 @@ public class BrowserInteropService
 
     public ValueTask<bool> GetDarkModeAsync() => _js.InvokeAsync<bool>("app.getDarkMode");
 
-    public ValueTask SetDarkModeAsync(bool enable) => _js.InvokeVoidAsync("app.setDarkMode", enable);
-
     public ValueTask SaveDarkModeAsync(bool enable) => _js.InvokeVoidAsync("app.saveDarkMode", enable);
 
     public ValueTask CopyToClipboardTextAsync(string text) => _js.InvokeVoidAsync("app.copyToClipboardText", text);
