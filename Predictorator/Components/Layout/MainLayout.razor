@@ -5,6 +5,7 @@
 @using Predictorator.Components.Pages.Subscription
 <MudLayout>
     <MudDialogProvider />
+    <MudPopoverProvider />
     <MudAppBar Elevation="1" Color="Color.Primary">
         <MudText Typo="Typo.h5" Class="ml-2">Predictotronix</MudText>
         <MudSpacer />
@@ -15,7 +16,8 @@
         }
         <MudButton Variant="Variant.Text" OnClick="OpenSubscribe">Subscribe</MudButton>
         <MudIconButton Icon="@(_darkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
-                       OnClick="ToggleDarkMode" />
+                       OnClick="ToggleDarkMode"
+                       UserAttributes="@(new Dictionary<string, object>{{"id","darkModeToggle"}})" />
     </MudAppBar>
 
     <MudMainContent>

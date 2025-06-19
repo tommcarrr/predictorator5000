@@ -15,6 +15,8 @@
     <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(1))"
                    UserAttributes="@(new Dictionary<string, object>{{"id","nextWeekBtn"}})" />
 </MudPaper>
+<MudDateRangePicker DateRange="_selectedRange" DateRangeChanged="RangeChanged" Class="my-2"
+                   UserAttributes="@(new Dictionary<string, object>{{"id","dateRangePicker"}})" />
 
 @if (_fixtures == null)
 {
@@ -88,6 +90,7 @@ else if (_fixtures.Response.Any())
     private bool _autoWeek;
     private int _currentWeekOffset;
     private readonly Dictionary<int, PredictionInput> _predictions = new();
+    private MudBlazor.DateRange _selectedRange = new(null, null);
 
     [Parameter, SupplyParameterFromQuery(Name = "fromDate")] public DateTime? FromDate { get; set; }
     [Parameter, SupplyParameterFromQuery(Name = "toDate")] public DateTime? ToDate { get; set; }
@@ -98,6 +101,7 @@ else if (_fixtures.Response.Any())
         var (from, to) = DateRangeCalculator.GetDates(FromDate, ToDate, WeekOffset);
         _fromDate = from;
         _toDate = to;
+        _selectedRange = new DateRange(from, to);
         _currentWeekOffset = WeekOffset ?? 0;
         _autoWeek = FromDate == null && ToDate == null;
         _fixtures = await FixtureService.GetFixturesAsync(from, to);
@@ -123,6 +127,17 @@ else if (_fixtures.Response.Any())
             ["toDate"] = _toDate?.ToString("yyyy-MM-dd")
         });
         NavigationManager.NavigateTo(uri);
+    }
+
+    private void RangeChanged(DateRange range)
+    {
+        if (range.Start.HasValue && range.End.HasValue)
+        {
+            _selectedRange = range;
+            _fromDate = range.Start.Value.Date;
+            _toDate = range.End.Value.Date;
+            Reload();
+        }
     }
 
     private void ChangeWeek(int delta)
