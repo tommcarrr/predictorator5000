@@ -87,10 +87,6 @@ h4 {
     margin-left: auto;
 }
 
-.title {
-    font-size: 2rem;
-}
-
 .weekJump {
     font-size: 1.5rem;
     text-decoration: none;
@@ -239,9 +235,6 @@ input[type=number] {
         padding: 0;
     }
 
-    .fixtures-container {
-        padding: 0;
-    }
 
     .appbar-container {
         flex-direction: column;
