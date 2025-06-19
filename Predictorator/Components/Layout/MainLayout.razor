@@ -3,24 +3,24 @@
 @inject BrowserInteropService Browser
 <MudLayout>
     <MudAppBar Elevation="0" Color="Color.Primary">
-        <div class="container-fluid d-flex align-items-center">
-            <MudText Typo="Typo.h5" Class="navbar-brand header">Predictotronix</MudText>
+        <MudContainer MaxWidth="MaxWidth.False" Class="appbar-container">
+            <MudText Typo="Typo.h5" Class="appbar-brand header">Predictotronix</MudText>
             @if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true &&
                 HttpContextAccessor.HttpContext.User.IsInRole("Admin"))
             {
-                <MudLink Href="/Admin/SendNotification" Class="nav-link">Admin</MudLink>
+                <MudLink Href="/Admin/SendNotification">Admin</MudLink>
             }
-            <MudLink Href="/Subscription/Subscribe" Class="nav-link">Subscribe</MudLink>
+            <MudLink Href="/Subscription/Subscribe">Subscribe</MudLink>
             <MudSpacer />
             <MudButton Variant="Variant.Outlined"
                        UserAttributes="@(new Dictionary<string, object> { { "id", "darkModeToggle" } })"
                        OnClick="ToggleDarkMode">@(_darkMode ? "Light Mode" : "Dark Mode")</MudButton>
-        </div>
+        </MudContainer>
     </MudAppBar>
     <MudMainContent>
-        <div class="container mt-4">
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="main-container">
             @Body
-        </div>
+        </MudContainer>
     </MudMainContent>
 </MudLayout>
 
