@@ -17,9 +17,7 @@ public class IndexPageBUnitTests
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();
-        ctx.Services.AddMudServices();
-        var pop = ctx.Services.FirstOrDefault(s => s.ServiceType.Name == "IPopoverService");
-        if (pop != null) ctx.Services.Remove(pop);
+        ctx.Services.AddMudServices(c => c.PopoverOptions.CheckForPopoverProvider = false);
         var jsRuntime = Substitute.For<IJSRuntime>();
         ctx.Services.AddSingleton<IJSRuntime>(jsRuntime);
         ctx.Services.AddSingleton(new BrowserInteropService(jsRuntime));
@@ -35,9 +33,9 @@ public class IndexPageBUnitTests
     }
 
     [Fact]
-    public void PageContainsDateRangePicker()
+    public async Task PageContainsDateRangePicker()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
         var cut = ctx.Render<IndexPage>();
         var picker = cut.Find("#dateRangePicker");
         Assert.NotNull(picker);

@@ -19,9 +19,7 @@ public class MainLayoutBUnitTests
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();
-        ctx.Services.AddMudServices();
-        var pop = ctx.Services.FirstOrDefault(s => s.ServiceType.Name == "IPopoverService");
-        if (pop != null) ctx.Services.Remove(pop);
+        ctx.Services.AddMudServices(c => c.PopoverOptions.CheckForPopoverProvider = false);
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var jsRuntime = Substitute.For<IJSRuntime>();
         jsRuntime.InvokeAsync<bool>("app.getDarkMode", Arg.Any<object[]?>()).Returns(new ValueTask<bool>(false));
@@ -32,9 +30,9 @@ public class MainLayoutBUnitTests
     }
 
     [Fact]
-    public void LayoutRendersHeaderWithCorrectFont()
+    public async Task LayoutRendersHeaderWithCorrectFont()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
         RenderFragment body = b => b.AddMarkupContent(0, "<p>child</p>");
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
         var header = cut.Find("h5.mud-typography-h5");
@@ -42,9 +40,9 @@ public class MainLayoutBUnitTests
     }
 
     [Fact]
-    public void LayoutRendersSubscribeButton()
+    public async Task LayoutRendersSubscribeButton()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
         RenderFragment body = b => b.AddMarkupContent(0, "<p>child</p>");
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
         var buttons = cut.FindAll("button");
@@ -52,21 +50,21 @@ public class MainLayoutBUnitTests
     }
 
     [Fact]
-    public void DarkModeToggleInvokesInterop()
+    public async Task DarkModeToggleInvokesInterop()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
         var jsRuntime = ctx.Services.GetRequiredService<IJSRuntime>();
         RenderFragment body = b => b.AddMarkupContent(0, "<p>child</p>");
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
         var toggle = cut.Find("#darkModeToggle");
         toggle.Click();
-        jsRuntime.Received().InvokeVoidAsync("app.saveDarkMode", Arg.Is<object[]>(o => (bool)o[0] == true));
+        _ = jsRuntime.Received().InvokeVoidAsync("app.saveDarkMode", Arg.Is<object[]>(o => (bool)o[0] == true));
     }
 
     [Fact]
-    public void SubscribeButtonOpensDialog()
+    public async Task SubscribeButtonOpensDialog()
     {
-        using var ctx = CreateContext();
+        await using var ctx = CreateContext();
         var dialog = ctx.Services.GetRequiredService<IDialogService>();
         RenderFragment body = b => b.AddMarkupContent(0, "<p>child</p>");
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
