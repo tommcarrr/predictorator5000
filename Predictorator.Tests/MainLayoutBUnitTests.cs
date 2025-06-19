@@ -19,7 +19,7 @@ public class MainLayoutBUnitTests
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();
-        ctx.Services.AddMudServices(c => c.PopoverOptions.CheckForPopoverProvider = false);
+        ctx.Services.AddMudServices();
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var jsRuntime = Substitute.For<IJSRuntime>();
         jsRuntime.InvokeAsync<bool>("app.getDarkMode", Arg.Any<object[]?>()).Returns(new ValueTask<bool>(false));
