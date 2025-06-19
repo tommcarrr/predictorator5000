@@ -2,10 +2,13 @@ window.app = (() => {
 
     function saveDarkMode(enable) {
         localStorage.setItem('dark-mode', enable ? 'enabled' : 'disabled');
+        document.body.classList.toggle('mud-theme-dark', enable);
     }
 
     function getDarkMode() {
-        return localStorage.getItem('dark-mode') === 'enabled';
+        const enabled = localStorage.getItem('dark-mode') === 'enabled';
+        document.body.classList.toggle('mud-theme-dark', enabled);
+        return enabled;
     }
 
     function copyToClipboardText(text) {
