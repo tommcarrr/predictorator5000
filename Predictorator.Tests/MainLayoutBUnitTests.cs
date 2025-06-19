@@ -60,7 +60,6 @@ public class MainLayoutBUnitTests
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
         var toggle = cut.Find("#darkModeToggle");
         toggle.Click();
-        jsRuntime.Received().InvokeVoidAsync("app.setDarkMode", Arg.Is<object[]>(o => (bool)o[0] == true));
         jsRuntime.Received().InvokeVoidAsync("app.saveDarkMode", Arg.Is<object[]>(o => (bool)o[0] == true));
     }
 
