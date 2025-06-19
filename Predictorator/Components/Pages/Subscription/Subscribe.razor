@@ -2,21 +2,25 @@
 @inject SubscriptionService SubscriptionService
 @inject NavigationManager Navigation
 
-<h2>Subscribe to Notifications</h2>
+<MudPaper Class="pa-4" Elevation="1">
+    <h2>Subscribe to Notifications</h2>
 
-@if (_submitted)
-{
-    <p>A verification link has been sent to your email address.</p>
-}
-else
-{
-    <EditForm Model="this" OnValidSubmit="HandleSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-        <MudTextField @bind-Value="Email" Label="Email address" For="@(() => Email)" />
-        <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Subscribe</MudButton>
-    </EditForm>
-}
+    @if (_submitted)
+    {
+        <p>A verification link has been sent to your email address.</p>
+    }
+    else
+    {
+        <EditForm Model="this" OnValidSubmit="HandleSubmit">
+            <MudStack Spacing="2">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <MudTextField @bind-Value="Email" Label="Email address" For="@(() => Email)" />
+                <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Subscribe</MudButton>
+            </MudStack>
+        </EditForm>
+    }
+</MudPaper>
 
 @code {
     [Required, EmailAddress]
