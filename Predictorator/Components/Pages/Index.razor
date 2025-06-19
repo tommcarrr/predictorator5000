@@ -35,34 +35,23 @@ else if (_fixtures.Response.Any())
             <MudText Typo="Typo.h6" Class="pa-2">@group.Key.ToString("dddd, MMMM d, yyyy")</MudText>
             <MudPaper Class="pa-2">
                 <MudTable Dense="true" Items="group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name)" T="FixtureData">
-                    <HeaderContent>
-                        <MudTh>Home Team</MudTh>
-                        <MudTh align="center">Prediction</MudTh>
-                        <MudTh align="right">Away Team</MudTh>
-                    </HeaderContent>
                     <RowTemplate Context="fixture">
                         <MudTr class="fixture-row">
-                            <MudTd>
-                                <MudItem Class="d-flex align-center">
-                                <MudImage Src="@fixture.Teams.Home.Logo" Alt="@fixture.Teams.Home.Name" Width="30" Height="30" Class="mr-2" />
-                                    @fixture.Teams.Home.Name
-                                </MudItem>
-                            </MudTd>
-                            <MudTd align="center">
-                                <MudNumericField T="int?" Class="score-input" Immediate="true" Style="width:2.5rem"
-                                                 @bind-Value="_predictions[fixture.Fixture.Id].Home"
-                                                 Disabled="@(fixture.Score?.Fulltime.Home != null)" Max="20" Min="0" />
-                                <span class="mx-1">-</span>
-                                <MudNumericField T="int?" Class="score-input" Immediate="true" Style="width:2.5rem"
-                                                 @bind-Value="_predictions[fixture.Fixture.Id].Away"
-                                                 Disabled="@(fixture.Score?.Fulltime.Away != null)" Max="20" Min="0" />
-                            </MudTd>
-                            <MudTd align="right">
-                                <MudItem Class="d-flex align-center justify-end">
-                                    @fixture.Teams.Away.Name
-                                    <MudImage Src="@fixture.Teams.Away.Logo" Alt="@fixture.Teams.Away.Name" Width="30" Height="30" Class="ml-2" />
-                                </MudItem>
-                            </MudTd>
+                            <td colspan="3">
+                                <div class="fixture-line">
+                                    <MudImage Src="@fixture.Teams.Home.Logo" Alt="@fixture.Teams.Home.Name" Width="30" Height="30" />
+                                    <span class="team-name">@fixture.Teams.Home.Name</span>
+                                    <MudNumericField T="int?" Class="score-input" Immediate="true"
+                                                     @bind-Value="_predictions[fixture.Fixture.Id].Home"
+                                                     Disabled="@(fixture.Score?.Fulltime.Home != null)" Max="20" Min="0" />
+                                    <span>-</span>
+                                    <MudNumericField T="int?" Class="score-input" Immediate="true"
+                                                     @bind-Value="_predictions[fixture.Fixture.Id].Away"
+                                                     Disabled="@(fixture.Score?.Fulltime.Away != null)" Max="20" Min="0" />
+                                    <span class="team-name">@fixture.Teams.Away.Name</span>
+                                    <MudImage Src="@fixture.Teams.Away.Logo" Alt="@fixture.Teams.Away.Name" Width="30" Height="30" />
+                                </div>
+                            </td>
                         </MudTr>
                         <MudTr>
                             <td colspan="3" class="mud-table-cell mud-text-secondary" style="font-size:smaller;text-align:center">

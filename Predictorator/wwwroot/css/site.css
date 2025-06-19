@@ -1,3 +1,16 @@
 .score-input {
     width: 2.5rem;
 }
+
+/* Ensure fixture details stay on one horizontal line */
+.fixture-line {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+}
+
+/* Allow team names to wrap while keeping the fixture on one line */
+.team-name {
+    white-space: normal;
+}
