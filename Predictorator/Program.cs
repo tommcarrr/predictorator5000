@@ -99,6 +99,7 @@ razorComponentsBuilder.AddInteractiveServerComponents(options =>
 });
 builder.Services.AddMudServices();
 builder.Services.AddScoped<BrowserInteropService>();
+builder.Services.AddScoped<ThemeService>();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();

@@ -1,9 +1,10 @@
+@implements IDisposable
 @inherits LayoutComponentBase
 @inject IHttpContextAccessor HttpContextAccessor
-@inject BrowserInteropService Browser
+@inject ThemeService ThemeService
 @inject IDialogService DialogService
 @using Predictorator.Components.Pages.Subscription
-<MudLayout Class="@LayoutClass">
+<MudLayout>
     <MudDialogProvider />
     <MudPopoverProvider />
     <MudAppBar Elevation="1" Color="Color.Primary">
@@ -15,7 +16,7 @@
             <MudButton Variant="Variant.Text" Href="/Admin/SendNotification">Admin</MudButton>
         }
         <MudButton Variant="Variant.Text" OnClick="@OpenSubscribe">Subscribe</MudButton>
-        <MudIconButton Icon="@(_darkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+        <MudIconButton Icon="@(ThemeService.IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
                        OnClick="@ToggleDarkMode"
                        UserAttributes="@(new Dictionary<string, object>{{"id","darkModeToggle"}})" />
     </MudAppBar>
@@ -29,21 +30,14 @@
 </MudLayout>
 
 @code {
-    private bool _darkMode;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnInitialized()
     {
-        if (firstRender)
-        {
-            _darkMode = await Browser.GetDarkModeAsync();
-            StateHasChanged();
-        }
+        ThemeService.OnChange += OnThemeChanged;
     }
 
     private async Task ToggleDarkMode()
     {
-        _darkMode = !_darkMode;
-        await Browser.SaveDarkModeAsync(_darkMode);
+        await ThemeService.ToggleDarkModeAsync();
     }
 
     private void OpenSubscribe()
@@ -51,5 +45,10 @@
         DialogService.Show<Subscribe>("Subscribe");
     }
 
-    private string? LayoutClass => _darkMode ? "mud-theme-dark" : null;
+    private void OnThemeChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ThemeService.OnChange -= OnThemeChanged;
+    }
 }

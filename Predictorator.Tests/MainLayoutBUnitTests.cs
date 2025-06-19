@@ -24,7 +24,11 @@ public class MainLayoutBUnitTests
         var jsRuntime = Substitute.For<IJSRuntime>();
         jsRuntime.InvokeAsync<bool>("app.getDarkMode", Arg.Any<object[]?>()).Returns(new ValueTask<bool>(false));
         ctx.Services.AddSingleton<IJSRuntime>(jsRuntime);
-        ctx.Services.AddSingleton(new BrowserInteropService(jsRuntime));
+        var browser = new BrowserInteropService(jsRuntime);
+        ctx.Services.AddSingleton(browser);
+        var theme = new ThemeService(browser);
+        theme.InitializeAsync().GetAwaiter().GetResult();
+        ctx.Services.AddSingleton(theme);
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         return ctx;
     }

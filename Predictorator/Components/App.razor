@@ -1,3 +1,4 @@
+@implements IDisposable
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +11,7 @@
     <HeadOutlet />
 </head>
 <body>
-    <MudThemeProvider />
+    <MudThemeProvider IsDarkMode="@ThemeService.IsDarkMode" />
     <MudSnackbarProvider />
     <Routes @rendermode="InteractiveServer" />
     <script src="_framework/blazor.server.js"></script>
@@ -18,3 +19,24 @@
     <script src="js/site.js"></script>
 </body>
 </html>
+
+@code {
+    [Inject]
+    private ThemeService ThemeService { get; set; } = null!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ThemeService.InitializeAsync();
+            ThemeService.OnChange += OnThemeChanged;
+        }
+    }
+
+    private void OnThemeChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ThemeService.OnChange -= OnThemeChanged;
+    }
+}
