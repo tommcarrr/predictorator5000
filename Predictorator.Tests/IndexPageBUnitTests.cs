@@ -17,7 +17,7 @@ public class IndexPageBUnitTests
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();
-        ctx.Services.AddMudServices(c => c.PopoverOptions.CheckForPopoverProvider = false);
+        ctx.Services.AddMudServices();
         var jsRuntime = Substitute.For<IJSRuntime>();
         ctx.Services.AddSingleton<IJSRuntime>(jsRuntime);
         ctx.Services.AddSingleton(new BrowserInteropService(jsRuntime));
