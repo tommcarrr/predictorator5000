@@ -26,7 +26,11 @@ public class IndexPageBUnitTests
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var jsRuntime = Substitute.For<IJSRuntime>();
         ctx.Services.AddSingleton<IJSRuntime>(jsRuntime);
-        ctx.Services.AddSingleton(new BrowserInteropService(jsRuntime));
+        var browser = new BrowserInteropService(jsRuntime);
+        ctx.Services.AddSingleton(browser);
+        var theme = new ThemeService(browser);
+        theme.InitializeAsync().GetAwaiter().GetResult();
+        ctx.Services.AddSingleton(theme);
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
         var provider = new FakeDateTimeProvider
