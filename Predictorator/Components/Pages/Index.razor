@@ -7,21 +7,11 @@
 
 <h1>Premier League Fixtures</h1>
 
-@if (_autoWeek)
-{
-    <div>
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Class="weekJump" OnClick="@(() => ChangeWeek(-1))" />
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" Class="weekJump" OnClick="@(() => ChangeWeek(1))" />
-    </div>
-}
-
-<MudExpansionPanels Style="margin-bottom:1rem;">
-    <MudExpansionPanel Text="@($"{_fromDate:dd/MM/yyyy} - {_toDate:dd/MM/yyyy}")">
-        <MudDatePicker @bind-Date="_fromDate" Label="From" Style="margin-right:0.5rem;" PickerVariant="PickerVariant.Static" />
-        <MudDatePicker @bind-Date="_toDate" Label="To" Style="margin-right:0.5rem;" PickerVariant="PickerVariant.Static" />
-        <MudButton OnClick="Reload" Color="Color.Primary" Variant="Variant.Filled" Style="margin-top:0.5rem;">Reload</MudButton>
-    </MudExpansionPanel>
-</MudExpansionPanels>
+<MudPaper Class="d-flex align-center justify-center gap-2 my-4" Elevation="1">
+    <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(-1))" />
+    <MudText Typo="Typo.h6">@($"{_fromDate:dd/MM/yyyy} - {_toDate:dd/MM/yyyy}")</MudText>
+    <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(1))" />
+</MudPaper>
 
 @if (_fixtures == null)
 {
@@ -32,74 +22,61 @@ else if (_fixtures.Response.Any())
     var groups = _fixtures.Response.GroupBy(f => f.Fixture.Date.Date).OrderBy(g => g.Key);
     foreach (var group in groups)
     {
-        <div class="date-block">
-            <MudCard Style="margin-bottom:1rem;">
-                <MudCardHeader>
-                    <MudText Typo="Typo.h6">@group.Key.ToString("dddd, MMMM d, yyyy")</MudText>
-                </MudCardHeader>
-                <MudCardContent>
-                <MudGrid Class="fixture-header">
-                    <MudItem xs="12" sm="4">
-                        Home Team
-                    </MudItem>
-                    <MudItem xs="12" sm="4">
-                        <MudText Align="Align.Center">Prediction</MudText>
-                    </MudItem>
-                    <MudItem xs="12" sm="4">
-                        <MudText Align="Align.Right">Away Team</MudText>
-                    </MudItem>
-                </MudGrid>
-                @foreach (var fixture in group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name))
-                {
-                    <MudGrid Class="fixture-row" Style="margin-bottom:0.75rem;">
-                        <MudItem xs="12" sm="4">
-                            <div style="display:flex;align-items:center;">
-                                <img src="@fixture.Teams.Home.Logo" alt="@fixture.Teams.Home.Name" class="team-logo" style="margin-right:8px;" />
-                                <span>@fixture.Teams.Home.Name</span>
-                            </div>
-                        </MudItem>
-                        <MudItem xs="12" sm="4">
-                            <div style="text-align:center;">
-                                <input type="number" class="score-input" style="text-align:center;" maxlength="2"
-                                       @bind="_predictions[fixture.Fixture.Id].Home"
-                                       @bind:event="oninput"
-                                       readonly="@(fixture.Score?.Fulltime.Home != null)" />
-                                <span style="margin:0 0.5rem;">-</span>
-                                <input type="number" class="score-input" style="text-align:center;" maxlength="2"
-                                       @bind="_predictions[fixture.Fixture.Id].Away"
-                                       @bind:event="oninput"
-                                       readonly="@(fixture.Score?.Fulltime.Away != null)" />
-                            </div>
-                        </MudItem>
-                        <MudItem xs="12" sm="4">
-                            <div style="display:flex;align-items:center;justify-content:flex-end;">
-                                <span>@fixture.Teams.Away.Name</span>
-                                <img src="@fixture.Teams.Away.Logo" alt="@fixture.Teams.Away.Name" class="team-logo" style="margin-left:8px;" />
-                            </div>
-                        </MudItem>
-                    </MudGrid>
-                    <MudGrid Class="details-row" Style="margin-bottom:0.5rem;">
-                        <MudItem xs="12">
-                            @{ var ukTz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
-                               var uk = TimeZoneInfo.ConvertTime(fixture.Fixture.Date, ukTz); }
-                            <MudText Align="Align.Center">@uk.ToString("h:mm tt") - @fixture.Fixture.Venue.Name, @fixture.Fixture.Venue.City</MudText>
-                        </MudItem>
-                    </MudGrid>
-                }
-                </MudCardContent>
-            </MudCard>
-        </div>
+        <MudPaper Class="my-4" Elevation="1">
+            <MudText Typo="Typo.h6" Class="pa-2">@group.Key.ToString("dddd, MMMM d, yyyy")</MudText>
+            <MudPaper Class="pa-2">
+                <MudTable Dense="true" Items="group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name)" T="FixtureData">
+                    <HeaderContent>
+                        <MudTh>Home Team</MudTh>
+                        <MudTh align="center">Prediction</MudTh>
+                        <MudTh align="right">Away Team</MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="fixture">
+                        <MudTr class="fixture-row">
+                            <MudTd>
+                                <MudItem Class="d-flex align-center">
+                                <MudImage Src="@fixture.Teams.Home.Logo" Alt="@fixture.Teams.Home.Name" Width="30" Height="30" Class="mr-2" />
+                                    @fixture.Teams.Home.Name
+                                </MudItem>
+                            </MudTd>
+                            <MudTd align="center">
+                                <MudNumericField T="int?" Class="score-input" Immediate="true"
+                                                 @bind-Value="_predictions[fixture.Fixture.Id].Home"
+                                                 Disabled="@(fixture.Score?.Fulltime.Home != null)" Max="20" Min="0" />
+                                <span class="mx-1">-</span>
+                                <MudNumericField T="int?" Class="score-input" Immediate="true"
+                                                 @bind-Value="_predictions[fixture.Fixture.Id].Away"
+                                                 Disabled="@(fixture.Score?.Fulltime.Away != null)" Max="20" Min="0" />
+                            </MudTd>
+                            <MudTd align="right">
+                                <MudItem Class="d-flex align-center justify-end">
+                                    @fixture.Teams.Away.Name
+                                    <MudImage Src="@fixture.Teams.Away.Logo" Alt="@fixture.Teams.Away.Name" Width="30" Height="30" Class="ml-2" />
+                                </MudItem>
+                            </MudTd>
+                        </MudTr>
+                        <MudTr>
+                            <td colspan="3" class="mud-table-cell mud-text-secondary" style="font-size:smaller;text-align:center">
+                                @{ var ukTz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+                                   var uk = TimeZoneInfo.ConvertTime(fixture.Fixture.Date, ukTz); }
+                                @uk.ToString("h:mm tt") - @fixture.Fixture.Venue.Name, @fixture.Fixture.Venue.City
+                            </td>
+                        </MudTr>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        </MudPaper>
     }
 }
 
-<div class="buttons" style="margin-top:1rem;">
+<MudStack Class="mt-4" Row="true" Spacing="2">
     <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="FillRandomScores"
                UserAttributes="@(new Dictionary<string, object>{{"id","fillRandomBtn"}})">Complete with Random Scores</MudButton>
     <MudButton Color="Color.Warning" Variant="Variant.Filled" OnClick="ClearScores"
                UserAttributes="@(new Dictionary<string, object>{{"id","clearBtn"}})">Clear Predictions</MudButton>
     <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="CopyPredictionsAsync"
                UserAttributes="@(new Dictionary<string, object>{{"id","copyBtn"}})">Copy Predictions to Clipboard</MudButton>
-</div>
+</MudStack>
 
 @code {
     private FixturesResponse? _fixtures;

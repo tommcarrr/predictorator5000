@@ -1,27 +1,29 @@
 @inherits LayoutComponentBase
 @inject IHttpContextAccessor HttpContextAccessor
 @inject BrowserInteropService Browser
+@inject IDialogService DialogService
+@using Predictorator.Components.Pages.Subscription
 <MudLayout>
-    <MudAppBar Elevation="0" Color="Color.Primary">
-        <MudContainer MaxWidth="MaxWidth.False" Class="appbar-container">
-            <MudText Typo="Typo.h5" Class="appbar-brand header">Predictotronix</MudText>
-            @if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true &&
-                HttpContextAccessor.HttpContext.User.IsInRole("Admin"))
-            {
-                <MudLink Href="/Admin/SendNotification">Admin</MudLink>
-            }
-            <MudLink Href="/Subscription/Subscribe">Subscribe</MudLink>
-            <MudSpacer />
-            <MudButton Variant="Variant.Outlined"
-                       UserAttributes="@(new Dictionary<string, object> { { "id", "darkModeToggle" } })"
-                       OnClick="ToggleDarkMode">@(_darkMode ? "Light Mode" : "Dark Mode")</MudButton>
-        </MudContainer>
+    <MudDialogProvider />
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudText Typo="Typo.h5" Class="ml-2">Predictotronix</MudText>
+        <MudSpacer />
+        @if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true &&
+            HttpContextAccessor.HttpContext.User.IsInRole("Admin"))
+        {
+            <MudButton Variant="Variant.Text" Href="/Admin/SendNotification">Admin</MudButton>
+        }
+        <MudButton Variant="Variant.Text" OnClick="OpenSubscribe">Subscribe</MudButton>
+        <MudIconButton Icon="@(_darkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                       OnClick="ToggleDarkMode" />
     </MudAppBar>
+
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.ExtraLarge">
+        <MudContainer MaxWidth="MaxWidth.Large">
             @Body
         </MudContainer>
     </MudMainContent>
+
 </MudLayout>
 
 @code {
@@ -42,5 +44,10 @@
         _darkMode = !_darkMode;
         await Browser.SetDarkModeAsync(_darkMode);
         await Browser.SaveDarkModeAsync(_darkMode);
+    }
+
+    private void OpenSubscribe()
+    {
+        DialogService.Show<Subscribe>("Subscribe");
     }
 }
