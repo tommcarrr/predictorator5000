@@ -2,6 +2,16 @@
     width: 2.5rem;
 }
 
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+.mud-layout {
+    min-height: 100vh;
+    background-color: var(--mud-palette-background);
+}
+
 /* Ensure fixture details stay on one horizontal line */
 .fixture-line {
     display: flex;
