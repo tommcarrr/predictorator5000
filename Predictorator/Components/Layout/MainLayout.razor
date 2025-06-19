@@ -14,9 +14,9 @@
         {
             <MudButton Variant="Variant.Text" Href="/Admin/SendNotification">Admin</MudButton>
         }
-        <MudButton Variant="Variant.Text" OnClick="OpenSubscribe">Subscribe</MudButton>
+        <MudButton Variant="Variant.Text" OnClick="@OpenSubscribe">Subscribe</MudButton>
         <MudIconButton Icon="@(_darkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
-                       OnClick="ToggleDarkMode"
+                       OnClick="@ToggleDarkMode"
                        UserAttributes="@(new Dictionary<string, object>{{"id","darkModeToggle"}})" />
     </MudAppBar>
 

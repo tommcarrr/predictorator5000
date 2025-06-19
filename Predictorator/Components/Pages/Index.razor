@@ -10,7 +10,7 @@
 <MudPaper Class="d-flex align-center justify-center gap-2 my-4" Elevation="1">
     <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(-1))"
                    UserAttributes="@(new Dictionary<string, object>{{"id","prevWeekBtn"}})" />
-    <MudText Typo="Typo.h6" Class="d-flex align-center cursor-pointer" OnClick="TogglePicker">
+    <MudText Typo="Typo.h6" Class="d-flex align-center cursor-pointer" @onclick="TogglePicker">
         @($"{_fromDate:dd/MM/yyyy} - {_toDate:dd/MM/yyyy}")
         <MudIcon Icon="@(_showPicker ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Class="ml-1" />
     </MudText>
@@ -68,11 +68,11 @@ else if (_fixtures.Response.Any())
 }
 
 <MudStack Class="mt-4" Row="true" Spacing="2">
-    <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="FillRandomScores"
+    <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="@FillRandomScores"
                UserAttributes="@(new Dictionary<string, object>{{"id","fillRandomBtn"}})">Complete with Random Scores</MudButton>
-    <MudButton Color="Color.Warning" Variant="Variant.Filled" OnClick="ClearScores"
+    <MudButton Color="Color.Warning" Variant="Variant.Filled" OnClick="@ClearScores"
                UserAttributes="@(new Dictionary<string, object>{{"id","clearBtn"}})">Clear Predictions</MudButton>
-    <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="CopyPredictionsAsync"
+    <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="@CopyPredictionsAsync"
                UserAttributes="@(new Dictionary<string, object>{{"id","copyBtn"}})">Copy Predictions to Clipboard</MudButton>
 </MudStack>
 
