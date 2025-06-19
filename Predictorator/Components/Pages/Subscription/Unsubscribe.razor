@@ -1,0 +1,28 @@
+@page "/Subscription/Unsubscribe"
+@inject SubscriptionService SubscriptionService
+
+<h2>Unsubscribe</h2>
+@if (_result == null)
+{
+    <p>Loading...</p>
+}
+else if (_result == true)
+{
+    <p>You have been unsubscribed.</p>
+}
+else
+{
+    <p>Invalid unsubscribe link.</p>
+}
+
+@code {
+    [Parameter, SupplyParameterFromQuery]
+    public string? token { get; set; }
+
+    private bool? _result;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _result = await SubscriptionService.UnsubscribeAsync(token ?? "");
+    }
+}

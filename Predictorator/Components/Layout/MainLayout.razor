@@ -8,9 +8,9 @@
             @if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true &&
                 HttpContextAccessor.HttpContext.User.IsInRole("Admin"))
             {
-                <MudLink Href="/mvc/Admin/SendNotification" Class="nav-link">Admin</MudLink>
+                <MudLink Href="/Admin/SendNotification" Class="nav-link">Admin</MudLink>
             }
-            <MudLink Href="/mvc/Subscription/Subscribe" Class="nav-link">Subscribe</MudLink>
+            <MudLink Href="/Subscription/Subscribe" Class="nav-link">Subscribe</MudLink>
             <MudSpacer />
             <MudButton Variant="Variant.Outlined"
                        UserAttributes="@(new Dictionary<string, object> { { "id", "darkModeToggle" } })"

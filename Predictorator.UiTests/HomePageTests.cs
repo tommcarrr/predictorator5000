@@ -98,7 +98,7 @@ public class HomePageTests
     [Test]
     public async Task SubscribePage_Should_Display_Form()
     {
-        await NavigateWithRetriesAsync(_page!, $"{BaseUrl}/mvc/Subscription/Subscribe");
+        await NavigateWithRetriesAsync(_page!, $"{BaseUrl}/Subscription/Subscribe");
         await _page!.Locator("h2").WaitForAsync();
         var header = await _page!.TextContentAsync("h2");
         Assert.That(header, Is.EqualTo("Subscribe to Notifications"));

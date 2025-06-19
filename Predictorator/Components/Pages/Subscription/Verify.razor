@@ -1,0 +1,28 @@
+@page "/Subscription/Verify"
+@inject SubscriptionService SubscriptionService
+
+<h2>Verification</h2>
+@if (_result == null)
+{
+    <p>Loading...</p>
+}
+else if (_result == true)
+{
+    <p>Your email has been verified.</p>
+}
+else
+{
+    <p>Invalid verification link.</p>
+}
+
+@code {
+    [Parameter, SupplyParameterFromQuery]
+    public string? token { get; set; }
+
+    private bool? _result;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _result = await SubscriptionService.VerifyAsync(token ?? "");
+    }
+}
