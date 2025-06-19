@@ -1,6 +1,7 @@
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using Microsoft.AspNetCore.Http;
 using IndexPage = Predictorator.Components.Pages.Index;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
@@ -8,6 +9,8 @@ using Predictorator.Tests.Helpers;
 using MudBlazor.Services;
 using NSubstitute;
 using System.Linq;
+using Microsoft.AspNetCore.Components;
+using Predictorator.Components.Layout;
 using Xunit;
 
 namespace Predictorator.Tests;
@@ -18,6 +21,7 @@ public class IndexPageBUnitTests
     {
         var ctx = new BunitContext();
         ctx.Services.AddMudServices();
+        ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var jsRuntime = Substitute.For<IJSRuntime>();
         ctx.Services.AddSingleton<IJSRuntime>(jsRuntime);
         ctx.Services.AddSingleton(new BrowserInteropService(jsRuntime));
@@ -36,7 +40,12 @@ public class IndexPageBUnitTests
     public async Task PageContainsDateRangePicker()
     {
         await using var ctx = CreateContext();
-        var cut = ctx.Render<IndexPage>();
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.CloseComponent();
+        };
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
         var picker = cut.Find("#dateRangePicker");
         Assert.NotNull(picker);
     }
