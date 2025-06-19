@@ -1,4 +1,5 @@
 @page "/"
+@rendermode InteractiveServer
 @using Microsoft.AspNetCore.WebUtilities
 @inject NavigationManager NavigationManager
 @inject IFixtureService FixtureService
@@ -8,9 +9,11 @@
 <h1>Premier League Fixtures</h1>
 
 <MudPaper Class="d-flex align-center justify-center gap-2 my-4" Elevation="1">
-    <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(-1))" />
+    <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(-1))"
+                   UserAttributes="@(new Dictionary<string, object>{{"id","prevWeekBtn"}})" />
     <MudText Typo="Typo.h6">@($"{_fromDate:dd/MM/yyyy} - {_toDate:dd/MM/yyyy}")</MudText>
-    <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(1))" />
+    <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(1))"
+                   UserAttributes="@(new Dictionary<string, object>{{"id","nextWeekBtn"}})" />
 </MudPaper>
 
 @if (_fixtures == null)

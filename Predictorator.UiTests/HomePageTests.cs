@@ -126,4 +126,23 @@ public class HomePageTests
         var value = await _page!.Locator(".score-input").First.InputValueAsync();
         Assert.IsNotEmpty(value);
     }
+
+    [Test]
+    public async Task WeekNavigationButtons_Should_Change_Url()
+    {
+        await NavigateWithRetriesAsync(_page!, BaseUrl);
+        if (Environment.GetEnvironmentVariable("UI_TEST_TOKEN") == null)
+        {
+            Assert.Pass("No test token provided; skipping week navigation test.");
+        }
+
+        var initialUrl = _page!.Url;
+        await _page.Locator("#nextWeekBtn").ClickAsync();
+        await _page.WaitForURLAsync("**weekOffset=1**");
+        StringAssert.Contains("weekOffset=1", _page.Url);
+
+        await _page.Locator("#prevWeekBtn").ClickAsync();
+        await _page.WaitForURLAsync(initialUrl);
+        Assert.That(_page.Url, Is.EqualTo(initialUrl));
+    }
 }
