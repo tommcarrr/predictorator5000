@@ -11,7 +11,8 @@
     <HeadOutlet />
 </head>
 <body>
-    <MudThemeProvider IsDarkMode="@ThemeService.IsDarkMode"
+    <MudThemeProvider @rendermode="InteractiveServer"
+                      IsDarkMode="@ThemeService.IsDarkMode"
                       IsDarkModeChanged="@ThemeService.SetDarkModeAsync" />
     <MudSnackbarProvider />
     <Routes @rendermode="InteractiveServer" />
@@ -29,8 +30,9 @@
     {
         if (firstRender)
         {
-            await ThemeService.InitializeAsync();
             ThemeService.OnChange += OnThemeChanged;
+            await ThemeService.InitializeAsync();
+            StateHasChanged();
         }
     }
 
