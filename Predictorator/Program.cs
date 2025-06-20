@@ -27,7 +27,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
         .ReadFrom.Configuration(context.Configuration)
         .WriteTo.File(Path.Combine(logDir, "app.log"), rollingInterval: RollingInterval.Day)
         .WriteTo.Console()
-        .WriteTo.AzureAppServices();
+        .WriteTo.AzureApp();
 });
 
 var error = StartupValidator.Validate(builder);
@@ -90,7 +90,7 @@ builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =
         .UseLoggerFactory(loggerFactory)
         .EnableDetailedErrors()
         .EnableSensitiveDataLogging()
-        .LogTo(efLogger.LogError, LogLevel.Error);
+        .LogTo(message => efLogger.LogError(message), LogLevel.Error);
 });
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
