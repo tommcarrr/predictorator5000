@@ -12,6 +12,7 @@ using Predictorator.Startup;
 using Predictorator.Options;
 using Serilog;
 using Serilog.Events;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +25,9 @@ builder.Host.UseSerilog((context, services, configuration) =>
         .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
         .Enrich.FromLogContext()
         .ReadFrom.Configuration(context.Configuration)
-        .WriteTo.File(Path.Combine(logDir, "app.log"), rollingInterval: RollingInterval.Day);
+        .WriteTo.File(Path.Combine(logDir, "app.log"), rollingInterval: RollingInterval.Day)
+        .WriteTo.Console()
+        .WriteTo.AzureAppServices();
 });
 
 var error = StartupValidator.Validate(builder);
@@ -78,8 +81,17 @@ builder.Services.Configure<AdminUserOptions>(options =>
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
+{
+    var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+    var efLogger = loggerFactory.CreateLogger("EFCore");
+    options
+        .UseSqlServer(connectionString)
+        .UseLoggerFactory(loggerFactory)
+        .EnableDetailedErrors()
+        .EnableSensitiveDataLogging()
+        .LogTo(efLogger.LogError, LogLevel.Error);
+});
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultUI()
