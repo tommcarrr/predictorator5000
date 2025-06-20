@@ -30,6 +30,6 @@ public class RenderModeTests
 
         var appPath = Path.Combine(root, "Predictorator", "Components", "App.razor");
         var appContent = File.ReadAllText(appPath);
-        Assert.Contains("@rendermode InteractiveServer", appContent, StringComparison.Ordinal);
+        Assert.DoesNotContain("@rendermode InteractiveServer", appContent, StringComparison.Ordinal);
     }
 }
