@@ -35,6 +35,11 @@ Codex must be proficient in the following technologies and frameworks, which are
 - Use test-driven development (TDD) where practical.
 - Maintain Playwright UI tests alongside UI changes.
 - Ensure tests run reliably both locally and in CI.
+  - If the required .NET SDK version (see `global.json`) isn't available, run `./dotnet-install.sh` to install it.
+  - Execute all tests with `dotnet test Predictorator.sln` which will automatically build the solution.
+  - Only use `--no-build` with `dotnet test` after running `dotnet build Predictorator.sln`.
+  - Avoid `--no-restore` unless you've already restored packages with `dotnet restore` (or built the solution).
+  - Playwright UI tests are skipped by default; set `RUN_UI_TESTS=true` (and optionally `BASE_URL` and `UI_TEST_TOKEN`) to enable them.
 
 ### Documentation
 
@@ -57,6 +62,11 @@ Codex must be proficient in the following technologies and frameworks, which are
 ### Running the Application
 
 - Ensure the application can be run using a single command, e.g., `docker compose up --build` or a clear `dotnet run` setup.
+
+### Running Tests Locally
+
+- Use `dotnet test Predictorator.sln` to build and execute all tests.
+- Install Playwright browsers with `playwright install` if UI tests are enabled.
 
 ## Final Checklist Before Completing Work
 
