@@ -10,6 +10,7 @@ using Predictorator.Startup;
 using Resend;
 using Serilog;
 using Serilog.Events;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -110,6 +111,14 @@ builder.Services.AddMudServices();
 builder.Services.AddScoped<BrowserInteropService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddRazorPages();
+
+var keyPath = builder.Configuration["DataProtection:KeyPath"];
+if (string.IsNullOrWhiteSpace(keyPath))
+    keyPath = Path.Combine(builder.Environment.ContentRootPath, "dp-keys");
+Directory.CreateDirectory(keyPath);
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keyPath))
+    .SetApplicationName("Predictorator");
 
 var app = builder.Build();
 

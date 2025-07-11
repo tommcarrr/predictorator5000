@@ -39,6 +39,7 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+dp-keys/
 
 # Uncomment if needed, or add a specific file extension for other build directories
 #**/[Bb]uild/
