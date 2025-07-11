@@ -1,0 +1,24 @@
+@implements IDisposable
+@rendermode InteractiveServer
+@inject ThemeService ThemeService
+<MudIconButton Icon="@(ThemeService.IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+               OnClick="@ToggleDarkMode"
+               UserAttributes="@(new Dictionary<string, object>{{"id","darkModeToggle"}})" />
+@code {
+    protected override void OnInitialized()
+    {
+        ThemeService.OnChange += OnThemeChanged;
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        await ThemeService.ToggleDarkModeAsync();
+    }
+
+    private void OnThemeChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ThemeService.OnChange -= OnThemeChanged;
+    }
+}

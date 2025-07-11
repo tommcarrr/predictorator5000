@@ -1,9 +1,7 @@
 @implements IDisposable
-@using Predictorator.Components.Pages.Subscription
 @inherits LayoutComponentBase
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ThemeService ThemeService
-@inject IDialogService DialogService
 <MudLayout>
     <MudThemeProvider @rendermode="InteractiveServer"
                       IsDarkMode="@ThemeService.IsDarkMode"
@@ -20,10 +18,8 @@
         {
             <MudButton Variant="Variant.Text" Href="/Admin/SendNotification">Admin</MudButton>
         }
-        <MudButton Variant="Variant.Text" OnClick="@OpenSubscribe">Subscribe</MudButton>
-        <MudIconButton Icon="@(ThemeService.IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
-                       OnClick="@ToggleDarkMode"
-                       UserAttributes="@(new Dictionary<string, object>{{"id","darkModeToggle"}})" />
+        <SubscribeButton />
+        <DarkModeToggle />
     </MudAppBar>
 
     <MudMainContent>
@@ -38,16 +34,6 @@
     protected override void OnInitialized()
     {
         ThemeService.OnChange += OnThemeChanged;
-    }
-
-    private async Task ToggleDarkMode()
-    {
-        await ThemeService.ToggleDarkModeAsync();
-    }
-
-    private void OpenSubscribe()
-    {
-        DialogService.Show<Subscribe>("Subscribe");
     }
 
     private void OnThemeChanged() => InvokeAsync(StateHasChanged);
