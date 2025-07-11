@@ -1,15 +1,14 @@
 using Bunit;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
-using Microsoft.AspNetCore.Http;
+using MudBlazor;
+using MudBlazor.Services;
+using NSubstitute;
 using Predictorator.Components;
+using Predictorator.Models.Fixtures;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
-using Predictorator.Models.Fixtures;
-using MudBlazor.Services;
-using MudBlazor;
-using NSubstitute;
-using Xunit;
 
 namespace Predictorator.Tests;
 
@@ -22,7 +21,7 @@ public class DarkModeBUnitTests
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var jsRuntime = Substitute.For<IJSRuntime>();
         jsRuntime.InvokeAsync<bool>("app.getDarkMode", Arg.Any<object[]?>()).Returns(new ValueTask<bool>(false));
-        ctx.Services.AddSingleton<IJSRuntime>(jsRuntime);
+        ctx.Services.AddSingleton(jsRuntime);
         var browser = new BrowserInteropService(jsRuntime);
         ctx.Services.AddSingleton(browser);
         var theme = new ThemeService(browser);
@@ -50,6 +49,6 @@ public class DarkModeBUnitTests
 
         toggle.Click();
 
-        cut.WaitForAssertion(() => Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsDarkMode), timeout: System.TimeSpan.FromSeconds(1));
+        cut.WaitForAssertion(() => Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsDarkMode), timeout: TimeSpan.FromSeconds(1));
     }
 }

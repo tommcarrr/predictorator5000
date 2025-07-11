@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
 using Predictorator.Startup;
-using System.Collections.Generic;
 
 namespace Predictorator.Tests;
 

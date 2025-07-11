@@ -1,7 +1,3 @@
-using Xunit;
-using System;
-using System.IO;
-
 namespace Predictorator.Tests;
 
 public class RenderModeTests

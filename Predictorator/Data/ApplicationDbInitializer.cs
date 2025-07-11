@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Logging;
 using Predictorator.Options;
-using System.Linq;
 
 namespace Predictorator.Data;
 

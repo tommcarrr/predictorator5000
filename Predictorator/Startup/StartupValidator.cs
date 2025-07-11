@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Builder;
-
 namespace Predictorator.Startup;
 
 public static class StartupValidator

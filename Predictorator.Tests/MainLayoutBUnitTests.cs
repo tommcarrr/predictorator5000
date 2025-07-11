@@ -3,14 +3,12 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
+using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
-using System.Linq;
 using Predictorator.Components.Layout;
 using Predictorator.Components.Pages.Subscription;
 using Predictorator.Services;
-using MudBlazor;
-using Xunit;
 
 namespace Predictorator.Tests;
 
@@ -23,7 +21,7 @@ public class MainLayoutBUnitTests
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var jsRuntime = Substitute.For<IJSRuntime>();
         jsRuntime.InvokeAsync<bool>("app.getDarkMode", Arg.Any<object[]?>()).Returns(new ValueTask<bool>(false));
-        ctx.Services.AddSingleton<IJSRuntime>(jsRuntime);
+        ctx.Services.AddSingleton(jsRuntime);
         var browser = new BrowserInteropService(jsRuntime);
         ctx.Services.AddSingleton(browser);
         var theme = new ThemeService(browser);

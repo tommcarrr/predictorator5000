@@ -1,19 +1,15 @@
 using Bunit;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
-using Microsoft.AspNetCore.Http;
-using IndexPage = Predictorator.Components.Pages.Index;
+using MudBlazor.Services;
+using NSubstitute;
+using Predictorator.Components.Layout;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
-using MudBlazor.Services;
-using NSubstitute;
-using System.Linq;
-using System;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Components;
-using Predictorator.Components.Layout;
-using Xunit;
+using IndexPage = Predictorator.Components.Pages.Index;
 
 namespace Predictorator.Tests;
 
@@ -25,7 +21,7 @@ public class IndexPageBUnitTests
         ctx.Services.AddMudServices();
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var jsRuntime = Substitute.For<IJSRuntime>();
-        ctx.Services.AddSingleton<IJSRuntime>(jsRuntime);
+        ctx.Services.AddSingleton(jsRuntime);
         var browser = new BrowserInteropService(jsRuntime);
         ctx.Services.AddSingleton(browser);
         var theme = new ThemeService(browser);

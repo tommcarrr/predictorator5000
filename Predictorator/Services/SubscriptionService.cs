@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using Resend;
 using Predictorator.Data;
 using Predictorator.Models;
+using Resend;
 
 namespace Predictorator.Services;
 

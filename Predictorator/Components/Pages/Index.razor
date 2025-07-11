@@ -1,6 +1,6 @@
 @page "/"
+@using System.Text
 @rendermode InteractiveServer
-@using Microsoft.AspNetCore.WebUtilities
 @inject NavigationManager NavigationManager
 @inject IFixtureService FixtureService
 @inject IDateRangeCalculator DateRangeCalculator
@@ -85,7 +85,7 @@ else if (_fixtures.Response.Any())
     private bool _showPicker;
     private int _currentWeekOffset;
     private readonly Dictionary<int, PredictionInput> _predictions = new();
-    private MudBlazor.DateRange _selectedRange = new(null, null);
+    private DateRange _selectedRange = new(null, null);
 
     [Parameter, SupplyParameterFromQuery(Name = "fromDate")] public DateTime? FromDate { get; set; }
     [Parameter, SupplyParameterFromQuery(Name = "toDate")] public DateTime? ToDate { get; set; }
@@ -183,8 +183,8 @@ else if (_fixtures.Response.Any())
     {
         if (_fixtures == null) return;
 
-        var sbText = new System.Text.StringBuilder();
-        var sbHtml = new System.Text.StringBuilder();
+        var sbText = new StringBuilder();
+        var sbHtml = new StringBuilder();
         bool missing = false;
         sbHtml.Append("<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse: collapse;\">");
 

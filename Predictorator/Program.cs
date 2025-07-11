@@ -1,18 +1,15 @@
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Predictorator.Data;
-using Predictorator.Services;
-using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.RateLimiting;
-using Predictorator.Components;
 using MudBlazor.Services;
-using Microsoft.Extensions.Caching.Hybrid;
-using Resend;
-using Predictorator.Startup;
+using Predictorator.Components;
+using Predictorator.Data;
 using Predictorator.Options;
+using Predictorator.Services;
+using Predictorator.Startup;
+using Resend;
 using Serilog;
 using Serilog.Events;
-using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,12 +63,12 @@ builder.Services.AddRateLimiter(options =>
 });
 builder.Services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 builder.Services.AddHybridCache();
-builder.Services.AddHttpClient<Resend.ResendClient>();
-builder.Services.Configure<Resend.ResendClientOptions>(o =>
+builder.Services.AddHttpClient<ResendClient>();
+builder.Services.Configure<ResendClientOptions>(o =>
 {
     o.ApiToken = builder.Configuration["Resend:ApiToken"]!;
 });
-builder.Services.AddTransient<Resend.IResend, Resend.ResendClient>();
+builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.AddTransient<SubscriptionService>();
 builder.Services.Configure<AdminUserOptions>(options =>
 {

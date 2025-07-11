@@ -1,6 +1,3 @@
-using System;
-using System.Threading.Tasks;
-
 namespace Predictorator.Services;
 
 public class ThemeService

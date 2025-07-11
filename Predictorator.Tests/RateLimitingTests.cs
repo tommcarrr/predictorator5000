@@ -1,16 +1,16 @@
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Builder;
+using System.Net;
 using System.Threading.RateLimiting;
-using Predictorator.Services;
-using Predictorator.Models.Fixtures;
-using Predictorator.Tests.Helpers;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Predictorator.Data;
+using Predictorator.Models.Fixtures;
+using Predictorator.Services;
+using Predictorator.Tests.Helpers;
 
 namespace Predictorator.Tests;
 
@@ -58,6 +58,6 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
         var first = await client.GetAsync("/");
         var second = await client.GetAsync("/");
 
-        Assert.Equal(System.Net.HttpStatusCode.TooManyRequests, second.StatusCode);
+        Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
     }
 }

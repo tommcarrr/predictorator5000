@@ -1,11 +1,6 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Caching.Hybrid;
-using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Hosting;
-using System.IO;
-using System.Text.Json;
-using System.Linq;
 using Predictorator.Models.Fixtures;
 
 namespace Predictorator.Services
@@ -52,7 +47,7 @@ namespace Predictorator.Services
                     return mockResponse;
                 }
 
-                var query = new Dictionary<string, string?>()
+                var query = new Dictionary<string, string?>
                 {
                     ["league"] = "39",
                     ["season"] = fromDate.AddMonths(-7).Year.ToString(),

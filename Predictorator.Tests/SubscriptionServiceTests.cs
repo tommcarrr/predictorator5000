@@ -1,11 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
-using Resend;
 using Predictorator.Data;
 using Predictorator.Models;
 using Predictorator.Services;
-using Xunit;
+using Resend;
 
 namespace Predictorator.Tests;
 
