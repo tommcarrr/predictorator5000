@@ -23,3 +23,8 @@ docker compose up --build
 ```
 
 This will start both the web application and a SQL Server container.
+
+Data Protection keys are persisted to `./dp-keys` by default. When running in Docker,
+the keys are stored in `/var/dp-keys` which is backed by the `dp-keys` volume.
+You can override the location by setting the `DataProtection__KeyPath` environment
+variable.
