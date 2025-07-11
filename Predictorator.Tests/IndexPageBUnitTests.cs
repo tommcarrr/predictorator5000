@@ -87,4 +87,32 @@ public class IndexPageBUnitTests
         Assert.NotNull(home);
         Assert.NotNull(away);
     }
+
+    [Fact]
+    public async Task WeekNavigation_Uses_WeekOffset_And_Buttons_Remain_Enabled()
+    {
+        await using var ctx = CreateContext();
+        var navMan = (NavigationManager)ctx.Services.GetRequiredService<NavigationManager>();
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.CloseComponent();
+        };
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        var next = cut.Find("#nextWeekBtn");
+        var prev = cut.Find("#prevWeekBtn");
+        Assert.False(next.HasAttribute("disabled"));
+        Assert.False(prev.HasAttribute("disabled"));
+
+        next.Click();
+        Assert.Contains("weekOffset=1", navMan.Uri);
+        Assert.DoesNotContain("fromDate", navMan.Uri);
+        Assert.DoesNotContain("toDate", navMan.Uri);
+
+        cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        next = cut.Find("#nextWeekBtn");
+        prev = cut.Find("#prevWeekBtn");
+        Assert.False(next.HasAttribute("disabled"));
+        Assert.False(prev.HasAttribute("disabled"));
+    }
 }
