@@ -7,6 +7,9 @@
 <MudLayout>
     <MudDialogProvider />
     <MudPopoverProvider />
+    <MudThemeProvider IsDarkMode="@ThemeService.IsDarkMode"
+                      IsDarkModeChanged="@ThemeService.SetDarkModeAsync" />
+    <MudSnackbarProvider />
     <MudAppBar Elevation="1" Color="Color.Primary">
         <MudText Typo="Typo.h5" Class="ml-2">Predictotronix</MudText>
         <MudSpacer />
