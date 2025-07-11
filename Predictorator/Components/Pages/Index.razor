@@ -93,6 +93,11 @@ else if (_fixtures.Response.Any())
 
     protected override async Task OnParametersSetAsync()
     {
+        var query = QueryHelpers.ParseQuery(new Uri(NavigationManager.Uri).Query);
+        if (!query.ContainsKey("fromDate")) FromDate = null;
+        if (!query.ContainsKey("toDate")) ToDate = null;
+        if (!query.ContainsKey("weekOffset")) WeekOffset = null;
+
         var (from, to) = DateRangeCalculator.GetDates(FromDate, ToDate, WeekOffset);
         _fromDate = from;
         _toDate = to;
