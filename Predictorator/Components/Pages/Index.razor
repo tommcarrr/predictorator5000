@@ -133,9 +133,14 @@ else if (_fixtures.Response.Any())
     {
         if (range.Start.HasValue && range.End.HasValue)
         {
+            var newFrom = range.Start.Value.Date;
+            var newTo = range.End.Value.Date;
+            if (newFrom == _fromDate && newTo == _toDate)
+                return;
+
             _selectedRange = range;
-            _fromDate = range.Start.Value.Date;
-            _toDate = range.End.Value.Date;
+            _fromDate = newFrom;
+            _toDate = newTo;
             Reload();
         }
     }
