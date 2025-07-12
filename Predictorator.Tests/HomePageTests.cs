@@ -76,5 +76,6 @@ public class HomePageTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.NotNull(doc.QuerySelector("#copyBtn"));
         Assert.NotNull(doc.QuerySelector("#fillRandomBtn"));
         Assert.NotNull(doc.QuerySelector("#clearBtn"));
+        Assert.NotNull(doc.QuerySelector("#resetBtn"));
     }
 }
