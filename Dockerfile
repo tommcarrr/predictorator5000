@@ -1,5 +1,5 @@
 # Build stage
-FROM mcr.microsoft.com/dotnet/sdk:9.0.301 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0.100 AS build
 WORKDIR /src
 COPY Predictorator/Predictorator.csproj Predictorator/
 RUN dotnet restore Predictorator/Predictorator.csproj
