@@ -115,4 +115,32 @@ public class IndexPageBUnitTests
         Assert.False(next.HasAttribute("disabled"));
         Assert.False(prev.HasAttribute("disabled"));
     }
+
+    [Fact]
+    public async Task ResetButton_Removes_Date_Range_And_Reenables_Week_Navigation()
+    {
+        await using var ctx = CreateContext();
+        var navMan = (NavigationManager)ctx.Services.GetRequiredService<NavigationManager>();
+        navMan.NavigateTo("/?fromDate=2024-02-01&toDate=2024-02-07");
+
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.CloseComponent();
+        };
+
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        var next = cut.Find("#nextWeekBtn");
+        var reset = cut.Find("#resetBtn");
+        Assert.True(next.HasAttribute("disabled"));
+        Assert.False(reset.HasAttribute("disabled"));
+
+        reset.Click();
+        Assert.DoesNotContain("fromDate", navMan.Uri);
+        Assert.DoesNotContain("toDate", navMan.Uri);
+
+        cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        next = cut.Find("#nextWeekBtn");
+        Assert.False(next.HasAttribute("disabled"));
+    }
 }
