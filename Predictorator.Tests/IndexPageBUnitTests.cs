@@ -25,7 +25,7 @@ public class IndexPageBUnitTests
         ctx.Services.AddSingleton(jsRuntime);
         var browser = new BrowserInteropService(jsRuntime);
         ctx.Services.AddSingleton(browser);
-        var theme = new ThemeService();
+        var theme = new ThemeService(browser);
         ctx.Services.AddSingleton(theme);
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));

@@ -26,9 +26,19 @@ window.app = (() => {
             (window.innerWidth <= 800 && window.innerHeight <= 600);
     }
 
+    function setLocalStorage(key, value) {
+        window.localStorage.setItem(key, value);
+    }
+
+    function getLocalStorage(key) {
+        return window.localStorage.getItem(key);
+    }
+
     return {
         copyToClipboardText,
         copyToClipboardHtml,
-        isMobileDevice
+        isMobileDevice,
+        setLocalStorage,
+        getLocalStorage
     };
 })();

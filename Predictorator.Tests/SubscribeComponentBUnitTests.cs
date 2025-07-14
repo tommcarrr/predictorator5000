@@ -16,15 +16,16 @@ namespace Predictorator.Tests;
 
 public class SubscribeComponentBUnitTests
 {
-    private BunitContext CreateContext(Dictionary<string,string?> settings)
+    private BunitContext CreateContext(Dictionary<string, string?> settings)
     {
         var ctx = new BunitContext();
         ctx.Services.AddMudServices();
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var jsRuntime = Substitute.For<IJSRuntime>();
         ctx.Services.AddSingleton(jsRuntime);
-        ctx.Services.AddSingleton(new BrowserInteropService(jsRuntime));
-        ctx.Services.AddSingleton(new ThemeService());
+        var browser = new BrowserInteropService(jsRuntime);
+        ctx.Services.AddSingleton(browser);
+        ctx.Services.AddSingleton(new ThemeService(browser));
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
 
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
@@ -44,7 +45,7 @@ public class SubscribeComponentBUnitTests
     [Fact]
     public async Task Renders_Email_Tab_When_Resend_Configured()
     {
-        await using var ctx = CreateContext(new Dictionary<string,string?> { ["Resend:ApiToken"] = "token" });
+        await using var ctx = CreateContext(new Dictionary<string, string?> { ["Resend:ApiToken"] = "token" });
         var cut = ctx.Render<Subscribe>();
         Assert.Contains("Email address", cut.Markup);
         Assert.DoesNotContain("Phone number", cut.Markup);
@@ -53,7 +54,7 @@ public class SubscribeComponentBUnitTests
     [Fact]
     public async Task Renders_Sms_Tab_When_Twilio_Configured()
     {
-        await using var ctx = CreateContext(new Dictionary<string,string?>
+        await using var ctx = CreateContext(new Dictionary<string, string?>
         {
             ["Twilio:AccountSid"] = "sid",
             ["Twilio:AuthToken"] = "token",
