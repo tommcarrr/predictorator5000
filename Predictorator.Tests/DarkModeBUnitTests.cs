@@ -20,12 +20,10 @@ public class DarkModeBUnitTests
         ctx.Services.AddMudServices();
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var jsRuntime = Substitute.For<IJSRuntime>();
-        jsRuntime.InvokeAsync<bool>("app.getDarkMode", Arg.Any<object[]?>()).Returns(new ValueTask<bool>(false));
         ctx.Services.AddSingleton(jsRuntime);
         var browser = new BrowserInteropService(jsRuntime);
         ctx.Services.AddSingleton(browser);
-        var theme = new ThemeService(browser);
-        theme.InitializeAsync().GetAwaiter().GetResult();
+        var theme = new ThemeService();
         ctx.Services.AddSingleton(theme);
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
@@ -40,7 +38,7 @@ public class DarkModeBUnitTests
     }
 
     [Fact]
-    public async Task ToggleDarkModeAppliesDarkClass()
+    public async Task ToggleDarkMode_UpdatesServiceState()
     {
         await using var ctx = CreateContext();
         var cut = ctx.Render<App>();
@@ -49,6 +47,31 @@ public class DarkModeBUnitTests
 
         toggle.Click();
 
-        cut.WaitForAssertion(() => Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsDarkMode), timeout: TimeSpan.FromSeconds(1));
+        cut.WaitForAssertion(() =>
+        {
+            Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsDarkMode);
+        }, timeout: TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public async Task Initialize_Uses_Existing_State()
+    {
+        await using var ctx = new BunitContext();
+        ctx.Services.AddMudServices();
+        ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
+        var jsRuntime = Substitute.For<IJSRuntime>();
+        ctx.Services.AddSingleton(jsRuntime);
+        var browser = new BrowserInteropService(jsRuntime);
+        ctx.Services.AddSingleton(browser);
+        var theme = new ThemeService();
+        theme.SetDarkMode(true);
+        ctx.Services.AddSingleton(theme);
+        ctx.Services.AddSingleton(Substitute.For<IDialogService>());
+        ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
+        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) }));
+
+        var cut = ctx.Render<App>();
+
+        Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsDarkMode);
     }
 }

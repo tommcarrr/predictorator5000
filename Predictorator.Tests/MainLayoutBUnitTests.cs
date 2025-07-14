@@ -20,12 +20,10 @@ public class MainLayoutBUnitTests
         ctx.Services.AddMudServices();
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var jsRuntime = Substitute.For<IJSRuntime>();
-        jsRuntime.InvokeAsync<bool>("app.getDarkMode", Arg.Any<object[]?>()).Returns(new ValueTask<bool>(false));
         ctx.Services.AddSingleton(jsRuntime);
         var browser = new BrowserInteropService(jsRuntime);
         ctx.Services.AddSingleton(browser);
-        var theme = new ThemeService(browser);
-        theme.InitializeAsync().GetAwaiter().GetResult();
+        var theme = new ThemeService();
         ctx.Services.AddSingleton(theme);
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         return ctx;
@@ -52,15 +50,17 @@ public class MainLayoutBUnitTests
     }
 
     [Fact]
-    public async Task DarkModeToggleInvokesInterop()
+    public async Task DarkModeToggleUpdatesState()
     {
         await using var ctx = CreateContext();
-        var jsRuntime = ctx.Services.GetRequiredService<IJSRuntime>();
         RenderFragment body = b => b.AddMarkupContent(0, "<p>child</p>");
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
         var toggle = cut.Find("#darkModeToggle");
         toggle.Click();
-        _ = jsRuntime.Received().InvokeVoidAsync("app.saveDarkMode", Arg.Is<object[]>(o => (bool)o[0] == true));
+        cut.WaitForAssertion(() =>
+        {
+            Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsDarkMode);
+        });
     }
 
     [Fact]

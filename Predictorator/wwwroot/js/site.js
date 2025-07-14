@@ -1,13 +1,5 @@
 window.app = (() => {
 
-    function saveDarkMode(enable) {
-        localStorage.setItem('dark-mode', enable ? 'enabled' : 'disabled');
-    }
-
-    function getDarkMode() {
-        const enabled = localStorage.getItem('dark-mode') === 'enabled';
-        return enabled;
-    }
 
     function copyToClipboardText(text) {
         navigator.clipboard.writeText(text).then(() => {
@@ -35,8 +27,6 @@ window.app = (() => {
     }
 
     return {
-        saveDarkMode,
-        getDarkMode,
         copyToClipboardText,
         copyToClipboardHtml,
         isMobileDevice
