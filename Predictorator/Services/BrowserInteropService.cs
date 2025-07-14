@@ -18,4 +18,10 @@ public class BrowserInteropService
     public ValueTask<bool> IsMobileDeviceAsync() => _js.InvokeAsync<bool>("app.isMobileDevice");
 
     public ValueTask AlertAsync(string message) => _js.InvokeVoidAsync("alert", message);
+
+    public ValueTask SetLocalStorageAsync(string key, string value) =>
+        _js.InvokeVoidAsync("app.setLocalStorage", key, value);
+
+    public ValueTask<string?> GetLocalStorageAsync(string key) =>
+        _js.InvokeAsync<string?>("app.getLocalStorage", key);
 }

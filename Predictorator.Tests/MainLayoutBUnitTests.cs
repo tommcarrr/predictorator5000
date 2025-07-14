@@ -24,7 +24,7 @@ public class MainLayoutBUnitTests
         ctx.Services.AddSingleton(jsRuntime);
         var browser = new BrowserInteropService(jsRuntime);
         ctx.Services.AddSingleton(browser);
-        var theme = new ThemeService();
+        var theme = new ThemeService(browser);
         ctx.Services.AddSingleton(theme);
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
 

@@ -24,7 +24,7 @@ public class DarkModeBUnitTests
         ctx.Services.AddSingleton(jsRuntime);
         var browser = new BrowserInteropService(jsRuntime);
         ctx.Services.AddSingleton(browser);
-        var theme = new ThemeService();
+        var theme = new ThemeService(browser);
         ctx.Services.AddSingleton(theme);
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
@@ -73,10 +73,11 @@ public class DarkModeBUnitTests
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var jsRuntime = Substitute.For<IJSRuntime>();
         ctx.Services.AddSingleton(jsRuntime);
+        jsRuntime.InvokeAsync<string?>("app.getLocalStorage", Arg.Any<object[]>())
+            .Returns("true");
         var browser = new BrowserInteropService(jsRuntime);
         ctx.Services.AddSingleton(browser);
-        var theme = new ThemeService();
-        theme.SetDarkMode(true);
+        var theme = new ThemeService(browser);
         ctx.Services.AddSingleton(theme);
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
@@ -95,6 +96,9 @@ public class DarkModeBUnitTests
 
         var cut = ctx.Render<App>();
 
-        Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsDarkMode);
+        cut.WaitForAssertion(() =>
+        {
+            Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsDarkMode);
+        }, timeout: TimeSpan.FromSeconds(1));
     }
 }
