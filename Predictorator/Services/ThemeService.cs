@@ -16,6 +16,7 @@ public class ThemeService
     public async Task InitializeAsync()
     {
         IsDarkMode = await _browser.GetDarkModeAsync();
+        OnChange?.Invoke();
     }
 
     public async Task ToggleDarkModeAsync()
