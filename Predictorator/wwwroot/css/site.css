@@ -21,6 +21,12 @@ html, body {
     width: 100%;
 }
 
+/* Ensure table rows stretch the full table width */
+.fixture-row td {
+    padding: 0;
+    width: 100%;
+}
+
 .home-name {
     text-align: left;
 }
