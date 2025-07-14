@@ -27,7 +27,6 @@
         if (firstRender)
         {
             ThemeService.OnChange += OnThemeChanged;
-            await ThemeService.InitializeAsync();
             StateHasChanged();
         }
     }

@@ -10,9 +10,9 @@
         ThemeService.OnChange += OnThemeChanged;
     }
 
-    private async Task ToggleDarkMode()
+    private void ToggleDarkMode()
     {
-        await ThemeService.ToggleDarkModeAsync();
+        ThemeService.ToggleDarkMode();
     }
 
     private void OnThemeChanged() => InvokeAsync(StateHasChanged);
