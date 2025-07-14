@@ -1,6 +1,7 @@
 using Bunit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.JSInterop;
 using MudBlazor;
 using MudBlazor.Services;
@@ -34,6 +35,17 @@ public class DarkModeBUnitTests
         };
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider));
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
+
+        var settings = new Dictionary<string, string?>
+        {
+            ["Resend:ApiToken"] = "token",
+            ["Twilio:AccountSid"] = "sid",
+            ["Twilio:AuthToken"] = "token",
+            ["Twilio:FromNumber"] = "+1"
+        };
+        var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
+        ctx.Services.AddSingleton<IConfiguration>(config);
+        ctx.Services.AddSingleton<NotificationFeatureService>();
         return ctx;
     }
 
@@ -69,6 +81,17 @@ public class DarkModeBUnitTests
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) }));
+
+        var settings = new Dictionary<string, string?>
+        {
+            ["Resend:ApiToken"] = "token",
+            ["Twilio:AccountSid"] = "sid",
+            ["Twilio:AuthToken"] = "token",
+            ["Twilio:FromNumber"] = "+1"
+        };
+        var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
+        ctx.Services.AddSingleton<IConfiguration>(config);
+        ctx.Services.AddSingleton<NotificationFeatureService>();
 
         var cut = ctx.Render<App>();
 

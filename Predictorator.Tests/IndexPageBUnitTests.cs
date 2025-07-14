@@ -2,6 +2,7 @@ using Bunit;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.JSInterop;
 using MudBlazor.Services;
 using NSubstitute;
@@ -34,6 +35,17 @@ public class IndexPageBUnitTests
             UtcNow = new DateTime(2024, 1, 1)
         };
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider));
+
+        var settings = new Dictionary<string, string?>
+        {
+            ["Resend:ApiToken"] = "token",
+            ["Twilio:AccountSid"] = "sid",
+            ["Twilio:AuthToken"] = "token",
+            ["Twilio:FromNumber"] = "+1"
+        };
+        var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
+        ctx.Services.AddSingleton<IConfiguration>(config);
+        ctx.Services.AddSingleton<NotificationFeatureService>();
         return ctx;
     }
 

@@ -1,7 +1,11 @@
 @rendermode InteractiveServer
 @using Predictorator.Components.Pages.Subscription
 @inject IDialogService DialogService
-<MudButton Variant="Variant.Text" OnClick="@OpenSubscribe">Subscribe</MudButton>
+@inject NotificationFeatureService Features
+@if (Features.AnyEnabled)
+{
+    <MudButton Variant="Variant.Text" OnClick="@OpenSubscribe">Subscribe</MudButton>
+}
 @code {
     private void OpenSubscribe()
     {

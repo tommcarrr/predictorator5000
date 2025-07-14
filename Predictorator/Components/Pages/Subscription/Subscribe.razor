@@ -2,11 +2,14 @@
 @rendermode InteractiveServer
 @inject SubscriptionService SubscriptionService
 @inject NavigationManager Navigation
+@inject NotificationFeatureService Features
 
 <MudPaper Class="pa-4" Elevation="1">
     <h2>Subscribe to Notifications</h2>
     <MudTabs>
-        <MudTabPanel Text="Email">
+        @if (Features.EmailEnabled)
+        {
+            <MudTabPanel Text="Email">
             @if (_emailSubmitted)
             {
                 <p>A verification link has been sent to your email address.</p>
@@ -22,8 +25,11 @@
                     </MudStack>
                 </EditForm>
             }
-        </MudTabPanel>
-        <MudTabPanel Text="SMS">
+            </MudTabPanel>
+        }
+        @if (Features.SmsEnabled)
+        {
+            <MudTabPanel Text="SMS">
             @if (_phoneSubmitted)
             {
                 <p>A verification link has been sent to your phone.</p>
@@ -39,7 +45,8 @@
                     </MudStack>
                 </EditForm>
             }
-        </MudTabPanel>
+            </MudTabPanel>
+        }
     </MudTabs>
 </MudPaper>
 
