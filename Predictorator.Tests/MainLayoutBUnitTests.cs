@@ -2,6 +2,7 @@ using Bunit;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.JSInterop;
 using MudBlazor;
 using MudBlazor.Services;
@@ -14,7 +15,7 @@ namespace Predictorator.Tests;
 
 public class MainLayoutBUnitTests
 {
-    private BunitContext CreateContext()
+    private BunitContext CreateContext(bool enableEmail = true, bool enableSms = true)
     {
         var ctx = new BunitContext();
         ctx.Services.AddMudServices();
@@ -26,6 +27,19 @@ public class MainLayoutBUnitTests
         var theme = new ThemeService();
         ctx.Services.AddSingleton(theme);
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
+
+        var settings = new Dictionary<string, string?>();
+        if (enableEmail)
+            settings["Resend:ApiToken"] = "token";
+        if (enableSms)
+        {
+            settings["Twilio:AccountSid"] = "sid";
+            settings["Twilio:AuthToken"] = "token";
+            settings["Twilio:FromNumber"] = "+1";
+        }
+        var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
+        ctx.Services.AddSingleton<IConfiguration>(config);
+        ctx.Services.AddSingleton<NotificationFeatureService>();
         return ctx;
     }
 
@@ -73,5 +87,14 @@ public class MainLayoutBUnitTests
         var button = cut.FindAll("button").First(b => b.TextContent.Trim() == "Subscribe");
         button.Click();
         dialog.Received().Show<Subscribe>(Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task SubscribeButtonNotRendered_When_Features_Disabled()
+    {
+        await using var ctx = CreateContext(enableEmail: false, enableSms: false);
+        RenderFragment body = b => b.AddMarkupContent(0, "<p>child</p>");
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        Assert.DoesNotContain(cut.FindAll("button"), b => b.TextContent.Trim() == "Subscribe");
     }
 }

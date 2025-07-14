@@ -73,6 +73,7 @@ builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.Configure<TwilioOptions>(builder.Configuration.GetSection(TwilioOptions.SectionName));
 builder.Services.AddTransient<ITwilioSmsSender, TwilioSmsSender>();
 builder.Services.AddTransient<SubscriptionService>();
+builder.Services.AddSingleton<NotificationFeatureService>();
 builder.Services.Configure<AdminUserOptions>(options =>
 {
     builder.Configuration.GetSection(AdminUserOptions.SectionName).Bind(options);
