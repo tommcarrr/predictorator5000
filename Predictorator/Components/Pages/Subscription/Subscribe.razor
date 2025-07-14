@@ -5,33 +5,62 @@
 
 <MudPaper Class="pa-4" Elevation="1">
     <h2>Subscribe to Notifications</h2>
-
-    @if (_submitted)
-    {
-        <p>A verification link has been sent to your email address.</p>
-    }
-    else
-    {
-        <EditForm Model="this" OnValidSubmit="HandleSubmit">
-            <MudStack Spacing="2">
-                <DataAnnotationsValidator />
-                <ValidationSummary />
-                <MudTextField @bind-Value="Email" Label="Email address" For="@(() => Email)" />
-                <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Subscribe</MudButton>
-            </MudStack>
-        </EditForm>
-    }
+    <MudTabs>
+        <MudTabPanel Text="Email">
+            @if (_emailSubmitted)
+            {
+                <p>A verification link has been sent to your email address.</p>
+            }
+            else
+            {
+                <EditForm Model="this" OnValidSubmit="HandleEmailSubmit">
+                    <MudStack Spacing="2">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <MudTextField @bind-Value="Email" Label="Email address" For="@(() => Email)" />
+                        <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Subscribe</MudButton>
+                    </MudStack>
+                </EditForm>
+            }
+        </MudTabPanel>
+        <MudTabPanel Text="SMS">
+            @if (_phoneSubmitted)
+            {
+                <p>A verification link has been sent to your phone.</p>
+            }
+            else
+            {
+                <EditForm Model="this" OnValidSubmit="HandlePhoneSubmit">
+                    <MudStack Spacing="2">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <MudTextField @bind-Value="PhoneNumber" Label="Phone number" For="@(() => PhoneNumber)" />
+                        <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Subscribe</MudButton>
+                    </MudStack>
+                </EditForm>
+            }
+        </MudTabPanel>
+    </MudTabs>
 </MudPaper>
 
 @code {
     [Required, EmailAddress]
     public string Email { get; set; } = string.Empty;
-    private bool _submitted;
-
-    private async Task HandleSubmit()
+    [Required, Phone]
+    public string PhoneNumber { get; set; } = string.Empty;
+    private bool _emailSubmitted;
+    private bool _phoneSubmitted;
+    private async Task HandleEmailSubmit()
     {
         var baseUrl = Navigation.BaseUri.TrimEnd('/');
         await SubscriptionService.AddSubscriberAsync(Email, baseUrl);
-        _submitted = true;
+        _emailSubmitted = true;
+    }
+
+    private async Task HandlePhoneSubmit()
+    {
+        var baseUrl = Navigation.BaseUri.TrimEnd('/');
+        await SubscriptionService.AddSmsSubscriberAsync(PhoneNumber, baseUrl);
+        _phoneSubmitted = true;
     }
 }
