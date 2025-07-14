@@ -21,10 +21,18 @@ html, body {
     width: 100%;
 }
 
-/* Ensure table rows stretch the full table width */
-.fixture-row td {
-    padding: 0;
+
+/* Fixture row container */
+.fixture-row {
+    display: flex;
+    flex-direction: column;
     width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+.fixture-info {
+    font-size: smaller;
+    text-align: center;
 }
 
 .home-name {

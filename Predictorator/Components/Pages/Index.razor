@@ -37,34 +37,29 @@ else if (_fixtures.Response.Any())
         <MudPaper Class="my-4" Elevation="1">
             <MudText Typo="Typo.h6" Class="pa-2">@group.Key.ToString("dddd, MMMM d, yyyy")</MudText>
             <MudPaper Class="pa-2">
-                <MudTable Dense="true" Items="group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name)" T="FixtureData">
-                    <RowTemplate Context="fixture">
-                        <MudTr class="fixture-row">
-                            <td colspan="3">
-                                <div class="fixture-line">
-                                    <MudImage Src="@fixture.Teams.Home.Logo" Alt="@fixture.Teams.Home.Name" Width="30" Height="30" />
-                                    <span class="team-name home-name">@fixture.Teams.Home.Name</span>
-                                    <MudNumericField T="int?" Class="score-input" Immediate="true"
-                                                     @bind-Value="_predictions[fixture.Fixture.Id].Home"
-                                                     Disabled="@(fixture.Score?.Fulltime.Home != null)" Max="20" Min="0" />
-                                    <span class="hyphen">-</span>
-                                    <MudNumericField T="int?" Class="score-input" Immediate="true"
-                                                     @bind-Value="_predictions[fixture.Fixture.Id].Away"
-                                                     Disabled="@(fixture.Score?.Fulltime.Away != null)" Max="20" Min="0" />
-                                    <span class="team-name away-name">@fixture.Teams.Away.Name</span>
-                                    <MudImage Src="@fixture.Teams.Away.Logo" Alt="@fixture.Teams.Away.Name" Width="30" Height="30" />
-                                </div>
-                            </td>
-                        </MudTr>
-                        <MudTr>
-                            <td colspan="3" class="mud-table-cell mud-text-secondary" style="font-size:smaller;text-align:center">
-                                @{ var ukTz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
-                                   var uk = TimeZoneInfo.ConvertTime(fixture.Fixture.Date, ukTz); }
-                                @uk.ToString("h:mm tt") - @fixture.Fixture.Venue.Name, @fixture.Fixture.Venue.City
-                            </td>
-                        </MudTr>
-                    </RowTemplate>
-                </MudTable>
+                @foreach (var fixture in group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name))
+                {
+                    <div class="fixture-row">
+                        <div class="fixture-line">
+                            <MudImage Src="@fixture.Teams.Home.Logo" Alt="@fixture.Teams.Home.Name" Width="30" Height="30" />
+                            <span class="team-name home-name">@fixture.Teams.Home.Name</span>
+                            <MudNumericField T="int?" Class="score-input" Immediate="true"
+                                             @bind-Value="_predictions[fixture.Fixture.Id].Home"
+                                             Disabled="@(fixture.Score?.Fulltime.Home != null)" Max="20" Min="0" />
+                            <span class="hyphen">-</span>
+                            <MudNumericField T="int?" Class="score-input" Immediate="true"
+                                             @bind-Value="_predictions[fixture.Fixture.Id].Away"
+                                             Disabled="@(fixture.Score?.Fulltime.Away != null)" Max="20" Min="0" />
+                            <span class="team-name away-name">@fixture.Teams.Away.Name</span>
+                            <MudImage Src="@fixture.Teams.Away.Logo" Alt="@fixture.Teams.Away.Name" Width="30" Height="30" />
+                        </div>
+                        <div class="fixture-info mud-text-secondary">
+                            @{ var ukTz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+                               var uk = TimeZoneInfo.ConvertTime(fixture.Fixture.Date, ukTz); }
+                            @uk.ToString("h:mm tt") - @fixture.Fixture.Venue.Name, @fixture.Fixture.Venue.City
+                        </div>
+                    </div>
+                }
             </MudPaper>
         </MudPaper>
     }
