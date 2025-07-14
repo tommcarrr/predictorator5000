@@ -70,6 +70,8 @@ builder.Services.Configure<ResendClientOptions>(o =>
     o.ApiToken = builder.Configuration["Resend:ApiToken"]!;
 });
 builder.Services.AddTransient<IResend, ResendClient>();
+builder.Services.Configure<TwilioOptions>(builder.Configuration.GetSection(TwilioOptions.SectionName));
+builder.Services.AddTransient<ITwilioSmsSender, TwilioSmsSender>();
 builder.Services.AddTransient<SubscriptionService>();
 builder.Services.Configure<AdminUserOptions>(options =>
 {

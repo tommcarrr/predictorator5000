@@ -13,4 +13,5 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     }
 
     public DbSet<Subscriber> Subscribers => Set<Subscriber>();
+    public DbSet<SmsSubscriber> SmsSubscribers => Set<SmsSubscriber>();
 }

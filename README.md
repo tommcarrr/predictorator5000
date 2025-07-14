@@ -15,6 +15,8 @@ dotnet test Predictorator.sln
 The seeded admin account credentials are configured via `AdminUser` settings.
 You can override these values by setting the `ADMIN_EMAIL` and
 `ADMIN_PASSWORD` environment variables before running the application.
+SMS notifications use Twilio. Set `Twilio__AccountSid`, `Twilio__AuthToken`, and
+`Twilio__FromNumber` environment variables with your Twilio credentials.
 
 To run the application in Docker using the latest Compose Specification:
 

@@ -18,6 +18,9 @@ services:
       ConnectionStrings__DefaultConnection: Server=db;Database=Predictorator;User Id=sa;Password=Your_password123;Encrypt=False
       ADMIN_EMAIL: admin@example.com
       ADMIN_PASSWORD: Admin123!
+      Twilio__AccountSid: your_sid
+      Twilio__AuthToken: your_token
+      Twilio__FromNumber: +10000000000
       DataProtection__KeyPath: /var/dp-keys
     depends_on:
       - db

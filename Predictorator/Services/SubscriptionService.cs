@@ -10,12 +10,14 @@ public class SubscriptionService
     private readonly ApplicationDbContext _db;
     private readonly IResend _resend;
     private readonly IConfiguration _config;
+    private readonly ITwilioSmsSender _smsSender;
 
-    public SubscriptionService(ApplicationDbContext db, IResend resend, IConfiguration config)
+    public SubscriptionService(ApplicationDbContext db, IResend resend, IConfiguration config, ITwilioSmsSender smsSender)
     {
         _db = db;
         _resend = resend;
         _config = config;
+        _smsSender = smsSender;
     }
 
     public async Task AddSubscriberAsync(string email, string baseUrl)
@@ -48,21 +50,65 @@ public class SubscriptionService
         await _resend.EmailSendAsync(message);
     }
 
+    public async Task AddSmsSubscriberAsync(string phoneNumber, string baseUrl)
+    {
+        if (await _db.SmsSubscribers.AnyAsync(s => s.PhoneNumber == phoneNumber))
+            return;
+
+        var subscriber = new SmsSubscriber
+        {
+            PhoneNumber = phoneNumber,
+            IsVerified = false,
+            VerificationToken = Guid.NewGuid().ToString("N"),
+            UnsubscribeToken = Guid.NewGuid().ToString("N"),
+            CreatedAt = DateTime.UtcNow
+        };
+        _db.SmsSubscribers.Add(subscriber);
+        await _db.SaveChangesAsync();
+
+        var verifyLink = $"{baseUrl}/Subscription/Verify?token={subscriber.VerificationToken}";
+        var unsubscribeLink = $"{baseUrl}/Subscription/Unsubscribe?token={subscriber.UnsubscribeToken}";
+        var message = $"Verify your phone subscription: {verifyLink}. To unsubscribe: {unsubscribeLink}";
+        await _smsSender.SendSmsAsync(phoneNumber, message);
+    }
+
     public async Task<bool> VerifyAsync(string token)
     {
         var subscriber = await _db.Subscribers.FirstOrDefaultAsync(s => s.VerificationToken == token);
-        if (subscriber == null) return false;
-        subscriber.IsVerified = true;
-        await _db.SaveChangesAsync();
-        return true;
+        if (subscriber != null)
+        {
+            subscriber.IsVerified = true;
+            await _db.SaveChangesAsync();
+            return true;
+        }
+
+        var smsSubscriber = await _db.SmsSubscribers.FirstOrDefaultAsync(s => s.VerificationToken == token);
+        if (smsSubscriber != null)
+        {
+            smsSubscriber.IsVerified = true;
+            await _db.SaveChangesAsync();
+            return true;
+        }
+        return false;
     }
 
     public async Task<bool> UnsubscribeAsync(string token)
     {
         var subscriber = await _db.Subscribers.FirstOrDefaultAsync(s => s.UnsubscribeToken == token);
-        if (subscriber == null) return false;
-        _db.Subscribers.Remove(subscriber);
-        await _db.SaveChangesAsync();
-        return true;
+        if (subscriber != null)
+        {
+            _db.Subscribers.Remove(subscriber);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+
+        var smsSubscriber = await _db.SmsSubscribers.FirstOrDefaultAsync(s => s.UnsubscribeToken == token);
+        if (smsSubscriber != null)
+        {
+            _db.SmsSubscribers.Remove(smsSubscriber);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+        return false;
     }
 }
