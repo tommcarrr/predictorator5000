@@ -56,6 +56,7 @@ public class CeefaxModeBUnitTests
         cut.WaitForAssertion(() =>
         {
             Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsCeefax);
+            Assert.Contains("ceefax", cut.Markup);
         }, timeout: TimeSpan.FromSeconds(1));
     }
 

@@ -9,3 +9,9 @@
 .ceefax-font {
     font-family: 'BBC-Ceefax', monospace;
 }
+
+body.ceefax {
+    font-family: 'BBC-Ceefax', monospace;
+    background-color: #000000;
+    color: #FFFFFF;
+}

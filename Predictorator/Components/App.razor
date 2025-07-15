@@ -10,7 +10,7 @@
     <link href="css/site.css" rel="stylesheet" />
     <HeadOutlet />
 </head>
-<body>
+<body class="@BodyClass">
     <Routes />
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
@@ -21,6 +21,8 @@
 @code {
     [Inject]
     private ThemeService ThemeService { get; set; } = null!;
+
+    private string? BodyClass => ThemeService.IsCeefax ? "ceefax" : null;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
