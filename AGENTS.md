@@ -57,6 +57,7 @@ Codex must be proficient in the following technologies and frameworks, which are
 
 - Codex must ensure that the app builds and passes tests via GitHub Actions or another CI system.
 - Linting and formatting checks (e.g., `dotnet format`) should be used to enforce consistency.
+- Run `dotnet build Predictorator.sln -warnaserror` to confirm there are no compiler warnings before completing any task.
 - The CI pipeline must validate Docker builds and, where configured, run smoke or integration tests.
 
 ### Running the Application
