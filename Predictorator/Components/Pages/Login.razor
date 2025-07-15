@@ -1,0 +1,57 @@
+@page "/admin"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject NavigationManager NavigationManager
+@inject ILogger<Login> Logger
+
+<h1>Log in</h1>
+<EditForm Model="_input" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <MudStack Spacing="2">
+        <MudTextField @bind-Value="_input.Email" Label="Email" Required="true" />
+        <MudTextField @bind-Value="_input.Password" Label="Password" InputType="InputType.Password" Required="true" />
+        <MudCheckBox T="bool" @bind-Checked="_input.RememberMe" Label="Remember me" />
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Log in</MudButton>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <MudAlert Severity="Severity.Error">@_error</MudAlert>
+        }
+    </MudStack>
+</EditForm>
+
+@code {
+    private readonly InputModel _input = new();
+    private string? _error;
+
+    private class InputModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = string.Empty;
+
+        public bool RememberMe { get; set; }
+    }
+
+    private async Task HandleLogin()
+    {
+        _error = null;
+        var result = await SignInManager.PasswordSignInAsync(_input.Email, _input.Password, _input.RememberMe, lockoutOnFailure: false);
+        if (result.Succeeded)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+        else if (result.IsLockedOut)
+        {
+            _error = "User locked out.";
+        }
+        else
+        {
+            _error = "Invalid login attempt.";
+        }
+    }
+}
