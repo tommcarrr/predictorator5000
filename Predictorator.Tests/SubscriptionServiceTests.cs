@@ -25,10 +25,10 @@ public class SubscriptionServiceTests
     }
 
     [Fact]
-    public async Task AddSubscriberAsync_sends_email_with_links()
+    public async Task SubscribeAsync_with_email_sends_email_with_links()
     {
         var service = CreateService(out var db, out var resend, out _);
-        await service.AddSubscriberAsync("user@example.com", "http://localhost");
+        await service.SubscribeAsync("user@example.com", null, "http://localhost");
 
         await resend.Received().EmailSendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
         var subscriber = await db.Subscribers.SingleAsync();
@@ -64,14 +64,21 @@ public class SubscriptionServiceTests
     }
 
     [Fact]
-    public async Task AddSmsSubscriberAsync_sends_sms()
+    public async Task SubscribeAsync_with_phone_sends_sms()
     {
         var service = CreateService(out var db, out _, out var sms);
-        await service.AddSmsSubscriberAsync("+123", "http://localhost");
+        await service.SubscribeAsync(null, "+123", "http://localhost");
 
         await sms.Received().SendSmsAsync("+123", Arg.Any<string>());
         var subscriber = await db.SmsSubscribers.SingleAsync();
         Assert.False(subscriber.IsVerified);
+    }
+
+    [Fact]
+    public async Task SubscribeAsync_throws_when_both_email_and_phone_provided()
+    {
+        var service = CreateService(out _, out _, out _);
+        await Assert.ThrowsAsync<ArgumentException>(() => service.SubscribeAsync("e@example.com", "+1", "http://localhost"));
     }
 
     [Fact]
