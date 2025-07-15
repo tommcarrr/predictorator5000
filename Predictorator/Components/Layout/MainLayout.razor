@@ -3,7 +3,8 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ThemeService ThemeService
 <MudLayout>
-    <MudThemeProvider @rendermode="InteractiveServer"
+<MudThemeProvider @rendermode="InteractiveServer"
+                      Theme="@ThemeService.CurrentTheme"
                       IsDarkMode="@ThemeService.IsDarkMode"
                       IsDarkModeChanged="@ThemeService.SetDarkModeAsync" />
 
@@ -21,6 +22,7 @@
         <SubscribeButton />
         <LoginDisplay />
         <DarkModeToggle />
+        <CeefaxToggle />
     </MudAppBar>
 
     <MudMainContent>

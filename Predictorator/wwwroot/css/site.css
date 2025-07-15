@@ -57,3 +57,14 @@ html, body {
     color: inherit;
     text-decoration: none;
 }
+
+@font-face {
+    font-family: 'BBC-Ceefax';
+    src: url('../fonts/bbc-ceefax-logo.otf.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.ceefax-font {
+    font-family: 'BBC-Ceefax', monospace;
+}

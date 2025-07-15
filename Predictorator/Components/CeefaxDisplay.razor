@@ -1,0 +1,32 @@
+@implements IDisposable
+@inject ThemeService ThemeService
+@using MudBlazor
+
+@if (ThemeService.IsCeefax)
+{
+    <MudPaper Class="pa-4 ceefax-font" Style="background-color:#000000; color:#FFFFFF;">
+        <MudText Typo="Typo.h5" Style="background-color:#0000FF; color:#FFFF00; padding:4px;">CEEFAX FOOTBALL</MudText>
+        <MudText Typo="Typo.subtitle2" Style="color:#FFFF00;">@_now.ToString("dd MMM yyyy HH:mm:ss")</MudText>
+        <MudDivider Class="my-2" />
+        <MudText Style="color:#00FF00;">Liverpool 3-0 Everton</MudText>
+        <MudText Style="color:#00FFFF;">Chelsea 1-1 Arsenal</MudText>
+        <MudText Style="color:#FF0000;">Next page 302</MudText>
+    </MudPaper>
+}
+
+@code {
+    private DateTime _now = DateTime.Now;
+    private System.Timers.Timer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Timers.Timer(1000);
+        _timer.Elapsed += (_, _) => InvokeAsync(() => { _now = DateTime.Now; StateHasChanged(); });
+        _timer.Start();
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}
