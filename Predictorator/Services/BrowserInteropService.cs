@@ -11,9 +11,11 @@ public class BrowserInteropService
         _js = js;
     }
 
-    public ValueTask CopyToClipboardTextAsync(string text) => _js.InvokeVoidAsync("app.copyToClipboardText", text);
+    public ValueTask<bool> CopyToClipboardTextAsync(string text) =>
+        _js.InvokeAsync<bool>("app.copyToClipboardText", text);
 
-    public ValueTask CopyToClipboardHtmlAsync(string html) => _js.InvokeVoidAsync("app.copyToClipboardHtml", html);
+    public ValueTask<bool> CopyToClipboardHtmlAsync(string html) =>
+        _js.InvokeAsync<bool>("app.copyToClipboardHtml", html);
 
     public ValueTask<bool> IsMobileDeviceAsync() => _js.InvokeAsync<bool>("app.isMobileDevice");
 

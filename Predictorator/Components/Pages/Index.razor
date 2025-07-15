@@ -5,6 +5,7 @@
 @inject IFixtureService FixtureService
 @inject IDateRangeCalculator DateRangeCalculator
 @inject BrowserInteropService Browser
+@inject ISnackbar Snackbar
 
 <MudText Typo="Typo.h3" Class="my-4 pa-2" Align="Align.Center">Premier League Fixtures</MudText>
 
@@ -18,6 +19,8 @@
         </MudText>
         <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(1))"
                        UserAttributes="@(new Dictionary<string, object>{{"id","nextWeekBtn"}})" />
+        <MudIconButton Icon="@Icons.Material.Filled.Close" Disabled="_autoWeek" OnClick="ResetRange"
+                       UserAttributes="@(new Dictionary<string, object>{{"id","resetBtn"}})" />
     </MudStack>
     <MudCollapse Expanded="_showPicker">
         <MudDateRangePicker DateRange="_selectedRange" DateRangeChanged="RangeChanged" Class="my-2"
@@ -159,6 +162,11 @@ else if (_fixtures.Response.Any())
         NavigationManager.NavigateTo(uri);
     }
 
+    private void ResetRange()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
     private void FillRandomScores()
     {
         var possible = new[] { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,4,4,5 };
@@ -228,15 +236,19 @@ else if (_fixtures.Response.Any())
 
         if (missing)
         {
-            await Browser.AlertAsync("Error: Please fill in all score predictions before copying.");
+            Snackbar.Add("Error: Please fill in all score predictions before copying.", Severity.Error);
             return;
         }
 
         var mobile = await Browser.IsMobileDeviceAsync();
-        if (mobile)
-            await Browser.CopyToClipboardTextAsync(sbText.ToString());
+        bool copied = mobile
+            ? await Browser.CopyToClipboardTextAsync(sbText.ToString())
+            : await Browser.CopyToClipboardHtmlAsync(sbHtml.ToString());
+
+        if (copied)
+            Snackbar.Add("Predictions copied to clipboard!", Severity.Success);
         else
-            await Browser.CopyToClipboardHtmlAsync(sbHtml.ToString());
+            Snackbar.Add("Could not copy predictions to clipboard.", Severity.Error);
     }
 
     private class PredictionInput
