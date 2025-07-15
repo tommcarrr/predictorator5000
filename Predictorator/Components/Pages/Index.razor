@@ -1,11 +1,8 @@
 @page "/"
-@using System.Text
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
 @inject IFixtureService FixtureService
 @inject IDateRangeCalculator DateRangeCalculator
-@inject BrowserInteropService Browser
-@inject ISnackbar Snackbar
 
 <MudText Typo="Typo.h3" Class="my-4 pa-2" Align="Align.Center">Premier League Fixtures</MudText>
 
@@ -35,7 +32,7 @@ else if (_fixtures.Response.Any())
     var groups = _fixtures.Response.GroupBy(f => f.Fixture.Date.Date).OrderBy(g => g.Key);
     foreach (var group in groups)
     {
-        <MudPaper Class="my-4" Elevation="1">
+        <MudPaper Class="my-4 fixture-group" Elevation="1" data-date="@group.Key.ToString("dddd, MMMM d, yyyy")">
             <MudText Typo="Typo.h6" Class="pa-2" Align="Align.Center">@group.Key.ToString("dddd, MMMM d, yyyy")</MudText>
             <MudPaper Class="pa-2">
                 @foreach (var fixture in group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name))
@@ -73,8 +70,8 @@ else if (_fixtures.Response.Any())
                UserAttributes="@(new Dictionary<string, object>{{"id","fillRandomBtn"}})">Complete with Random Scores</MudButton>
     <MudButton Color="Color.Warning" Variant="Variant.Filled" OnClick="@ClearScores"
                UserAttributes="@(new Dictionary<string, object>{{"id","clearBtn"}})">Clear Predictions</MudButton>
-    <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="@CopyPredictionsAsync"
-               UserAttributes="@(new Dictionary<string, object>{{"id","copyBtn"}})">Copy Predictions to Clipboard</MudButton>
+    <MudButton Color="Color.Success" Variant="Variant.Filled"
+               UserAttributes="@(new Dictionary<string, object>{{"id","copyBtn"}, {"onclick", "app.copyPredictions()"}})">Copy Predictions to Clipboard</MudButton>
 </MudStack>
 
 @code {
@@ -188,63 +185,6 @@ else if (_fixtures.Response.Any())
                 pred.Away = null;
         }
     }
-
-    private async Task CopyPredictionsAsync()
-    {
-        if (_fixtures == null) return;
-
-        var sbText = new StringBuilder();
-        var sbHtml = new StringBuilder();
-        bool missing = false;
-        sbHtml.Append("<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse: collapse;\">");
-
-        var groups = _fixtures.Response.GroupBy(f => f.Fixture.Date.Date).OrderBy(g => g.Key);
-        foreach (var group in groups)
-        {
-            var dateHeader = group.Key.ToString("dddd, MMMM d, yyyy");
-            sbText.AppendLine(dateHeader);
-            sbHtml.Append($"<thead><tr><th colspan=\"3\" style=\"background-color: #f2f2f2; text-align: center; padding: 10px;\">{dateHeader}</th></tr>");
-            sbHtml.Append("<tr><th style=\"background-color: #d9d9d9; text-align: left; padding: 5px; min-width: 120px\">Home Team</th>");
-            sbHtml.Append("<th style=\"background-color: #d9d9d9; text-align: center; padding: 5px;\">Score</th>");
-            sbHtml.Append("<th style=\"background-color: #d9d9d9; text-align: right; padding: 5px; min-width: 120px\">Away Team</th></tr></thead><tbody>");
-
-            foreach (var fixture in group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name))
-            {
-                var pred = _predictions[fixture.Fixture.Id];
-                var homeScore = pred.Home;
-                var awayScore = pred.Away;
-                if (homeScore == null || awayScore == null)
-                    missing = true;
-
-                var homeTeam = fixture.Teams.Home.Name.Trim();
-                var awayTeam = fixture.Teams.Away.Name.Trim();
-                sbText.AppendLine($"{homeTeam}    {homeScore} - {awayScore}    {awayTeam}");
-                sbHtml.Append($"<tr><td style=\"padding: 5px; text-align: left;\">{homeTeam}</td><td style=\"padding: 5px; text-align: center;\">{homeScore} - {awayScore}</td><td style=\"padding: 5px; text-align: right;\">{awayTeam}</td></tr>");
-            }
-
-            sbText.AppendLine();
-        }
-
-        sbHtml.Append("</tbody></table><br/>");
-
-        if (missing)
-        {
-            Snackbar.Add("Error: Please fill in all score predictions before copying.", Severity.Error);
-            return;
-        }
-
-        var mobile = await Browser.IsMobileDeviceAsync();
-        bool copied = mobile
-            ? await Browser.CopyToClipboardTextAsync(sbText.ToString())
-            : await Browser.CopyToClipboardHtmlAsync(sbHtml.ToString());
-
-        if (copied)
-            Snackbar.Add("Predictions copied to clipboard!", Severity.Success);
-        else
-            Snackbar.Add("Failed to copy predictions to clipboard.", Severity.Error);
-    }
-
-
     private class PredictionInput
     {
         public int? Home { get; set; }

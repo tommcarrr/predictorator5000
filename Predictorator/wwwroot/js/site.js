@@ -74,11 +74,68 @@ window.app = (() => {
         return window.localStorage.getItem(key);
     }
 
+    function copyPredictions() {
+        const groups = document.querySelectorAll('.fixture-group');
+        if (groups.length === 0) {
+            alert('No predictions available to copy.');
+            return;
+        }
+
+        let text = '';
+        let html = '<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">';
+        let missing = false;
+
+        groups.forEach(group => {
+            const dateHeader = group.getAttribute('data-date') || '';
+            text += dateHeader + '\n';
+            html += `<thead><tr><th colspan="3" style="background-color: #f2f2f2; text-align: center; padding: 10px;">${dateHeader}</th></tr>`;
+            html += '<tr><th style="background-color: #d9d9d9; text-align: left; padding: 5px; min-width: 120px">Home Team</th>' +
+                '<th style="background-color: #d9d9d9; text-align: center; padding: 5px;">Score</th>' +
+                '<th style="background-color: #d9d9d9; text-align: right; padding: 5px; min-width: 120px">Away Team</th></tr></thead><tbody>';
+
+            const rows = group.querySelectorAll('.fixture-row');
+            rows.forEach(row => {
+                const homeTeam = row.querySelector('.home-name')?.textContent.trim() || '';
+                const awayTeam = row.querySelector('.away-name')?.textContent.trim() || '';
+                const inputs = row.querySelectorAll('.score-input input');
+                const homeScore = inputs[0]?.value ?? '';
+                const awayScore = inputs[1]?.value ?? '';
+                if (homeScore === '' || awayScore === '') missing = true;
+
+                text += `${homeTeam}    ${homeScore} - ${awayScore}    ${awayTeam}\n`;
+                html += `<tr><td style="padding: 5px; text-align: left;">${homeTeam}</td>` +
+                    `<td style="padding: 5px; text-align: center;">${homeScore} - ${awayScore}</td>` +
+                    `<td style="padding: 5px; text-align: right;">${awayTeam}</td></tr>`;
+            });
+
+            text += '\n';
+            html += '</tbody>';
+        });
+
+        html += '</table><br/>';
+
+        if (missing) {
+            alert('Error: Please fill in all score predictions before copying.');
+            return;
+        }
+
+        const mobile = isMobileDevice();
+        const copyPromise = mobile ? copyToClipboardText(text) : copyToClipboardHtml(html);
+        Promise.resolve(copyPromise).then(copied => {
+            if (copied) {
+                alert('Predictions copied to clipboard!');
+            } else {
+                alert('Failed to copy predictions to clipboard.');
+            }
+        });
+    }
+
     return {
         copyToClipboardText,
         copyToClipboardHtml,
         isMobileDevice,
         setLocalStorage,
-        getLocalStorage
+        getLocalStorage,
+        copyPredictions
     };
 })();
