@@ -156,7 +156,13 @@ var razorComponents = app.MapRazorComponents<App>();
 razorComponents.AddInteractiveServerRenderMode();
 
 app.MapRazorPages();
-app.MapGet("/admin", () => Results.Redirect("/Identity/Account/Login"));
+app.MapGet("/Identity/Account/Register", () => Results.NotFound());
+app.MapPost("/Identity/Account/Register", () => Results.NotFound());
+app.MapGet("/logout", async (SignInManager<IdentityUser> sm) =>
+{
+    await sm.SignOutAsync();
+    return Results.Redirect("/");
+});
 
 if (!app.Environment.IsEnvironment("Testing"))
 {
