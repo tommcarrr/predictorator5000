@@ -18,6 +18,9 @@ You can override these values by setting the `ADMIN_EMAIL` and
 SMS notifications use Twilio. Set `Twilio__AccountSid`, `Twilio__AuthToken`, and
 `Twilio__FromNumber` environment variables with your Twilio credentials.
 
+Verification links sent to subscribers are valid for one hour. A background job
+runs every 15 minutes to remove unverified subscriptions that have expired.
+
 To run the application in Docker using the latest Compose Specification:
 
 ```bash
