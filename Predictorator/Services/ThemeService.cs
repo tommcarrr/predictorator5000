@@ -55,6 +55,8 @@ public class ThemeService
         {
             IsCeefax = result;
         }
+
+        OnChange?.Invoke();
     }
 
     public Task ToggleDarkModeAsync() => SetDarkModeAsync(!IsDarkMode);
