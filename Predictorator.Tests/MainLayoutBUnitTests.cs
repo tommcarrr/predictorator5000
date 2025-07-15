@@ -64,6 +64,17 @@ public class MainLayoutBUnitTests
     }
 
     [Fact]
+    public async Task LayoutRendersSupportLink()
+    {
+        await using var ctx = CreateContext();
+        RenderFragment body = b => b.AddMarkupContent(0, "<p>child</p>");
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        var link = cut.Find("#donateLink");
+        Assert.NotNull(link);
+        Assert.Equal("_blank", link.GetAttribute("target"));
+    }
+
+    [Fact]
     public async Task DarkModeToggleUpdatesState()
     {
         await using var ctx = CreateContext();
