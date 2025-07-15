@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 @inject ThemeService ThemeService
 
-<MudIconButton Icon="@Icons.Material.Outlined.Article" OnClick="ToggleCeefax" UserAttributes="@(new Dictionary<string, object>{{"id","ceefaxToggle"}})" />
+<MudIconButton Icon="@Icons.Material.Outlined.Article" OnClick="ToggleCeefax" Color="Color.Inherit" UserAttributes="@(new Dictionary<string, object>{{"id","ceefaxToggle"}})" />
 
 @code {
     protected override void OnInitialized()
