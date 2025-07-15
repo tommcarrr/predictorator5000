@@ -1,16 +1,7 @@
 window.app = (() => {
 
 
-    function copyToClipboardText(text) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            return navigator.clipboard.writeText(text)
-                .then(() => true)
-                .catch(err => {
-                    console.error('Could not copy text: ', err);
-                    return false;
-                });
-        }
-
+    function fallbackCopyText(text) {
         const textarea = document.createElement('textarea');
         textarea.value = text;
         textarea.style.position = 'fixed';
@@ -28,19 +19,20 @@ window.app = (() => {
         }
     }
 
-    function copyToClipboardHtml(html) {
-        if (navigator.clipboard && window.ClipboardItem) {
-            const item = new ClipboardItem({
-                'text/html': new Blob([html], { type: 'text/html' })
-            });
-            return navigator.clipboard.write([item])
+    function copyToClipboardText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(text)
                 .then(() => true)
                 .catch(err => {
                     console.error('Could not copy text: ', err);
-                    return false;
+                    return fallbackCopyText(text);
                 });
         }
 
+        return fallbackCopyText(text);
+    }
+
+    function fallbackCopyHtml(html) {
         const listener = (e) => {
             e.clipboardData.setData('text/html', html);
             e.clipboardData.setData('text/plain', html);
@@ -51,6 +43,22 @@ window.app = (() => {
         const success = document.execCommand('copy');
         document.removeEventListener('copy', listener);
         return success;
+    }
+
+    function copyToClipboardHtml(html) {
+        if (navigator.clipboard && window.ClipboardItem) {
+            const item = new ClipboardItem({
+                'text/html': new Blob([html], { type: 'text/html' })
+            });
+            return navigator.clipboard.write([item])
+                .then(() => true)
+                .catch(err => {
+                    console.error('Could not copy text: ', err);
+                    return fallbackCopyHtml(html);
+                });
+        }
+
+        return fallbackCopyHtml(html);
     }
 
     function isMobileDevice() {
