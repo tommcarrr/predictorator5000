@@ -39,9 +39,10 @@ public class SubscribeComponentBUnitTests
         var db = new ApplicationDbContext(options);
         var resend = Substitute.For<IResend>();
         var sms = Substitute.For<ITwilioSmsSender>();
+        var jobs = Substitute.For<Hangfire.IBackgroundJobClient>();
         var time = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
         ctx.Services.AddSingleton<IDateTimeProvider>(time);
-        ctx.Services.AddSingleton(new SubscriptionService(db, resend, config, sms, time));
+        ctx.Services.AddSingleton(new SubscriptionService(db, resend, config, sms, time, jobs));
         return ctx;
     }
 
