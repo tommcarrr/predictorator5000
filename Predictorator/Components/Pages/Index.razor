@@ -9,24 +9,26 @@
 
 <CeefaxDisplay />
 
-<h1>Premier League Fixtures</h1>
+<h1 class="text-center">Premier League Fixtures</h1>
 
-<MudPaper Class="d-flex align-center justify-center gap-2 my-4" Elevation="1">
-    <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(-1))"
-                   UserAttributes="@(new Dictionary<string, object>{{"id","prevWeekBtn"}})" />
-    <MudText Typo="Typo.h6" Class="d-flex align-center cursor-pointer" @onclick="TogglePicker">
-        @($"{_fromDate:dd/MM/yyyy} - {_toDate:dd/MM/yyyy}")
-        <MudIcon Icon="@(_showPicker ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Class="ml-1" />
-    </MudText>
-    <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(1))"
-                   UserAttributes="@(new Dictionary<string, object>{{"id","nextWeekBtn"}})" />
-    <MudIconButton Icon="@Icons.Material.Filled.Refresh" Disabled="_autoWeek" OnClick="ResetRange"
-                   UserAttributes="@(new Dictionary<string, object>{{"id","resetBtn"}})" />
+<MudPaper Class="my-4 pa-2" Elevation="1">
+    <MudStack Row="true" AlignItems="AlignItems.Center" JustifyContent="Justify.Center" Spacing="2">
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(-1))"
+                       UserAttributes="@(new Dictionary<string, object>{{"id","prevWeekBtn"}})" />
+        <MudText Typo="Typo.h6" Class="d-flex align-center cursor-pointer" @onclick="TogglePicker">
+            @($"{_fromDate:dd/MM/yyyy} - {_toDate:dd/MM/yyyy}")
+            <MudIcon Icon="@(_showPicker ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Class="ml-1" />
+        </MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(1))"
+                       UserAttributes="@(new Dictionary<string, object>{{"id","nextWeekBtn"}})" />
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Disabled="_autoWeek" OnClick="ResetRange"
+                       UserAttributes="@(new Dictionary<string, object>{{"id","resetBtn"}})" />
+    </MudStack>
+    <MudCollapse Expanded="_showPicker">
+        <MudDateRangePicker DateRange="_selectedRange" DateRangeChanged="RangeChanged" Class="my-2"
+                           UserAttributes="@(new Dictionary<string, object>{{"id","dateRangePicker"}})" />
+    </MudCollapse>
 </MudPaper>
-<MudCollapse Expanded="_showPicker">
-    <MudDateRangePicker DateRange="_selectedRange" DateRangeChanged="RangeChanged" Class="my-2"
-                       UserAttributes="@(new Dictionary<string, object>{{"id","dateRangePicker"}})" />
-</MudCollapse>
 
 @if (_fixtures == null)
 {
@@ -42,35 +44,35 @@ else if (_fixtures.Response.Any())
             <MudPaper Class="pa-2">
                 @foreach (var fixture in group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name))
                 {
-                    <MudStack Spacing="1" UserAttributes="@(new Dictionary<string, object>{{"data-testid","fixture-row"}})">
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                    <div class="fixture-row" data-testid="fixture-row">
+                        <div class="fixture-line">
                             <MudImage Src="@fixture.Teams.Home.Logo" Alt="@fixture.Teams.Home.Name" Width="30" Height="30" />
-                            <MudText Style="white-space:normal;" Align="Align.Left" Class="flex-grow-1">@fixture.Teams.Home.Name</MudText>
-                            <MudNumericField T="int?" Style="width:2.5rem;" Immediate="true"
+                            <span class="team-name home-name">@fixture.Teams.Home.Name</span>
+                            <MudNumericField T="int?" Class="score-input" Immediate="true"
                                              @bind-Value="_predictions[fixture.Fixture.Id].Home"
                                              Disabled="@(fixture.Score?.Fulltime.Home != null)" Max="20" Min="0"
                                              UserAttributes="@(new Dictionary<string, object>{{"data-testid","score-input"}})" />
-                            <MudText Align="Align.Center">-</MudText>
-                            <MudNumericField T="int?" Style="width:2.5rem;" Immediate="true"
+                            <span class="hyphen">-</span>
+                            <MudNumericField T="int?" Class="score-input" Immediate="true"
                                              @bind-Value="_predictions[fixture.Fixture.Id].Away"
                                              Disabled="@(fixture.Score?.Fulltime.Away != null)" Max="20" Min="0"
                                              UserAttributes="@(new Dictionary<string, object>{{"data-testid","score-input"}})" />
-                            <MudText Style="white-space:normal;" Align="Align.Right" Class="flex-grow-1">@fixture.Teams.Away.Name</MudText>
+                            <span class="team-name away-name">@fixture.Teams.Away.Name</span>
                             <MudImage Src="@fixture.Teams.Away.Logo" Alt="@fixture.Teams.Away.Name" Width="30" Height="30" />
-                        </MudStack>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
+                        </div>
+                        <div class="fixture-info mud-text-secondary">
                             @{ var ukTz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
                                var uk = TimeZoneInfo.ConvertTime(fixture.Fixture.Date, ukTz); }
                             @uk.ToString("h:mm tt") - @fixture.Fixture.Venue.Name, @fixture.Fixture.Venue.City
-                        </MudText>
-                    </MudStack>
+                        </div>
+                    </div>
                 }
             </MudPaper>
         </MudPaper>
     }
 }
 
-<MudStack Class="mt-4" Row="true" Spacing="2">
+<MudStack Class="mt-4" Row="true" Spacing="2" JustifyContent="Justify.Center">
     <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="@FillRandomScores"
                UserAttributes="@(new Dictionary<string, object>{{"id","fillRandomBtn"}})">Complete with Random Scores</MudButton>
     <MudButton Color="Color.Warning" Variant="Variant.Filled" OnClick="@ClearScores"

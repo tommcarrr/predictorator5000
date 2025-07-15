@@ -9,3 +9,53 @@
 .ceefax-font {
     font-family: 'BBC-Ceefax', monospace;
 }
+
+.score-input {
+    width: 2.5rem;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+.mud-layout {
+    min-height: 100vh;
+    background-color: var(--mud-palette-background);
+}
+
+.fixture-line {
+    display: grid;
+    grid-template-columns: 30px 1fr 2.5rem 1rem 2.5rem 1fr 30px;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.fixture-row {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+.fixture-info {
+    font-size: smaller;
+    text-align: center;
+}
+
+.home-name {
+    text-align: left;
+}
+
+.away-name {
+    text-align: right;
+}
+
+.hyphen {
+    text-align: center;
+}
+
+.team-name {
+    white-space: normal;
+}
