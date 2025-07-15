@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Hangfire;
+using Hangfire.Common;
+using Hangfire.States;
 using Predictorator.Data;
 using Predictorator.Models;
 using Resend;
@@ -12,14 +15,16 @@ public class SubscriptionService
     private readonly IConfiguration _config;
     private readonly ITwilioSmsSender _smsSender;
     private readonly IDateTimeProvider _dateTime;
+    private readonly IBackgroundJobClient _jobs;
 
-    public SubscriptionService(ApplicationDbContext db, IResend resend, IConfiguration config, ITwilioSmsSender smsSender, IDateTimeProvider dateTime)
+    public SubscriptionService(ApplicationDbContext db, IResend resend, IConfiguration config, ITwilioSmsSender smsSender, IDateTimeProvider dateTime, IBackgroundJobClient jobs)
     {
         _db = db;
         _resend = resend;
         _config = config;
         _smsSender = smsSender;
         _dateTime = dateTime;
+        _jobs = jobs;
     }
 
     public Task SubscribeAsync(string? email, string? phoneNumber, string baseUrl)
@@ -28,15 +33,24 @@ public class SubscriptionService
             throw new ArgumentException("Provide either an email or phone number, not both.");
 
         if (!string.IsNullOrWhiteSpace(email))
-            return AddEmailSubscriberAsync(email, baseUrl);
+        {
+            var job = Job.FromExpression<SubscriptionService>(s => s.AddEmailSubscriberAsync(email, baseUrl));
+            _jobs.Create(job, new EnqueuedState());
+            return Task.CompletedTask;
+        }
 
         if (!string.IsNullOrWhiteSpace(phoneNumber))
-            return AddSmsSubscriberAsync(phoneNumber, baseUrl);
+        {
+            var job = Job.FromExpression<SubscriptionService>(s => s.AddSmsSubscriberAsync(phoneNumber, baseUrl));
+            _jobs.Create(job, new EnqueuedState());
+            return Task.CompletedTask;
+        }
 
         throw new ArgumentException("An email or phone number is required.");
     }
 
-    private async Task AddEmailSubscriberAsync(string email, string baseUrl)
+    [AutomaticRetry(Attempts = 3)]
+    public async Task AddEmailSubscriberAsync(string email, string baseUrl)
     {
         if (await _db.Subscribers.AnyAsync(s => s.Email == email))
             return;
@@ -66,7 +80,8 @@ public class SubscriptionService
         await _resend.EmailSendAsync(message);
     }
 
-    private async Task AddSmsSubscriberAsync(string phoneNumber, string baseUrl)
+    [AutomaticRetry(Attempts = 3)]
+    public async Task AddSmsSubscriberAsync(string phoneNumber, string baseUrl)
     {
         if (await _db.SmsSubscribers.AnyAsync(s => s.PhoneNumber == phoneNumber))
             return;
