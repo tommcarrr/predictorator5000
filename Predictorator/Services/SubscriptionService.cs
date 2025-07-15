@@ -20,7 +20,21 @@ public class SubscriptionService
         _smsSender = smsSender;
     }
 
-    public async Task AddSubscriberAsync(string email, string baseUrl)
+    public Task SubscribeAsync(string? email, string? phoneNumber, string baseUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(phoneNumber))
+            throw new ArgumentException("Provide either an email or phone number, not both.");
+
+        if (!string.IsNullOrWhiteSpace(email))
+            return AddEmailSubscriberAsync(email, baseUrl);
+
+        if (!string.IsNullOrWhiteSpace(phoneNumber))
+            return AddSmsSubscriberAsync(phoneNumber, baseUrl);
+
+        throw new ArgumentException("An email or phone number is required.");
+    }
+
+    private async Task AddEmailSubscriberAsync(string email, string baseUrl)
     {
         if (await _db.Subscribers.AnyAsync(s => s.Email == email))
             return;
@@ -50,7 +64,7 @@ public class SubscriptionService
         await _resend.EmailSendAsync(message);
     }
 
-    public async Task AddSmsSubscriberAsync(string phoneNumber, string baseUrl)
+    private async Task AddSmsSubscriberAsync(string phoneNumber, string baseUrl)
     {
         if (await _db.SmsSubscribers.AnyAsync(s => s.PhoneNumber == phoneNumber))
             return;

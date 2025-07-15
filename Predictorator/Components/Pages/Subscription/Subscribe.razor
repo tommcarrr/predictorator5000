@@ -60,14 +60,14 @@
     private async Task HandleEmailSubmit()
     {
         var baseUrl = Navigation.BaseUri.TrimEnd('/');
-        await SubscriptionService.AddSubscriberAsync(Email, baseUrl);
+        await SubscriptionService.SubscribeAsync(Email, null, baseUrl);
         _emailSubmitted = true;
     }
 
     private async Task HandlePhoneSubmit()
     {
         var baseUrl = Navigation.BaseUri.TrimEnd('/');
-        await SubscriptionService.AddSmsSubscriberAsync(PhoneNumber, baseUrl);
+        await SubscriptionService.SubscribeAsync(null, PhoneNumber, baseUrl);
         _phoneSubmitted = true;
     }
 }
