@@ -16,11 +16,11 @@
             }
             else
             {
-                <EditForm Model="this" OnValidSubmit="HandleEmailSubmit">
+                <EditForm Model="_emailModel" OnValidSubmit="HandleEmailSubmit">
                     <MudStack Spacing="2">
                         <DataAnnotationsValidator />
                         <ValidationSummary />
-                        <MudTextField @bind-Value="Email" Label="Email address" For="@(() => Email)" />
+                        <MudTextField @bind-Value="_emailModel.Email" Label="Email address" For="@(() => _emailModel.Email)" />
                         <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Subscribe</MudButton>
                     </MudStack>
                 </EditForm>
@@ -36,11 +36,11 @@
             }
             else
             {
-                <EditForm Model="this" OnValidSubmit="HandlePhoneSubmit">
+                <EditForm Model="_phoneModel" OnValidSubmit="HandlePhoneSubmit">
                     <MudStack Spacing="2">
                         <DataAnnotationsValidator />
                         <ValidationSummary />
-                        <MudTextField @bind-Value="PhoneNumber" Label="Phone number" For="@(() => PhoneNumber)" />
+                        <MudTextField @bind-Value="_phoneModel.PhoneNumber" Label="Phone number" For="@(() => _phoneModel.PhoneNumber)" />
                         <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Subscribe</MudButton>
                     </MudStack>
                 </EditForm>
@@ -51,23 +51,34 @@
 </MudPaper>
 
 @code {
-    [Required, EmailAddress]
-    public string Email { get; set; } = string.Empty;
-    [Required, Phone]
-    public string PhoneNumber { get; set; } = string.Empty;
+    private class EmailModel
+    {
+        [Required, EmailAddress]
+        public string Email { get; set; } = string.Empty;
+    }
+
+    private class PhoneModel
+    {
+        [Required, Phone]
+        public string PhoneNumber { get; set; } = string.Empty;
+    }
+
+    private readonly EmailModel _emailModel = new();
+    private readonly PhoneModel _phoneModel = new();
     private bool _emailSubmitted;
     private bool _phoneSubmitted;
+
     private async Task HandleEmailSubmit()
     {
         var baseUrl = Navigation.BaseUri.TrimEnd('/');
-        await SubscriptionService.SubscribeAsync(Email, null, baseUrl);
+        await SubscriptionService.SubscribeAsync(_emailModel.Email, null, baseUrl);
         _emailSubmitted = true;
     }
 
     private async Task HandlePhoneSubmit()
     {
         var baseUrl = Navigation.BaseUri.TrimEnd('/');
-        await SubscriptionService.SubscribeAsync(null, PhoneNumber, baseUrl);
+        await SubscriptionService.SubscribeAsync(null, _phoneModel.PhoneNumber, baseUrl);
         _phoneSubmitted = true;
     }
 }

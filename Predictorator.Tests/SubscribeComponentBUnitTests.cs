@@ -64,4 +64,19 @@ public class SubscribeComponentBUnitTests
         Assert.Contains("Phone number", cut.Markup);
         Assert.DoesNotContain("Email address", cut.Markup);
     }
+
+    [Fact]
+    public async Task Email_Submit_Does_Not_Require_Phone()
+    {
+        await using var ctx = CreateContext(new Dictionary<string, string?> { ["Resend:ApiToken"] = "token" });
+        var cut = ctx.Render<Subscribe>();
+        var input = cut.Find("input");
+        input.Change("user@example.com");
+        cut.Find("form").Submit();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains("verification link", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        });
+    }
 }
