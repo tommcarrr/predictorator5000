@@ -1,0 +1,144 @@
+using Hangfire;
+using Hangfire.Common;
+using Hangfire.States;
+using Microsoft.EntityFrameworkCore;
+using Predictorator.Data;
+using Predictorator.Models;
+using Resend;
+
+namespace Predictorator.Services;
+
+public class NotificationService
+{
+    private readonly ApplicationDbContext _db;
+    private readonly IResend _resend;
+    private readonly ITwilioSmsSender _sms;
+    private readonly IConfiguration _config;
+    private readonly IFixtureService _fixtures;
+    private readonly IDateRangeCalculator _range;
+    private readonly NotificationFeatureService _features;
+    private readonly IDateTimeProvider _time;
+    private readonly IBackgroundJobClient _jobs;
+
+    public NotificationService(
+        ApplicationDbContext db,
+        IResend resend,
+        ITwilioSmsSender sms,
+        IConfiguration config,
+        IFixtureService fixtures,
+        IDateRangeCalculator range,
+        NotificationFeatureService features,
+        IDateTimeProvider time,
+        IBackgroundJobClient jobs)
+    {
+        _db = db;
+        _resend = resend;
+        _sms = sms;
+        _config = config;
+        _fixtures = fixtures;
+        _range = range;
+        _features = features;
+        _time = time;
+        _jobs = jobs;
+    }
+
+    public async Task CheckFixturesAsync()
+    {
+        if (!_features.AnyEnabled)
+            return;
+
+        var baseUrl = _config["BASE_URL"];
+        if (string.IsNullOrWhiteSpace(baseUrl))
+            return;
+
+        var (from, to) = _range.GetDates(null, null, null);
+        var response = await _fixtures.GetFixturesAsync(from, to);
+        if (response.Response.Count == 0)
+            return;
+
+        var nowUtc = _time.UtcNow;
+        var future = response.Response
+            .Where(f => f.Fixture.Date.ToUniversalTime() > nowUtc)
+            .OrderBy(f => f.Fixture.Date)
+            .FirstOrDefault();
+        if (future != null)
+        {
+            var key = future.Fixture.Date.Date.ToString("yyyy-MM-dd");
+            var sent = await _db.SentNotifications
+                .AnyAsync(n => n.Type == "NewFixtures" && n.Key == key);
+            if (!sent)
+            {
+                var job = Job.FromExpression<NotificationService>(s => s.SendNewFixturesAvailableAsync(key, baseUrl));
+                _jobs.Create(job, new EnqueuedState());
+            }
+        }
+
+        var first = response.Response.OrderBy(f => f.Fixture.Date).First();
+        var ukTz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+        var firstUk = TimeZoneInfo.ConvertTime(first.Fixture.Date, ukTz);
+        var nowUk = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, ukTz);
+        if (firstUk.Date == nowUk.Date)
+        {
+            var key = first.Fixture.Date.ToString("O");
+            var sent = await _db.SentNotifications
+                .AnyAsync(n => n.Type == "FixturesStartingSoon" && n.Key == key);
+            if (!sent)
+            {
+                var sendTimeUtc = first.Fixture.Date.AddHours(-1);
+                var delay = sendTimeUtc - nowUtc;
+                if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
+                _jobs.Schedule<NotificationService>(
+                    s => s.SendFixturesStartingSoonAsync(key, baseUrl),
+                    delay);
+            }
+        }
+    }
+
+    [AutomaticRetry(Attempts = 3)]
+    public async Task SendNewFixturesAvailableAsync(string key, string baseUrl)
+    {
+        await SendToAllAsync("New fixtures are available!", baseUrl, "NewFixtures", key);
+    }
+
+    [AutomaticRetry(Attempts = 3)]
+    public async Task SendFixturesStartingSoonAsync(string key, string baseUrl)
+    {
+        await SendToAllAsync("Fixtures start in 1 hour!", baseUrl, "FixturesStartingSoon", key);
+    }
+
+    private async Task SendToAllAsync(string message, string baseUrl, string type, string key)
+    {
+        var emails = await _db.Subscribers
+            .Where(s => s.IsVerified)
+            .Select(s => s.Email)
+            .ToListAsync();
+        foreach (var email in emails)
+        {
+            var emailMessage = new EmailMessage
+            {
+                From = _config["Resend:From"] ?? "no-reply@example.com",
+                Subject = "Predictorator Notification",
+                HtmlBody = $"<p>{message} <a href=\"{baseUrl}\">View fixtures</a>.</p>"
+            };
+            emailMessage.To.Add(email);
+            await _resend.EmailSendAsync(emailMessage);
+        }
+
+        var phones = await _db.SmsSubscribers
+            .Where(s => s.IsVerified)
+            .Select(s => s.PhoneNumber)
+            .ToListAsync();
+        foreach (var phone in phones)
+        {
+            await _sms.SendSmsAsync(phone, $"{message} {baseUrl}");
+        }
+
+        _db.SentNotifications.Add(new SentNotification
+        {
+            Type = type,
+            Key = key,
+            SentAt = _time.UtcNow
+        });
+        await _db.SaveChangesAsync();
+    }
+}
