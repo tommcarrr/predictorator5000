@@ -1,5 +1,3 @@
-using System;
-
 namespace Predictorator.Models;
 
 public class SmsSubscriber

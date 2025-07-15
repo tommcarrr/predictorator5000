@@ -8,7 +8,6 @@ using Predictorator.Data;
 using Predictorator.Options;
 using Predictorator.Services;
 using Predictorator.Startup;
-using Predictorator.Models;
 using Predictorator.Endpoints;
 using Resend;
 using Serilog;

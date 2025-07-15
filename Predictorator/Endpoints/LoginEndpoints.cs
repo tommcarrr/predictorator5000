@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Http;
 using Predictorator.Models;
 using Predictorator.Services;
 
