@@ -116,7 +116,7 @@ public class NotificationService
         {
             var emailMessage = new EmailMessage
             {
-                From = _config["Resend:From"] ?? "no-reply@example.com",
+                From = _config["Resend:From"] ?? "Prediction Fairy <no-reply@example.com>",
                 Subject = "Predictorator Notification",
                 HtmlBody = $"<p>{message} <a href=\"{baseUrl}\">View fixtures</a>.</p>"
             };

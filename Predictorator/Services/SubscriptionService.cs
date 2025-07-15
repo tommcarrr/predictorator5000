@@ -71,7 +71,7 @@ public class SubscriptionService
 
         var message = new EmailMessage
         {
-            From = _config["Resend:From"] ?? "no-reply@example.com",
+            From = _config["Resend:From"] ?? "Prediction Fairy <no-reply@example.com>",
             Subject = "Verify your email",
             HtmlBody = $"<p>Please <a href=\"{verifyLink}\">verify your email</a>.</p><p>If you did not request this, you can <a href=\"{unsubscribeLink}\">unsubscribe</a>.</p>"
         };
