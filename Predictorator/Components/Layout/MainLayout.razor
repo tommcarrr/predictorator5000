@@ -11,7 +11,7 @@
     <MudDialogProvider    @rendermode="InteractiveServer" />
     <MudSnackbarProvider  @rendermode="InteractiveServer" />
     <MudAppBar Elevation="1" Color="Color.Primary">
-        <MudText Typo="Typo.h5" Class="ml-2"><a href="/">Predictotronix</a></MudText>
+        <MudText Typo="Typo.h5" Class="ml-2"><a href="/" class="app-title-link">Predictotronix</a></MudText>
         <MudSpacer />
         @if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true &&
             HttpContextAccessor.HttpContext.User.IsInRole("Admin"))
