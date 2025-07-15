@@ -1,9 +1,8 @@
 @page "/admin"
 @rendermode InteractiveServer
-@using Microsoft.AspNetCore.Identity
-@inject SignInManager<IdentityUser> SignInManager
 @inject NavigationManager NavigationManager
 @inject ILogger<Login> Logger
+@inject HttpClient Http
 
 <h1>Log in</h1>
 <EditForm Model="_input" OnValidSubmit="HandleLogin">
@@ -40,18 +39,25 @@
     private async Task HandleLogin()
     {
         _error = null;
-        var result = await SignInManager.PasswordSignInAsync(_input.Email, _input.Password, _input.RememberMe, lockoutOnFailure: false);
-        if (result.Succeeded)
+        try
         {
-            NavigationManager.NavigateTo("/");
+            var response = await Http.PostAsJsonAsync("/login", _input);
+            if (response.IsSuccessStatusCode)
+            {
+                NavigationManager.NavigateTo("/");
+                return;
+            }
+
+            _error = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(_error))
+            {
+                _error = "Invalid login attempt.";
+            }
         }
-        else if (result.IsLockedOut)
+        catch (Exception ex)
         {
-            _error = "User locked out.";
-        }
-        else
-        {
-            _error = "Invalid login attempt.";
+            Logger.LogError(ex, "Login failed");
+            _error = "An error occurred.";
         }
     }
 }
