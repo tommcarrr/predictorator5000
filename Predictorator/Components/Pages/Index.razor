@@ -42,26 +42,28 @@ else if (_fixtures.Response.Any())
             <MudPaper Class="pa-2">
                 @foreach (var fixture in group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name))
                 {
-                    <div class="fixture-row">
-                        <div class="fixture-line">
+                    <MudStack Spacing="1" UserAttributes="@(new Dictionary<string, object>{{"data-testid","fixture-row"}})">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
                             <MudImage Src="@fixture.Teams.Home.Logo" Alt="@fixture.Teams.Home.Name" Width="30" Height="30" />
-                            <span class="team-name home-name">@fixture.Teams.Home.Name</span>
-                            <MudNumericField T="int?" Class="score-input" Immediate="true"
+                            <MudText Style="white-space:normal;" Align="Align.Left" Class="flex-grow-1">@fixture.Teams.Home.Name</MudText>
+                            <MudNumericField T="int?" Style="width:2.5rem;" Immediate="true"
                                              @bind-Value="_predictions[fixture.Fixture.Id].Home"
-                                             Disabled="@(fixture.Score?.Fulltime.Home != null)" Max="20" Min="0" />
-                            <span class="hyphen">-</span>
-                            <MudNumericField T="int?" Class="score-input" Immediate="true"
+                                             Disabled="@(fixture.Score?.Fulltime.Home != null)" Max="20" Min="0"
+                                             UserAttributes="@(new Dictionary<string, object>{{"data-testid","score-input"}})" />
+                            <MudText Align="Align.Center">-</MudText>
+                            <MudNumericField T="int?" Style="width:2.5rem;" Immediate="true"
                                              @bind-Value="_predictions[fixture.Fixture.Id].Away"
-                                             Disabled="@(fixture.Score?.Fulltime.Away != null)" Max="20" Min="0" />
-                            <span class="team-name away-name">@fixture.Teams.Away.Name</span>
+                                             Disabled="@(fixture.Score?.Fulltime.Away != null)" Max="20" Min="0"
+                                             UserAttributes="@(new Dictionary<string, object>{{"data-testid","score-input"}})" />
+                            <MudText Style="white-space:normal;" Align="Align.Right" Class="flex-grow-1">@fixture.Teams.Away.Name</MudText>
                             <MudImage Src="@fixture.Teams.Away.Logo" Alt="@fixture.Teams.Away.Name" Width="30" Height="30" />
-                        </div>
-                        <div class="fixture-info mud-text-secondary">
+                        </MudStack>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
                             @{ var ukTz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
                                var uk = TimeZoneInfo.ConvertTime(fixture.Fixture.Date, ukTz); }
                             @uk.ToString("h:mm tt") - @fixture.Fixture.Venue.Name, @fixture.Fixture.Venue.City
-                        </div>
-                    </div>
+                        </MudText>
+                    </MudStack>
                 }
             </MudPaper>
         </MudPaper>

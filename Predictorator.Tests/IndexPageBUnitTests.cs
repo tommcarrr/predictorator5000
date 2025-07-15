@@ -93,10 +93,10 @@ public class IndexPageBUnitTests
 
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
 
-        var home = cut.Find(".fixture-line .home-name");
-        var away = cut.Find(".fixture-line .away-name");
-        Assert.NotNull(home);
-        Assert.NotNull(away);
+        var row = cut.Find("[data-testid=fixture-row]");
+        var inputs = cut.FindAll("[data-testid=score-input]");
+        Assert.NotNull(row);
+        Assert.Equal(2, inputs.Count);
     }
 
     [Fact]

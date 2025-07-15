@@ -81,8 +81,8 @@ public class HomePageTests
     public async Task Index_Should_Display_Fixture_Row_When_Using_Mock_Data()
     {
         await NavigateWithRetriesAsync(_page!, BaseUrl);
-        await _page!.Locator(".fixture-row").First.WaitForAsync(new() { State = WaitForSelectorState.Visible });
-        var rows = await _page!.QuerySelectorAllAsync(".fixture-row");
+        await _page!.Locator("[data-testid=fixture-row]").First.WaitForAsync(new() { State = WaitForSelectorState.Visible });
+        var rows = await _page!.QuerySelectorAllAsync("[data-testid=fixture-row]");
         if (Environment.GetEnvironmentVariable("UI_TEST_TOKEN") != null)
         {
             Assert.IsNotEmpty(rows);
@@ -121,7 +121,7 @@ public class HomePageTests
         }
 
         await _page!.Locator("#fillRandomBtn").ClickAsync();
-        var value = await _page!.Locator(".score-input").First.InputValueAsync();
+        var value = await _page!.Locator("[data-testid=score-input]").First.InputValueAsync();
         Assert.IsNotEmpty(value);
     }
 
