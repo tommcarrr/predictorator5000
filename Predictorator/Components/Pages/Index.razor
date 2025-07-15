@@ -5,6 +5,7 @@
 @inject IFixtureService FixtureService
 @inject IDateRangeCalculator DateRangeCalculator
 @inject BrowserInteropService Browser
+@inject ISnackbar Snackbar
 
 <MudText Typo="Typo.h3" Class="my-4 pa-2" Align="Align.Center">Premier League Fixtures</MudText>
 
@@ -230,15 +231,19 @@ else if (_fixtures.Response.Any())
 
         if (missing)
         {
-            await Browser.AlertAsync("Error: Please fill in all score predictions before copying.");
+            Snackbar.Add("Error: Please fill in all score predictions before copying.", Severity.Error);
             return;
         }
 
         var mobile = await Browser.IsMobileDeviceAsync();
-        if (mobile)
-            await Browser.CopyToClipboardTextAsync(sbText.ToString());
+        bool copied = mobile
+            ? await Browser.CopyToClipboardTextAsync(sbText.ToString())
+            : await Browser.CopyToClipboardHtmlAsync(sbHtml.ToString());
+
+        if (copied)
+            Snackbar.Add("Predictions copied to clipboard!", Severity.Success);
         else
-            await Browser.CopyToClipboardHtmlAsync(sbHtml.ToString());
+            Snackbar.Add("Failed to copy predictions to clipboard.", Severity.Error);
     }
 
     private void ResetRange()

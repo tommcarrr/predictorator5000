@@ -2,23 +2,55 @@ window.app = (() => {
 
 
     function copyToClipboardText(text) {
-        navigator.clipboard.writeText(text).then(() => {
-            alert('Predictions copied to clipboard!');
-        }).catch(err => {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(text)
+                .then(() => true)
+                .catch(err => {
+                    console.error('Could not copy text: ', err);
+                    return false;
+                });
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        try {
+            const success = document.execCommand('copy');
+            document.body.removeChild(textarea);
+            return success;
+        } catch (err) {
             console.error('Could not copy text: ', err);
-        });
+            document.body.removeChild(textarea);
+            return false;
+        }
     }
 
     function copyToClipboardHtml(html) {
-        navigator.clipboard.write([
-            new ClipboardItem({
+        if (navigator.clipboard && window.ClipboardItem) {
+            const item = new ClipboardItem({
                 'text/html': new Blob([html], { type: 'text/html' })
-            })
-        ]).then(() => {
-            alert('Predictions copied to clipboard!');
-        }).catch(err => {
-            console.error('Could not copy text: ', err);
-        });
+            });
+            return navigator.clipboard.write([item])
+                .then(() => true)
+                .catch(err => {
+                    console.error('Could not copy text: ', err);
+                    return false;
+                });
+        }
+
+        const listener = (e) => {
+            e.clipboardData.setData('text/html', html);
+            e.clipboardData.setData('text/plain', html);
+            e.preventDefault();
+        };
+
+        document.addEventListener('copy', listener);
+        const success = document.execCommand('copy');
+        document.removeEventListener('copy', listener);
+        return success;
     }
 
     function isMobileDevice() {
