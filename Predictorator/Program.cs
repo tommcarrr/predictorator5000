@@ -176,11 +176,15 @@ if (!app.Environment.IsEnvironment("Testing"))
         "fixture-notifications",
         s => s.CheckFixturesAsync(),
         "0 10 * * *",
-        TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time"));
+        new RecurringJobOptions
+        {
+            TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time")
+        });
     RecurringJob.AddOrUpdate<SubscriptionService>(
         "cleanup-unverified",
         service => service.RemoveExpiredUnverifiedAsync(),
-        "*/15 * * * *");
+        "*/15 * * * *",
+        new RecurringJobOptions());
     await ApplicationDbInitializer.SeedAdminUserAsync(app.Services);
 }
 

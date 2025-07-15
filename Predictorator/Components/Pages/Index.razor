@@ -18,6 +18,8 @@
         </MudText>
         <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(1))"
                        UserAttributes="@(new Dictionary<string, object>{{"id","nextWeekBtn"}})" />
+        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Disabled="_autoWeek" OnClick="ResetRange"
+                       UserAttributes="@(new Dictionary<string, object>{{"id","resetBtn"}})" />
     </MudStack>
     <MudCollapse Expanded="_showPicker">
         <MudDateRangePicker DateRange="_selectedRange" DateRangeChanged="RangeChanged" Class="my-2"
@@ -237,6 +239,11 @@ else if (_fixtures.Response.Any())
             await Browser.CopyToClipboardTextAsync(sbText.ToString());
         else
             await Browser.CopyToClipboardHtmlAsync(sbHtml.ToString());
+    }
+
+    private void ResetRange()
+    {
+        NavigationManager.NavigateTo("/");
     }
 
     private class PredictionInput
