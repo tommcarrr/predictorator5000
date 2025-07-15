@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using Predictorator.Components;
+using Hangfire;
 using Predictorator.Data;
 using Predictorator.Options;
 using Predictorator.Services;
@@ -115,6 +116,12 @@ builder.Services.AddScoped<BrowserInteropService>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddRazorPages();
 
+if (!builder.Environment.IsEnvironment("Testing"))
+{
+    builder.Services.AddHangfire(config => config.UseSqlServerStorage(connectionString));
+    builder.Services.AddHangfireServer();
+}
+
 var keyPath = builder.Configuration["DataProtection:KeyPath"];
 if (string.IsNullOrWhiteSpace(keyPath))
     keyPath = Path.Combine(builder.Environment.ContentRootPath, "dp-keys");
@@ -152,7 +159,14 @@ app.MapRazorPages();
 app.MapGet("/admin", () => Results.Redirect("/Identity/Account/Login"));
 
 if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.UseHangfireDashboard();
+    RecurringJob.AddOrUpdate<SubscriptionService>(
+        "cleanup-unverified",
+        service => service.RemoveExpiredUnverifiedAsync(),
+        "*/15 * * * *");
     await ApplicationDbInitializer.SeedAdminUserAsync(app.Services);
+}
 
 app.Run();
 

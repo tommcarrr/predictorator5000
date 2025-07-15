@@ -11,13 +11,15 @@ public class SubscriptionService
     private readonly IResend _resend;
     private readonly IConfiguration _config;
     private readonly ITwilioSmsSender _smsSender;
+    private readonly IDateTimeProvider _dateTime;
 
-    public SubscriptionService(ApplicationDbContext db, IResend resend, IConfiguration config, ITwilioSmsSender smsSender)
+    public SubscriptionService(ApplicationDbContext db, IResend resend, IConfiguration config, ITwilioSmsSender smsSender, IDateTimeProvider dateTime)
     {
         _db = db;
         _resend = resend;
         _config = config;
         _smsSender = smsSender;
+        _dateTime = dateTime;
     }
 
     public Task SubscribeAsync(string? email, string? phoneNumber, string baseUrl)
@@ -45,7 +47,7 @@ public class SubscriptionService
             IsVerified = false,
             VerificationToken = Guid.NewGuid().ToString("N"),
             UnsubscribeToken = Guid.NewGuid().ToString("N"),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = _dateTime.UtcNow
         };
         _db.Subscribers.Add(subscriber);
         await _db.SaveChangesAsync();
@@ -75,7 +77,7 @@ public class SubscriptionService
             IsVerified = false,
             VerificationToken = Guid.NewGuid().ToString("N"),
             UnsubscribeToken = Guid.NewGuid().ToString("N"),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = _dateTime.UtcNow
         };
         _db.SmsSubscribers.Add(subscriber);
         await _db.SaveChangesAsync();
@@ -125,4 +127,25 @@ public class SubscriptionService
         }
         return false;
     }
+
+    public async Task RemoveExpiredUnverifiedAsync()
+    {
+        var cutoff = _dateTime.UtcNow.AddHours(-1);
+
+        var expiredEmail = await _db.Subscribers
+            .Where(s => !s.IsVerified && s.CreatedAt < cutoff)
+            .ToListAsync();
+        if (expiredEmail.Any())
+            _db.Subscribers.RemoveRange(expiredEmail);
+
+        var expiredSms = await _db.SmsSubscribers
+            .Where(s => !s.IsVerified && s.CreatedAt < cutoff)
+            .ToListAsync();
+        if (expiredSms.Any())
+            _db.SmsSubscribers.RemoveRange(expiredSms);
+
+        if (expiredEmail.Any() || expiredSms.Any())
+            await _db.SaveChangesAsync();
+    }
 }
+

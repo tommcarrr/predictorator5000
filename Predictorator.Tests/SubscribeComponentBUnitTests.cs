@@ -10,6 +10,7 @@ using NSubstitute;
 using Predictorator.Components.Pages.Subscription;
 using Predictorator.Data;
 using Predictorator.Services;
+using Predictorator.Tests.Helpers;
 using Resend;
 
 namespace Predictorator.Tests;
@@ -38,7 +39,9 @@ public class SubscribeComponentBUnitTests
         var db = new ApplicationDbContext(options);
         var resend = Substitute.For<IResend>();
         var sms = Substitute.For<ITwilioSmsSender>();
-        ctx.Services.AddSingleton(new SubscriptionService(db, resend, config, sms));
+        var time = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
+        ctx.Services.AddSingleton<IDateTimeProvider>(time);
+        ctx.Services.AddSingleton(new SubscriptionService(db, resend, config, sms, time));
         return ctx;
     }
 

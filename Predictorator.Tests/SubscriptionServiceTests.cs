@@ -4,13 +4,14 @@ using NSubstitute;
 using Predictorator.Data;
 using Predictorator.Models;
 using Predictorator.Services;
+using Predictorator.Tests.Helpers;
 using Resend;
 
 namespace Predictorator.Tests;
 
 public class SubscriptionServiceTests
 {
-    private static SubscriptionService CreateService(out ApplicationDbContext db, out IResend resend, out ITwilioSmsSender sms)
+    private static SubscriptionService CreateService(out ApplicationDbContext db, out IResend resend, out ITwilioSmsSender sms, IDateTimeProvider? provider = null)
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
@@ -21,7 +22,8 @@ public class SubscriptionServiceTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { ["Resend:From"] = "from@example.com" })
             .Build();
-        return new SubscriptionService(db, resend, config, sms);
+        provider ??= new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
+        return new SubscriptionService(db, resend, config, sms, provider);
     }
 
     [Fact]
@@ -107,5 +109,37 @@ public class SubscriptionServiceTests
 
         Assert.True(result);
         Assert.Empty(db.SmsSubscribers);
+    }
+
+    [Fact]
+    public async Task RemoveExpiredUnverifiedAsync_removes_old_records()
+    {
+        var provider = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow };
+        var service = CreateService(out var db, out _, out _, provider);
+        db.Subscribers.Add(new Subscriber { Email = "old@example.com", CreatedAt = provider.UtcNow.AddHours(-2), VerificationToken = "a", UnsubscribeToken = "b" });
+        db.SmsSubscribers.Add(new SmsSubscriber { PhoneNumber = "+1", CreatedAt = provider.UtcNow.AddHours(-2), VerificationToken = "c", UnsubscribeToken = "d" });
+        await db.SaveChangesAsync();
+
+        await service.RemoveExpiredUnverifiedAsync();
+
+        Assert.Empty(db.Subscribers);
+        Assert.Empty(db.SmsSubscribers);
+    }
+
+    [Fact]
+    public async Task RemoveExpiredUnverifiedAsync_keeps_recent_or_verified()
+    {
+        var provider = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow };
+        var service = CreateService(out var db, out _, out _, provider);
+        var recent = new Subscriber { Email = "new@example.com", CreatedAt = provider.UtcNow.AddMinutes(-30), VerificationToken = "a", UnsubscribeToken = "b" };
+        var verified = new SmsSubscriber { PhoneNumber = "+1", CreatedAt = provider.UtcNow.AddHours(-2), IsVerified = true, VerificationToken = "c", UnsubscribeToken = "d" };
+        db.Subscribers.Add(recent);
+        db.SmsSubscribers.Add(verified);
+        await db.SaveChangesAsync();
+
+        await service.RemoveExpiredUnverifiedAsync();
+
+        Assert.Contains(recent, db.Subscribers);
+        Assert.Contains(verified, db.SmsSubscribers);
     }
 }

@@ -6,48 +6,45 @@
 
 <MudPaper Class="pa-4" Elevation="1">
     <h2>Subscribe to Notifications</h2>
-    <MudTabs>
-        @if (Features.EmailEnabled)
-        {
-            <MudTabPanel Text="Email">
-            @if (_emailSubmitted)
+    @if (_emailSubmitted)
+    {
+        <p>A verification link has been sent to your email address. It will be valid for one hour.</p>
+    }
+    else if (_phoneSubmitted)
+    {
+        <p>A verification link has been sent to your phone. It will be valid for one hour.</p>
+    }
+    else
+    {
+        <MudTabs>
+            @if (Features.EmailEnabled)
             {
-                <p>A verification link has been sent to your email address.</p>
+                <MudTabPanel Text="Email">
+                    <EditForm Model="_emailModel" OnValidSubmit="HandleEmailSubmit">
+                        <MudStack Spacing="2">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+                            <MudTextField @bind-Value="_emailModel.Email" Label="Email address" For="@(() => _emailModel.Email)" />
+                            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Subscribe</MudButton>
+                        </MudStack>
+                    </EditForm>
+                </MudTabPanel>
             }
-            else
+            @if (Features.SmsEnabled)
             {
-                <EditForm Model="_emailModel" OnValidSubmit="HandleEmailSubmit">
-                    <MudStack Spacing="2">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary />
-                        <MudTextField @bind-Value="_emailModel.Email" Label="Email address" For="@(() => _emailModel.Email)" />
-                        <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Subscribe</MudButton>
-                    </MudStack>
-                </EditForm>
+                <MudTabPanel Text="SMS">
+                    <EditForm Model="_phoneModel" OnValidSubmit="HandlePhoneSubmit">
+                        <MudStack Spacing="2">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+                            <MudTextField @bind-Value="_phoneModel.PhoneNumber" Label="Phone number" For="@(() => _phoneModel.PhoneNumber)" />
+                            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Subscribe</MudButton>
+                        </MudStack>
+                    </EditForm>
+                </MudTabPanel>
             }
-            </MudTabPanel>
-        }
-        @if (Features.SmsEnabled)
-        {
-            <MudTabPanel Text="SMS">
-            @if (_phoneSubmitted)
-            {
-                <p>A verification link has been sent to your phone.</p>
-            }
-            else
-            {
-                <EditForm Model="_phoneModel" OnValidSubmit="HandlePhoneSubmit">
-                    <MudStack Spacing="2">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary />
-                        <MudTextField @bind-Value="_phoneModel.PhoneNumber" Label="Phone number" For="@(() => _phoneModel.PhoneNumber)" />
-                        <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Subscribe</MudButton>
-                    </MudStack>
-                </EditForm>
-            }
-            </MudTabPanel>
-        }
-    </MudTabs>
+        </MudTabs>
+    }
 </MudPaper>
 
 @code {
