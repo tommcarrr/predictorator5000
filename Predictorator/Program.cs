@@ -76,6 +76,7 @@ builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.Configure<TwilioOptions>(builder.Configuration.GetSection(TwilioOptions.SectionName));
 builder.Services.AddTransient<ITwilioSmsSender, TwilioSmsSender>();
 builder.Services.AddTransient<SubscriptionService>();
+builder.Services.AddTransient<NotificationService>();
 builder.Services.AddSingleton<NotificationFeatureService>();
 builder.Services.Configure<AdminUserOptions>(options =>
 {
@@ -172,6 +173,11 @@ app.MapGet("/logout", async (SignInManager<IdentityUser> sm) =>
 if (!app.Environment.IsEnvironment("Testing"))
 {
     app.UseHangfireDashboard();
+    RecurringJob.AddOrUpdate<NotificationService>(
+        "fixture-notifications",
+        s => s.CheckFixturesAsync(),
+        "0 10 * * *",
+        TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time"));
     RecurringJob.AddOrUpdate<SubscriptionService>(
         "cleanup-unverified",
         service => service.RemoveExpiredUnverifiedAsync(),
