@@ -8,6 +8,8 @@ using Predictorator.Data;
 using Predictorator.Options;
 using Predictorator.Services;
 using Predictorator.Startup;
+using Predictorator.Models;
+using Predictorator.Endpoints;
 using Resend;
 using Serilog;
 using Serilog.Events;
@@ -112,8 +114,10 @@ razorComponentsBuilder.AddInteractiveServerComponents(options =>
     options.DetailedErrors = true;
 });
 builder.Services.AddMudServices();
+builder.Services.AddHttpClient();
 builder.Services.AddScoped<BrowserInteropService>();
 builder.Services.AddScoped<ThemeService>();
+builder.Services.AddScoped<ISignInService, SignInManagerSignInService>();
 builder.Services.AddRazorPages();
 
 if (!builder.Environment.IsEnvironment("Testing"))
@@ -156,6 +160,7 @@ var razorComponents = app.MapRazorComponents<App>();
 razorComponents.AddInteractiveServerRenderMode();
 
 app.MapRazorPages();
+app.MapPost("/login", LoginEndpoints.LoginAsync);
 app.MapGet("/Identity/Account/Register", () => Results.NotFound());
 app.MapPost("/Identity/Account/Register", () => Results.NotFound());
 app.MapGet("/logout", async (SignInManager<IdentityUser> sm) =>
