@@ -20,6 +20,10 @@ SMS notifications use Twilio. Set `Twilio__AccountSid`, `Twilio__AuthToken`, and
 Set `BASE_URL` to the public address of the site so scheduled notifications
 contain valid links.
 
+When logged in as the admin user, the main fixtures page shows extra buttons to
+manually send the "new fixtures" or "1-hour warning" notifications using the
+currently selected date range. These are intended for testing purposes only.
+
 Verification links sent to subscribers are valid for one hour. A background job
 runs every 15 minutes to remove unverified subscriptions that have expired.
 

@@ -6,6 +6,10 @@ using Microsoft.JSInterop;
 using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
+using Microsoft.EntityFrameworkCore;
+using Resend;
+using Hangfire;
+using Predictorator.Data;
 using Predictorator.Components;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
@@ -27,13 +31,15 @@ public class DarkModeBUnitTests
         var theme = new ThemeService(browser);
         ctx.Services.AddSingleton(theme);
         var fixtures = new FixturesResponse { Response = [] };
-        ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
+        var fixtureService = new FakeFixtureService(fixtures);
+        ctx.Services.AddSingleton<IFixtureService>(fixtureService);
         var provider = new FakeDateTimeProvider
         {
             Today = new DateTime(2024, 1, 1),
             UtcNow = new DateTime(2024, 1, 1)
         };
-        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider));
+        var calculator = new DateRangeCalculator(provider);
+        ctx.Services.AddSingleton<IDateRangeCalculator>(calculator);
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
 
         var settings = new Dictionary<string, string?>
@@ -45,7 +51,18 @@ public class DarkModeBUnitTests
         };
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         ctx.Services.AddSingleton<IConfiguration>(config);
-        ctx.Services.AddSingleton<NotificationFeatureService>();
+        var features = new NotificationFeatureService(config);
+        ctx.Services.AddSingleton(features);
+
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        var db = new ApplicationDbContext(options);
+        var resend = Substitute.For<IResend>();
+        var sms = Substitute.For<ITwilioSmsSender>();
+        var jobs = Substitute.For<IBackgroundJobClient>();
+        var time = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
+        ctx.Services.AddSingleton(new NotificationService(db, resend, sms, config, fixtureService, calculator, features, time, jobs));
         return ctx;
     }
 
@@ -80,8 +97,11 @@ public class DarkModeBUnitTests
         var theme = new ThemeService(browser);
         ctx.Services.AddSingleton(theme);
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
-        ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
-        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) }));
+        var fixtureService2 = new FakeFixtureService(new FixturesResponse { Response = [] });
+        ctx.Services.AddSingleton<IFixtureService>(fixtureService2);
+        var provider2 = new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) };
+        var calculator2 = new DateRangeCalculator(provider2);
+        ctx.Services.AddSingleton<IDateRangeCalculator>(calculator2);
 
         var settings = new Dictionary<string, string?>
         {
@@ -92,7 +112,18 @@ public class DarkModeBUnitTests
         };
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         ctx.Services.AddSingleton<IConfiguration>(config);
-        ctx.Services.AddSingleton<NotificationFeatureService>();
+        var features2 = new NotificationFeatureService(config);
+        ctx.Services.AddSingleton(features2);
+
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        var db = new ApplicationDbContext(options);
+        var resend = Substitute.For<IResend>();
+        var sms = Substitute.For<ITwilioSmsSender>();
+        var jobs = Substitute.For<IBackgroundJobClient>();
+        var time = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
+        ctx.Services.AddSingleton(new NotificationService(db, resend, sms, config, fixtureService2, calculator2, features2, time, jobs));
 
         var cut = ctx.Render<App>();
 

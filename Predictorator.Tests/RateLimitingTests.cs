@@ -7,6 +7,10 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Configuration;
+using Resend;
+using Hangfire;
+using NSubstitute;
 using Predictorator.Data;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
@@ -47,6 +51,16 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
                 });
                 services.AddTransient<IFixtureService>(_ => new FakeFixtureService(
                     new FixturesResponse { Response = new List<FixtureData>() }));
+                services.AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Resend:ApiToken"] = "token",
+                    ["Twilio:AccountSid"] = "sid",
+                    ["Twilio:AuthToken"] = "token",
+                    ["Twilio:FromNumber"] = "+1"
+                }).Build());
+                services.AddSingleton<NotificationFeatureService>();
+                services.AddSingleton<IBackgroundJobClient>(Substitute.For<IBackgroundJobClient>());
+                services.AddSingleton<NotificationService>();
             });
         });
     }

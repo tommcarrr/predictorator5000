@@ -6,6 +6,10 @@
 @inject IDateRangeCalculator DateRangeCalculator
 @inject BrowserInteropService Browser
 @inject ISnackbar Snackbar
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NotificationService NotificationService
+@inject NotificationFeatureService NotificationFeatures
+@inject IConfiguration Config
 
 <MudText Typo="Typo.h3" Class="my-4 pa-2" Align="Align.Center">Premier League Fixtures</MudText>
 
@@ -78,6 +82,22 @@ else if (_fixtures.Response.Any())
     <MudButton Color="Color.Success" Variant="Variant.Filled" OnClick="@CopyPredictionsAsync"
                UserAttributes="@(new Dictionary<string, object>{{"id","copyBtn"}})">Copy Predictions to Clipboard</MudButton>
 </MudStack>
+
+@if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true &&
+    HttpContextAccessor.HttpContext.User.IsInRole("Admin") &&
+    NotificationFeatures.AnyEnabled)
+{
+    <MudStack Class="pb-4" Row="true" Spacing="2" Justify="Justify.Center">
+        <MudButton Color="Color.Info" Variant="Variant.Filled" OnClick="@SendNewFixturesNotificationAsync"
+                   UserAttributes="@(new Dictionary<string, object>{{"id","sendNewFixturesBtn"}})">
+            Send New Fixtures Notification
+        </MudButton>
+        <MudButton Color="Color.Info" Variant="Variant.Filled" OnClick="@SendOneHourWarningAsync"
+                   UserAttributes="@(new Dictionary<string, object>{{"id","sendOneHourBtn"}})">
+            Send 1-Hour Warning Notification
+        </MudButton>
+    </MudStack>
+}
 
 @code {
     private FixturesResponse? _fixtures;
@@ -249,6 +269,36 @@ else if (_fixtures.Response.Any())
     private void ResetRange()
     {
         NavigationManager.NavigateTo("/");
+    }
+
+    private async Task SendNewFixturesNotificationAsync()
+    {
+        var baseUrl = Config["BASE_URL"]?.TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            Snackbar.Add("BASE_URL not configured", Severity.Error);
+            return;
+        }
+
+        var path = new Uri(NavigationManager.Uri).PathAndQuery;
+        var link = baseUrl + path;
+        await NotificationService.SendNewFixturesAvailableAsync($"manual-{DateTime.UtcNow:O}", link);
+        Snackbar.Add("New fixtures notification sent", Severity.Success);
+    }
+
+    private async Task SendOneHourWarningAsync()
+    {
+        var baseUrl = Config["BASE_URL"]?.TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            Snackbar.Add("BASE_URL not configured", Severity.Error);
+            return;
+        }
+
+        var path = new Uri(NavigationManager.Uri).PathAndQuery;
+        var link = baseUrl + path;
+        await NotificationService.SendFixturesStartingSoonAsync($"manual-{DateTime.UtcNow:O}", link);
+        Snackbar.Add("1-hour warning notification sent", Severity.Success);
     }
 
     private class PredictionInput

@@ -7,6 +7,10 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Configuration;
+using Hangfire;
+using Resend;
+using NSubstitute;
 using Predictorator.Data;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
@@ -59,6 +63,16 @@ public class HomePageTests : IClassFixture<WebApplicationFactory<Program>>
                             }
                         }
                     }));
+                services.AddSingleton<IConfiguration>(new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Resend:ApiToken"] = "token",
+                    ["Twilio:AccountSid"] = "sid",
+                    ["Twilio:AuthToken"] = "token",
+                    ["Twilio:FromNumber"] = "+1"
+                }).Build());
+                services.AddSingleton<NotificationFeatureService>();
+                services.AddSingleton<IBackgroundJobClient>(Substitute.For<IBackgroundJobClient>());
+                services.AddSingleton<NotificationService>();
             });
         });
     }

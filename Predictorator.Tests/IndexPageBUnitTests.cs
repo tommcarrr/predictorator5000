@@ -6,7 +6,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.JSInterop;
 using MudBlazor.Services;
 using NSubstitute;
+using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using Resend;
+using Hangfire;
 using Predictorator.Components.Layout;
+using Predictorator.Data;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
@@ -16,11 +21,17 @@ namespace Predictorator.Tests;
 
 public class IndexPageBUnitTests
 {
-    private BunitContext CreateContext()
+    private BunitContext CreateContext(bool isAdmin = false)
     {
         var ctx = new BunitContext();
         ctx.Services.AddMudServices();
-        ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
+        var accessor = new HttpContextAccessor();
+        if (isAdmin)
+        {
+            var identity = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Role, "Admin") }, "Test");
+            accessor.HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) };
+        }
+        ctx.Services.AddSingleton<IHttpContextAccessor>(accessor);
         var jsRuntime = Substitute.For<IJSRuntime>();
         ctx.Services.AddSingleton(jsRuntime);
         var browser = new BrowserInteropService(jsRuntime);
@@ -28,13 +39,15 @@ public class IndexPageBUnitTests
         var theme = new ThemeService(browser);
         ctx.Services.AddSingleton(theme);
         var fixtures = new FixturesResponse { Response = [] };
-        ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
+        var fixtureService = new FakeFixtureService(fixtures);
+        ctx.Services.AddSingleton<IFixtureService>(fixtureService);
         var provider = new FakeDateTimeProvider
         {
             Today = new DateTime(2024, 1, 1),
             UtcNow = new DateTime(2024, 1, 1)
         };
-        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider));
+        var calculator = new DateRangeCalculator(provider);
+        ctx.Services.AddSingleton<IDateRangeCalculator>(calculator);
 
         var settings = new Dictionary<string, string?>
         {
@@ -45,7 +58,18 @@ public class IndexPageBUnitTests
         };
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         ctx.Services.AddSingleton<IConfiguration>(config);
-        ctx.Services.AddSingleton<NotificationFeatureService>();
+        var features = new NotificationFeatureService(config);
+        ctx.Services.AddSingleton(features);
+
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        var db = new ApplicationDbContext(options);
+        var resend = Substitute.For<IResend>();
+        var sms = Substitute.For<ITwilioSmsSender>();
+        var jobs = Substitute.For<IBackgroundJobClient>();
+        var time = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
+        ctx.Services.AddSingleton(new NotificationService(db, resend, sms, config, fixtureService, calculator, features, time, jobs));
         return ctx;
     }
 
@@ -153,5 +177,25 @@ public class IndexPageBUnitTests
         cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
         next = cut.Find("#nextWeekBtn");
         Assert.False(next.HasAttribute("disabled"));
+    }
+
+    [Fact]
+    public async Task AdminButtons_Not_Visible_For_Non_Admin()
+    {
+        await using var ctx = CreateContext();
+        RenderFragment body = b => { b.OpenComponent<IndexPage>(0); b.CloseComponent(); };
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        Assert.DoesNotContain(cut.FindAll("button"), b => b.Id == "sendNewFixturesBtn");
+        Assert.DoesNotContain(cut.FindAll("button"), b => b.Id == "sendOneHourBtn");
+    }
+
+    [Fact]
+    public async Task AdminButtons_Render_For_Admin()
+    {
+        await using var ctx = CreateContext(isAdmin: true);
+        RenderFragment body = b => { b.OpenComponent<IndexPage>(0); b.CloseComponent(); };
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        Assert.NotNull(cut.Find("#sendNewFixturesBtn"));
+        Assert.NotNull(cut.Find("#sendOneHourBtn"));
     }
 }
