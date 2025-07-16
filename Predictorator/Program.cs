@@ -136,6 +136,8 @@ builder.Services.AddDataProtection()
 
 var app = builder.Build();
 
+ToastInterop.Configure(app.Services);
+
 
 app.UseRateLimiter();
 
