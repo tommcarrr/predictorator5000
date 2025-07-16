@@ -78,16 +78,16 @@ window.app = (() => {
         window.toastHelper = dotnetHelper;
     }
 
-    function showToast(message) {
+    function showToast(message, severity) {
         if (window.toastHelper) {
-            window.toastHelper.invokeMethodAsync('ShowToast', message);
+            window.toastHelper.invokeMethodAsync('ShowToast', message, severity);
         }
     }
     
     function copyPredictions() {
         const groups = document.querySelectorAll('.fixture-group');
         if (groups.length === 0) {
-            showToast('No predictions available to copy.');
+            showToast('No predictions available to copy.', 'error');
             return;
         }
 
@@ -125,7 +125,7 @@ window.app = (() => {
         html += '</table><br/>';
 
         if (missing) {
-            showToast('Error: Please fill in all score predictions before copying.');
+            showToast('Error: Please fill in all score predictions before copying.', 'error');
             return;
         }
 
@@ -133,9 +133,9 @@ window.app = (() => {
         const copyPromise = mobile ? copyToClipboardText(text) : copyToClipboardHtml(html);
         Promise.resolve(copyPromise).then(copied => {
             if (copied) {
-                showToast('Predictions copied to clipboard!');
+                showToast('Predictions copied to clipboard!', 'success');
             } else {
-                showToast('Failed to copy predictions to clipboard.');
+                showToast('Failed to copy predictions to clipboard.', 'error');
             }
         });
     }

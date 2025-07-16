@@ -22,9 +22,16 @@ public sealed class ToastInterop : IAsyncDisposable
     }
 
     [JSInvokable]
-    public Task ShowToast(string message)
+    public Task ShowToast(string message, string? severity = null)
     {
-        _snackbar.Add(message, Severity.Normal);
+        var toastSeverity = severity?.ToLowerInvariant() switch
+        {
+            "success" => Severity.Success,
+            "error" => Severity.Error,
+            _ => Severity.Normal
+        };
+
+        _snackbar.Add(message, toastSeverity);
         return Task.CompletedTask;
     }
 
