@@ -131,16 +131,10 @@ window.app = (() => {
     }
 
     return {
-        copyToClipboardText,
-        copyToClipboardHtml,
-        isMobileDevice,
-        setLocalStorage,
-        getLocalStorage,
         copyPredictions
     };
 })();
 
-// delegate click so the handler works regardless of render timing
 document.addEventListener('click', function (e) {
     if (e.target && e.target.parentNode.id === 'copyBtn') {
         window.app.copyPredictions();
