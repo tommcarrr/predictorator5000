@@ -3,7 +3,6 @@
 @inject NavigationManager NavigationManager
 @inject IFixtureService FixtureService
 @inject IDateRangeCalculator DateRangeCalculator
-
 <MudText Typo="Typo.h3" Class="my-4 pa-2" Align="Align.Center">Premier League Fixtures</MudText>
 
 <MudPaper Class="my-4 pa-2" Elevation="1">
@@ -71,7 +70,7 @@ else if (_fixtures.Response.Any())
     <MudButton Color="Color.Warning" Variant="Variant.Filled" OnClick="@ClearScores"
                UserAttributes="@(new Dictionary<string, object>{{"id","clearBtn"}})">Clear Predictions</MudButton>
     <MudButton Color="Color.Success" Variant="Variant.Filled"
-               UserAttributes="@(new Dictionary<string, object>{{"id","copyBtn"}, {"onclick", "app.copyPredictions()"}})">Copy Predictions to Clipboard</MudButton>
+               UserAttributes="@(new Dictionary<string, object>{{"id","copyBtn"}})">Copy Predictions to Clipboard</MudButton>
 </MudStack>
 
 @code {
