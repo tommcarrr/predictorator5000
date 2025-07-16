@@ -102,6 +102,19 @@ public class MainLayoutBUnitTests
     }
 
     [Fact]
+    public async Task LayoutRegistersToastHandler()
+    {
+        await using var ctx = CreateContext();
+        var js = ctx.Services.GetRequiredService<IJSRuntime>();
+        RenderFragment body = b => b.AddMarkupContent(0, "<p>child</p>");
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        cut.WaitForAssertion(() =>
+        {
+            js.Received().InvokeAsync<Microsoft.JSInterop.Infrastructure.IJSVoidResult>("app.registerToastHandler", Arg.Any<object[]>());
+        });
+    }
+
+    [Fact]
     public async Task SubscribeButtonNotRendered_When_Features_Disabled()
     {
         await using var ctx = CreateContext(enableEmail: false, enableSms: false);
