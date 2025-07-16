@@ -1,0 +1,18 @@
+@implements IDisposable
+@rendermode InteractiveServer
+@inject ToastInterop ToastInterop
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ToastInterop.InitializeAsync();
+        }
+    }
+
+    public void Dispose()
+    {
+        ToastInterop.DisposeAsync().AsTask().GetAwaiter().GetResult();
+    }
+}
