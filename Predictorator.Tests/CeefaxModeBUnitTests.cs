@@ -26,6 +26,7 @@ public class CeefaxModeBUnitTests
         ctx.Services.AddSingleton(browser);
         var theme = new ThemeService(browser);
         ctx.Services.AddSingleton(theme);
+        ctx.Services.AddScoped<ToastInterop>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
@@ -72,6 +73,7 @@ public class CeefaxModeBUnitTests
         ctx.Services.AddSingleton(browser);
         var theme = new ThemeService(browser);
         ctx.Services.AddSingleton(theme);
+        ctx.Services.AddScoped<ToastInterop>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) }));

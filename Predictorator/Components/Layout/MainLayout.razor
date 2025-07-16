@@ -2,6 +2,7 @@
 @inherits LayoutComponentBase
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ThemeService ThemeService
+@inject ToastInterop ToastInterop
 <MudLayout>
 <MudThemeProvider @rendermode="InteractiveServer"
                       Theme="@ThemeService.CurrentTheme"
@@ -38,10 +39,19 @@
         ThemeService.OnChange += OnThemeChanged;
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ToastInterop.InitializeAsync();
+        }
+    }
+
     private void OnThemeChanged() => InvokeAsync(StateHasChanged);
 
     public void Dispose()
     {
         ThemeService.OnChange -= OnThemeChanged;
+        ToastInterop.DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
 }
