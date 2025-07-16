@@ -27,6 +27,7 @@ public class IndexPageBUnitTests
         ctx.Services.AddSingleton(browser);
         var theme = new ThemeService(browser);
         ctx.Services.AddSingleton(theme);
+        ctx.Services.AddScoped<ToastInterop>();
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
         var provider = new FakeDateTimeProvider

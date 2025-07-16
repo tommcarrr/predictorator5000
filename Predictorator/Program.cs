@@ -117,6 +117,7 @@ builder.Services.AddMudServices();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<BrowserInteropService>();
 builder.Services.AddScoped<ThemeService>();
+builder.Services.AddScoped<ToastInterop>();
 builder.Services.AddScoped<ISignInService, SignInManagerSignInService>();
 builder.Services.AddRazorPages();
 
@@ -135,8 +136,6 @@ builder.Services.AddDataProtection()
     .SetApplicationName("Predictorator");
 
 var app = builder.Build();
-
-ToastInterop.Configure(app.Services);
 
 
 app.UseRateLimiter();

@@ -27,6 +27,7 @@ public class SubscribeComponentBUnitTests
         var browser = new BrowserInteropService(jsRuntime);
         ctx.Services.AddSingleton(browser);
         ctx.Services.AddSingleton(new ThemeService(browser));
+        ctx.Services.AddScoped<ToastInterop>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
 
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();

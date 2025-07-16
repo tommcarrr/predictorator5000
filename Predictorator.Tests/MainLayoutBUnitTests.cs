@@ -26,6 +26,7 @@ public class MainLayoutBUnitTests
         ctx.Services.AddSingleton(browser);
         var theme = new ThemeService(browser);
         ctx.Services.AddSingleton(theme);
+        ctx.Services.AddScoped<ToastInterop>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
 
         var settings = new Dictionary<string, string?>();

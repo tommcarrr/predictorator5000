@@ -1,27 +1,36 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Predictorator.Services;
 
-public static class ToastInterop
+public sealed class ToastInterop : IAsyncDisposable
 {
-    private static IServiceProvider? _provider;
+    private readonly ISnackbar _snackbar;
+    private readonly IJSRuntime _js;
+    private DotNetObjectReference<ToastInterop>? _objRef;
 
-    public static void Configure(IServiceProvider provider)
+    public ToastInterop(ISnackbar snackbar, IJSRuntime js)
     {
-        _provider = provider;
+        _snackbar = snackbar;
+        _js = js;
+    }
+
+    public async Task InitializeAsync()
+    {
+        _objRef ??= DotNetObjectReference.Create(this);
+        await _js.InvokeVoidAsync("app.registerToastHandler", _objRef);
     }
 
     [JSInvokable]
-    public static Task ShowToast(string message)
+    public Task ShowToast(string message)
     {
-        if (_provider == null)
-            return Task.CompletedTask;
-
-        using var scope = _provider.CreateScope();
-        var snackbar = scope.ServiceProvider.GetService<ISnackbar>();
-        snackbar?.Add(message, Severity.Normal);
+        _snackbar.Add(message, Severity.Normal);
         return Task.CompletedTask;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _objRef?.Dispose();
+        return ValueTask.CompletedTask;
     }
 }

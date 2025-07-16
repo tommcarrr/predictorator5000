@@ -66,9 +66,13 @@ window.app = (() => {
             (window.innerWidth <= 800 && window.innerHeight <= 600);
     }
 
+    function registerToastHandler(dotnetHelper) {
+        window.toastHelper = dotnetHelper;
+    }
+
     function showToast(message) {
-        if (window.DotNet && DotNet.invokeMethodAsync) {
-            DotNet.invokeMethodAsync('Predictorator', 'ShowToast', message);
+        if (window.toastHelper) {
+            window.toastHelper.invokeMethodAsync('ShowToast', message);
         }
     }
     
@@ -129,7 +133,8 @@ window.app = (() => {
     }
 
     return {
-        copyPredictions
+        copyPredictions,
+        registerToastHandler
     };
 })();
 
