@@ -61,6 +61,14 @@ window.app = (() => {
         return fallbackCopyHtml(html);
     }
 
+    function setCeefax(enabled) {
+        if (enabled) {
+            document.body.classList.add('ceefax-font');
+        } else {
+            document.body.classList.remove('ceefax-font');
+        }
+    }
+
     function isMobileDevice() {
         return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
             (window.innerWidth <= 800 && window.innerHeight <= 600);
@@ -134,7 +142,8 @@ window.app = (() => {
 
     return {
         copyPredictions,
-        registerToastHandler
+        registerToastHandler,
+        setCeefax
     };
 })();
 

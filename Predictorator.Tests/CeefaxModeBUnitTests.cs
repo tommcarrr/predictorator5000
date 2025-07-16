@@ -6,6 +6,7 @@ using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
 using Predictorator.Components;
+using Predictorator.Components.Layout;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
@@ -22,8 +23,6 @@ public class CeefaxModeBUnitTests
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var storage = new FakeBrowserStorage();
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
-        var theme = new ThemeService(storage);
-        ctx.Services.AddSingleton(theme);
         ctx.Services.AddScoped<ToastInterop>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         var fixtures = new FixturesResponse { Response = [] };
@@ -49,12 +48,13 @@ public class CeefaxModeBUnitTests
     {
         await using var ctx = CreateContext();
         var cut = ctx.Render<App>();
+        var layout = cut.FindComponent<MainLayout>();
         var toggle = cut.Find("#ceefaxToggle");
-        Assert.False(ctx.Services.GetRequiredService<ThemeService>().IsCeefax);
+        Assert.False(layout.Instance.IsCeefax);
         toggle.Click();
         cut.WaitForAssertion(() =>
         {
-            Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsCeefax);
+            Assert.True(layout.Instance.IsCeefax);
         }, timeout: TimeSpan.FromSeconds(1));
     }
 
@@ -84,8 +84,6 @@ public class CeefaxModeBUnitTests
         var storage = new FakeBrowserStorage();
         await storage.SetAsync("ceefaxMode", true);
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
-        var theme = new ThemeService(storage);
-        ctx.Services.AddSingleton(theme);
         ctx.Services.AddScoped<ToastInterop>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
@@ -103,10 +101,11 @@ public class CeefaxModeBUnitTests
         ctx.Services.AddSingleton<NotificationFeatureService>();
 
         var cut = ctx.Render<App>();
+        var layout = cut.FindComponent<MainLayout>();
 
         cut.WaitForAssertion(() =>
         {
-            Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsCeefax);
+            Assert.True(layout.Instance.IsCeefax);
         }, timeout: TimeSpan.FromSeconds(1));
     }
 }

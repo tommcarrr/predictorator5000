@@ -119,7 +119,6 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<BrowserInteropService>();
 builder.Services.AddScoped<ProtectedLocalStorage>();
 builder.Services.AddScoped<IBrowserStorage, ProtectedLocalStorageBrowserStorage>();
-builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<ToastInterop>();
 builder.Services.AddScoped<ISignInService, SignInManagerSignInService>();
 builder.Services.AddRazorPages();
