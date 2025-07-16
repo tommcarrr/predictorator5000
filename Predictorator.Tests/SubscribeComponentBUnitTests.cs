@@ -24,7 +24,6 @@ public class SubscribeComponentBUnitTests
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var storage = new FakeBrowserStorage();
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
-        ctx.Services.AddSingleton(new ThemeService(storage));
         ctx.Services.AddScoped<ToastInterop>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
 

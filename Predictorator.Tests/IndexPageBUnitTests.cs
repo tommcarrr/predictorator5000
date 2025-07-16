@@ -22,8 +22,6 @@ public class IndexPageBUnitTests
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var storage = new FakeBrowserStorage();
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
-        var theme = new ThemeService(storage);
-        ctx.Services.AddSingleton(theme);
         ctx.Services.AddScoped<ToastInterop>();
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));

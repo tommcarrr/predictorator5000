@@ -25,8 +25,6 @@ public class MainLayoutBUnitTests
         ctx.Services.AddSingleton(jsRuntime);
         var storage = new FakeBrowserStorage();
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
-        var theme = new ThemeService(storage);
-        ctx.Services.AddSingleton(theme);
         ctx.Services.AddScoped<ToastInterop>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
 

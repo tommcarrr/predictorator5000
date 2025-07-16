@@ -50,8 +50,6 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
 
                 services.RemoveAll(typeof(IBrowserStorage));
                 services.AddSingleton<IBrowserStorage>(new FakeBrowserStorage());
-                services.RemoveAll(typeof(ThemeService));
-                services.AddSingleton<ThemeService>();
             });
         });
     }

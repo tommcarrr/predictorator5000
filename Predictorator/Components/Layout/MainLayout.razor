@@ -1,11 +1,11 @@
 @implements IDisposable
 @inherits LayoutComponentBase
 @inject IHttpContextAccessor HttpContextAccessor
-@inject ThemeService ThemeService
+@inject IJSRuntime Js
 @inject IBrowserStorage Storage
 
 <MudThemeProvider @rendermode="InteractiveServer"
-                  Theme="@ThemeService.CurrentTheme"
+                  Theme="@CurrentTheme"
                   @bind-IsDarkMode="@IsDarkMode"/>
 <MudPopoverProvider @rendermode="InteractiveServer"/>
 <MudDialogProvider @rendermode="InteractiveServer"/>
@@ -24,9 +24,19 @@
             <MudButton Variant="Variant.Text" Href="/Admin/SendNotification">Admin</MudButton>
         }
         <SubscribeButton/>
-        <SupportLink/>
-        <DarkModeToggle/>
-        <CeefaxToggle/>
+        <MudTooltip Text="Contribute to hosting costs">
+            <MudIconButton Icon="@Icons.Material.Filled.VolunteerActivism"
+                           Href="https://paypal.me/tommcarrr?country.x=GB&locale.x=en_GB"
+                           Target="_blank" Rel="noopener"
+                           Color="Color.Inherit"
+                           UserAttributes="@(new Dictionary<string, object>{{"id","donateLink"}})" />
+        </MudTooltip>
+        <MudIconButton Icon="@(IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                       OnClick="ToggleDarkModeAsync" Color="Color.Inherit"
+                       UserAttributes="@(new Dictionary<string, object>{{"id","darkModeToggle"}})" />
+        <MudIconButton Icon="@Icons.Material.Outlined.Article"
+                      OnClick="ToggleCeefaxAsync" Color="@(IsCeefax ? Color.Inherit : Color.Dark)"
+                      UserAttributes="@(new Dictionary<string, object>{{"id","ceefaxToggle"}})" />
     </MudAppBar>
 
     <MudMainContent>
@@ -40,19 +50,47 @@
 
 @code {
     public bool IsDarkMode { get; set; }
+    public bool IsCeefax { get; set; }
+
+    private MudTheme CeefaxTheme { get; } = new()
+    {
+        PaletteDark = new PaletteDark
+        {
+            Background = "#000000",
+            Surface = "#000000",
+            TextPrimary = "#FFFFFF",
+            TextSecondary = "#CCCCCC",
+            Primary = "#0000FF",
+            Secondary = "#00FF00",
+            Info = "#00FFFF",
+            Success = "#00FF00",
+            Warning = "#FFFF00",
+            Error = "#FF0000",
+            AppbarBackground = "#0000FF",
+            AppbarText = "#00FF00",
+            DrawerBackground = "#000000",
+            DrawerText = "#FFFFFF",
+            ActionDefault = "#FFFFFF",
+            ActionDisabled = "#555555",
+            ActionDisabledBackground = "#222222"
+        }
+    };
+
+    private MudTheme? CurrentTheme => IsCeefax ? CeefaxTheme : null;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            var stored = await Storage.GetAsync("darkMode");
-            if (stored.HasValue)
-            {
-                IsDarkMode = stored.Value;
-            }
+            var dark = await Storage.GetAsync("darkMode");
+            if (dark.HasValue)
+                IsDarkMode = dark.Value;
 
-            await ThemeService.InitializeAsync();
-            ThemeService.OnChange += OnThemeChanged;
+            var ceefax = await Storage.GetAsync("ceefaxMode");
+            if (ceefax.HasValue)
+                IsCeefax = ceefax.Value;
+
+            await Js.InvokeVoidAsync("app.setCeefax", IsCeefax);
             await InvokeAsync(StateHasChanged);
         }
     }
@@ -64,11 +102,16 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private void OnThemeChanged() => InvokeAsync(StateHasChanged);
+    public async Task ToggleCeefaxAsync()
+    {
+        IsCeefax = !IsCeefax;
+        await Storage.SetAsync("ceefaxMode", IsCeefax);
+        await Js.InvokeVoidAsync("app.setCeefax", IsCeefax);
+        await InvokeAsync(StateHasChanged);
+    }
 
     public void Dispose()
     {
-        ThemeService.OnChange -= OnThemeChanged;
     }
 
 }
