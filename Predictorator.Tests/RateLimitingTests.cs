@@ -47,6 +47,11 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
                 });
                 services.AddTransient<IFixtureService>(_ => new FakeFixtureService(
                     new FixturesResponse { Response = new List<FixtureData>() }));
+
+                services.RemoveAll(typeof(IBrowserStorage));
+                services.AddSingleton<IBrowserStorage>(new FakeBrowserStorage());
+                services.RemoveAll(typeof(ThemeService));
+                services.AddSingleton<ThemeService>();
             });
         });
     }
