@@ -13,6 +13,7 @@ using Resend;
 using Serilog;
 using Serilog.Events;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -116,6 +117,8 @@ razorComponentsBuilder.AddInteractiveServerComponents(options =>
 builder.Services.AddMudServices();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<BrowserInteropService>();
+builder.Services.AddScoped<ProtectedLocalStorage>();
+builder.Services.AddScoped<IBrowserStorage, ProtectedLocalStorageBrowserStorage>();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<ToastInterop>();
 builder.Services.AddScoped<ISignInService, SignInManagerSignInService>();

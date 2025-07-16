@@ -1,14 +1,15 @@
+using System.Threading.Tasks;
 using MudBlazor;
 
 namespace Predictorator.Services;
 
 public class ThemeService
 {
-    private readonly BrowserInteropService _browser;
+    private readonly IBrowserStorage _storage;
 
-    public ThemeService(BrowserInteropService browser)
+    public ThemeService(IBrowserStorage storage)
     {
-        _browser = browser;
+        _storage = storage;
     }
 
     public bool IsDarkMode { get; private set; }
@@ -44,16 +45,16 @@ public class ThemeService
 
     public async Task InitializeAsync()
     {
-        var value = await _browser.GetLocalStorageAsync("darkMode");
-        if (bool.TryParse(value, out var result))
+        var stored = await _storage.GetAsync("darkMode");
+        if (stored.HasValue)
         {
-            IsDarkMode = result;
+            IsDarkMode = stored.Value;
         }
 
-        value = await _browser.GetLocalStorageAsync("ceefaxMode");
-        if (bool.TryParse(value, out result))
+        stored = await _storage.GetAsync("ceefaxMode");
+        if (stored.HasValue)
         {
-            IsCeefax = result;
+            IsCeefax = stored.Value;
         }
 
         OnChange?.Invoke();
@@ -66,7 +67,7 @@ public class ThemeService
         if (IsDarkMode != value)
         {
             IsDarkMode = value;
-            await _browser.SetLocalStorageAsync("darkMode", value.ToString().ToLowerInvariant());
+            await _storage.SetAsync("darkMode", value);
             OnChange?.Invoke();
         }
     }
@@ -78,7 +79,7 @@ public class ThemeService
         if (IsCeefax != value)
         {
             IsCeefax = value;
-            await _browser.SetLocalStorageAsync("ceefaxMode", value.ToString().ToLowerInvariant());
+            await _storage.SetAsync("ceefaxMode", value);
             OnChange?.Invoke();
         }
     }

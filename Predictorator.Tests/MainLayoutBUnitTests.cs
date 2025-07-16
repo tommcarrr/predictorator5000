@@ -8,6 +8,7 @@ using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
 using Predictorator.Components.Layout;
+using Predictorator.Tests.Helpers;
 using Predictorator.Components.Pages.Subscription;
 using Predictorator.Services;
 
@@ -22,9 +23,9 @@ public class MainLayoutBUnitTests
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
         var jsRuntime = Substitute.For<IJSRuntime>();
         ctx.Services.AddSingleton(jsRuntime);
-        var browser = new BrowserInteropService(jsRuntime);
-        ctx.Services.AddSingleton(browser);
-        var theme = new ThemeService(browser);
+        var storage = new FakeBrowserStorage();
+        ctx.Services.AddSingleton<IBrowserStorage>(storage);
+        var theme = new ThemeService(storage);
         ctx.Services.AddSingleton(theme);
         ctx.Services.AddScoped<ToastInterop>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
