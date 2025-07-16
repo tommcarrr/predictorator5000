@@ -4,8 +4,8 @@
 @inject IFixtureService FixtureService
 @inject IDateRangeCalculator DateRangeCalculator
 @inject ThemeService ThemeService
+@using Predictorator.Components.Layout
 <MudText Typo="Typo.h3" Class="my-4 pa-2" Align="Align.Center">Premier League Fixtures</MudText>
-<MudText>@($"DarkMode={ThemeService.IsDarkMode}, Ceefax={ThemeService.IsCeefax}")</MudText>
 
 <MudPaper Class="my-4 pa-2" Elevation="1">
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
@@ -84,6 +84,8 @@ else if (_fixtures.Response.Any())
     private int _currentWeekOffset;
     private readonly Dictionary<int, PredictionInput> _predictions = new();
     private DateRange _selectedRange = new(null, null);
+
+    [CascadingParameter] public MainLayout? Layout { get; set; }
 
     [Parameter, SupplyParameterFromQuery(Name = "fromDate")] public DateTime? FromDate { get; set; }
     [Parameter, SupplyParameterFromQuery(Name = "toDate")] public DateTime? ToDate { get; set; }

@@ -9,7 +9,7 @@ public class ThemeServiceTests
     public async Task InitializeAsync_Raises_OnChange()
     {
         var storage = new FakeBrowserStorage();
-        await storage.SetAsync("darkMode", true);
+        await storage.SetAsync("ceefaxMode", true);
         var service = new ThemeService(storage);
         bool raised = false;
         service.OnChange += () => raised = true;

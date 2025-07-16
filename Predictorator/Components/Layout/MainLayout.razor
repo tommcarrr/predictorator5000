@@ -2,13 +2,15 @@
 @inherits LayoutComponentBase
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ThemeService ThemeService
+@inject IBrowserStorage Storage
 
 <MudThemeProvider @rendermode="InteractiveServer"
                   Theme="@ThemeService.CurrentTheme"
-                  @bind-IsDarkMode="@ThemeService.IsDarkMode"/>
+                  @bind-IsDarkMode="@IsDarkMode"/>
 <MudPopoverProvider @rendermode="InteractiveServer"/>
 <MudDialogProvider @rendermode="InteractiveServer"/>
 <MudSnackbarProvider @rendermode="InteractiveServer"/>
+<CascadingValue Value="this">
 <MudLayout>
     <ToastInit/>
     <MudAppBar Elevation="1" Color="Color.Primary">
@@ -34,16 +36,32 @@
     </MudMainContent>
 
 </MudLayout>
+</CascadingValue>
 
 @code {
+    public bool IsDarkMode { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            var stored = await Storage.GetAsync("darkMode");
+            if (stored.HasValue)
+            {
+                IsDarkMode = stored.Value;
+            }
+
             await ThemeService.InitializeAsync();
             ThemeService.OnChange += OnThemeChanged;
+            await InvokeAsync(StateHasChanged);
         }
+    }
+
+    public async Task ToggleDarkModeAsync()
+    {
+        IsDarkMode = !IsDarkMode;
+        await Storage.SetAsync("darkMode", IsDarkMode);
+        await InvokeAsync(StateHasChanged);
     }
 
     private void OnThemeChanged() => InvokeAsync(StateHasChanged);

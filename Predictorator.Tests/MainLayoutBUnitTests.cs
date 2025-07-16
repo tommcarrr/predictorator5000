@@ -86,7 +86,7 @@ public class MainLayoutBUnitTests
         toggle.Click();
         cut.WaitForAssertion(() =>
         {
-            Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsDarkMode);
+            Assert.True(cut.Instance.IsDarkMode);
         });
     }
 

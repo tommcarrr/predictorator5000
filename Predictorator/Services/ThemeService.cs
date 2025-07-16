@@ -11,7 +11,6 @@ public class ThemeService
         _storage = storage;
     }
 
-    public bool IsDarkMode { get; set; }
     public bool IsCeefax { get; set; }
 
     public MudTheme? CeefaxTheme { get; } = new MudTheme()
@@ -44,31 +43,13 @@ public class ThemeService
 
     public async Task InitializeAsync()
     {
-        var stored = await _storage.GetAsync("darkMode");
-        if (stored.HasValue)
-        {
-            IsDarkMode = stored.Value;
-        }
-
-        stored = await _storage.GetAsync("ceefaxMode");
+        var stored = await _storage.GetAsync("ceefaxMode");
         if (stored.HasValue)
         {
             IsCeefax = stored.Value;
         }
 
         OnChange?.Invoke();
-    }
-
-    public Task ToggleDarkModeAsync() => SetDarkModeAsync(!IsDarkMode);
-
-    public async Task SetDarkModeAsync(bool value)
-    {
-        if (IsDarkMode != value)
-        {
-            IsDarkMode = value;
-            await _storage.SetAsync("darkMode", value);
-            OnChange?.Invoke();
-        }
     }
 
     public Task ToggleCeefaxAsync() => SetCeefaxAsync(!IsCeefax);

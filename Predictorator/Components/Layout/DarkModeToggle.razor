@@ -1,24 +1,12 @@
-@implements IDisposable
 @rendermode InteractiveServer
-@inject ThemeService ThemeService
-<MudIconButton Icon="@(ThemeService.IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
-               OnClick="@ToggleDarkMode" Color="Color.Inherit"
+@using Predictorator.Components.Layout
+
+<MudIconButton Icon="@(Layout?.IsDarkMode == true ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+               OnClick="Toggle" Color="Color.Inherit"
                UserAttributes="@(new Dictionary<string, object>{{"id","darkModeToggle"}})" />
+
 @code {
-    protected override void OnInitialized()
-    {
-        ThemeService.OnChange += OnThemeChanged;
-    }
+    [CascadingParameter] public MainLayout? Layout { get; set; }
 
-    private async Task ToggleDarkMode()
-    {
-        await ThemeService.ToggleDarkModeAsync();
-    }
-
-    private void OnThemeChanged() => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-    {
-        ThemeService.OnChange -= OnThemeChanged;
-    }
+    private Task Toggle() => Layout?.ToggleDarkModeAsync() ?? Task.CompletedTask;
 }
