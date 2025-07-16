@@ -4,12 +4,11 @@
 @inject IJSRuntime Js
 @inject IBrowserStorage Storage
 
-<MudThemeProvider @rendermode="InteractiveServer"
-                  Theme="@CurrentTheme"
+<MudThemeProvider Theme="@CurrentTheme"
                   @bind-IsDarkMode="@IsDarkMode"/>
-<MudPopoverProvider @rendermode="InteractiveServer"/>
-<MudDialogProvider @rendermode="InteractiveServer"/>
-<MudSnackbarProvider @rendermode="InteractiveServer"/>
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 <CascadingValue Value="this">
 <MudLayout>
     <ToastInit/>
