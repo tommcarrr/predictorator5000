@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using MudBlazor;
 
 namespace Predictorator.Services;
@@ -12,15 +11,10 @@ public class ThemeService
         _storage = storage;
     }
 
-    public bool IsDarkMode { get; private set; }
-    public bool IsCeefax { get; private set; }
+    public bool IsDarkMode { get; set; }
+    public bool IsCeefax { get; set; }
 
-    public MudTheme DefaultTheme { get; } = new MudTheme()
-    {
-        // Light mode palette overrides can be specified here
-    };
-
-    public MudTheme CeefaxTheme { get; } = new MudTheme()
+    public MudTheme? CeefaxTheme { get; } = new MudTheme()
     {
         PaletteDark = new PaletteDark()
         {
@@ -44,7 +38,7 @@ public class ThemeService
         }
     };
 
-    public MudTheme CurrentTheme => IsCeefax ? CeefaxTheme : DefaultTheme;
+    public MudTheme? CurrentTheme => IsCeefax ? CeefaxTheme : null;
 
     public event Action? OnChange;
 

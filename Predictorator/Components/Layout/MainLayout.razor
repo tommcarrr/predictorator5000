@@ -5,7 +5,7 @@
 
 <MudThemeProvider @rendermode="InteractiveServer"
                   Theme="@ThemeService.CurrentTheme"
-                  IsDarkMode="@ThemeService.IsDarkMode"/>
+                  @bind-IsDarkMode="@ThemeService.IsDarkMode"/>
 <MudPopoverProvider @rendermode="InteractiveServer"/>
 <MudDialogProvider @rendermode="InteractiveServer"/>
 <MudSnackbarProvider @rendermode="InteractiveServer"/>

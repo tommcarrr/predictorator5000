@@ -1,15 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
-using Predictorator.Data;
-using Predictorator.Options;
-using System.Net.Http.Json;
-using Predictorator.Models;
 
 namespace Predictorator.Tests;
 

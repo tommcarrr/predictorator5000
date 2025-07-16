@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using MudBlazor.Services;
-using NSubstitute;
 using Predictorator.Components.Layout;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
