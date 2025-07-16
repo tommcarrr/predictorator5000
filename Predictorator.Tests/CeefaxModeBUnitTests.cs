@@ -70,7 +70,7 @@ public class CeefaxModeBUnitTests
         cut.WaitForAssertion(() =>
         {
             var t = cut.Find("#ceefaxToggle");
-            Assert.Contains("mud-primary-text", t.ClassName);
+            Assert.Contains("mud-inherit-text", t.ClassName);
         }, timeout: TimeSpan.FromSeconds(1));
     }
 

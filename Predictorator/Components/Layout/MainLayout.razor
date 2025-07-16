@@ -34,10 +34,13 @@
 </MudLayout>
 
 @code {
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await ThemeService.InitializeAsync();
-        ThemeService.OnChange += OnThemeChanged;
+        if (firstRender)
+        {
+            await ThemeService.InitializeAsync();
+            ThemeService.OnChange += OnThemeChanged;
+        }
     }
 
     private void OnThemeChanged() => InvokeAsync(StateHasChanged);
