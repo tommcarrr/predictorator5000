@@ -6,6 +6,7 @@ using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
 using Predictorator.Components;
+using Predictorator.Components.Layout;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
@@ -53,14 +54,15 @@ public class DarkModeBUnitTests
     {
         await using var ctx = CreateContext();
         var cut = ctx.Render<App>();
+        var layout = cut.FindComponent<MainLayout>();
         var toggle = cut.Find("#darkModeToggle");
-        Assert.False(ctx.Services.GetRequiredService<ThemeService>().IsDarkMode);
+        Assert.False(layout.Instance.IsDarkMode);
 
         toggle.Click();
 
         cut.WaitForAssertion(() =>
         {
-            Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsDarkMode);
+            Assert.True(layout.Instance.IsDarkMode);
         }, timeout: TimeSpan.FromSeconds(1));
     }
 
@@ -93,10 +95,11 @@ public class DarkModeBUnitTests
         ctx.Services.AddSingleton<NotificationFeatureService>();
 
         var cut = ctx.Render<App>();
+        var layout = cut.FindComponent<MainLayout>();
 
         cut.WaitForAssertion(() =>
         {
-            Assert.True(ctx.Services.GetRequiredService<ThemeService>().IsDarkMode);
+            Assert.True(layout.Instance.IsDarkMode);
         }, timeout: TimeSpan.FromSeconds(1));
     }
 }
