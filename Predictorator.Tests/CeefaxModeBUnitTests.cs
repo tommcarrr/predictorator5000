@@ -61,6 +61,22 @@ public class CeefaxModeBUnitTests
     }
 
     [Fact]
+    public async Task CeefaxToggle_Uses_Dark_Color_When_Off()
+    {
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<App>();
+        var toggle = cut.Find("#ceefaxToggle");
+        Assert.Contains("mud-dark-text", toggle.ClassName);
+
+        toggle.Click();
+        cut.WaitForAssertion(() =>
+        {
+            var t = cut.Find("#ceefaxToggle");
+            Assert.Contains("mud-primary-text", t.ClassName);
+        }, timeout: TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
     public async Task Initialize_Uses_Existing_State()
     {
         await using var ctx = new BunitContext();
