@@ -74,16 +74,10 @@ window.app = (() => {
         return window.localStorage.getItem(key);
     }
 
-    function showToast(message) {
-        if (window.DotNet && DotNet.invokeMethodAsync) {
-            DotNet.invokeMethodAsync('Predictorator', 'ShowToast', message);
-        }
-    }
-
     function copyPredictions() {
         const groups = document.querySelectorAll('.fixture-group');
         if (groups.length === 0) {
-            showToast('No predictions available to copy.');
+            alert('No predictions available to copy.');
             return;
         }
 
@@ -121,7 +115,7 @@ window.app = (() => {
         html += '</table><br/>';
 
         if (missing) {
-            showToast('Error: Please fill in all score predictions before copying.');
+            alert('Error: Please fill in all score predictions before copying.');
             return;
         }
 
@@ -129,9 +123,9 @@ window.app = (() => {
         const copyPromise = mobile ? copyToClipboardText(text) : copyToClipboardHtml(html);
         Promise.resolve(copyPromise).then(copied => {
             if (copied) {
-                showToast('Predictions copied to clipboard!');
+                alert('Predictions copied to clipboard!');
             } else {
-                showToast('Failed to copy predictions to clipboard.');
+                alert('Failed to copy predictions to clipboard.');
             }
         });
     }
@@ -142,14 +136,13 @@ window.app = (() => {
         isMobileDevice,
         setLocalStorage,
         getLocalStorage,
-        copyPredictions,
-        showToast
+        copyPredictions
     };
 })();
 
 // delegate click so the handler works regardless of render timing
 document.addEventListener('click', function (e) {
-    if (e.target && e.target.id === 'copyBtn') {
+    if (e.target && e.target.parentNode.id === 'copyBtn') {
         window.app.copyPredictions();
     }
 });
