@@ -2,27 +2,29 @@
 @inherits LayoutComponentBase
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ThemeService ThemeService
-<MudLayout>
-<MudThemeProvider @rendermode="InteractiveServer"
-                      Theme="@ThemeService.CurrentTheme"
-                      IsDarkMode="@ThemeService.IsDarkMode" />
 
-    <MudPopoverProvider  @rendermode="InteractiveServer" />
-    <MudDialogProvider    @rendermode="InteractiveServer" />
-    <MudSnackbarProvider  @rendermode="InteractiveServer" />
-    <ToastInit />
+<MudThemeProvider @rendermode="InteractiveServer"
+                  Theme="@ThemeService.CurrentTheme"
+                  IsDarkMode="@ThemeService.IsDarkMode"/>
+<MudPopoverProvider @rendermode="InteractiveServer"/>
+<MudDialogProvider @rendermode="InteractiveServer"/>
+<MudSnackbarProvider @rendermode="InteractiveServer"/>
+<MudLayout>
+    <ToastInit/>
     <MudAppBar Elevation="1" Color="Color.Primary">
-        <MudText Typo="Typo.h5" Class="ml-2"><a href="/" style="color:inherit;text-decoration:none">Predictotronix</a></MudText>
-        <MudSpacer />
+        <MudText Typo="Typo.h5" Class="ml-2">
+            <a href="/" style="color:inherit;text-decoration:none">Predictotronix</a>
+        </MudText>
+        <MudSpacer/>
         @if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true &&
-            HttpContextAccessor.HttpContext.User.IsInRole("Admin"))
+             HttpContextAccessor.HttpContext.User.IsInRole("Admin"))
         {
             <MudButton Variant="Variant.Text" Href="/Admin/SendNotification">Admin</MudButton>
         }
-        <SubscribeButton />
-        <SupportLink />
-        <DarkModeToggle />
-        <CeefaxToggle />
+        <SubscribeButton/>
+        <SupportLink/>
+        <DarkModeToggle/>
+        <CeefaxToggle/>
     </MudAppBar>
 
     <MudMainContent>
@@ -34,6 +36,7 @@
 </MudLayout>
 
 @code {
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -49,4 +52,5 @@
     {
         ThemeService.OnChange -= OnThemeChanged;
     }
+
 }
