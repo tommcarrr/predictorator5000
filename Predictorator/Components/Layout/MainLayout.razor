@@ -51,6 +51,8 @@
     public bool IsDarkMode { get; set; }
     public bool IsCeefax { get; set; }
 
+    private static readonly string[] CeefaxFont = new[] { "'BBC-Ceefax'", "monospace" };
+
     private MudTheme CeefaxTheme { get; } = new()
     {
         PaletteDark = new PaletteDark
@@ -72,6 +74,23 @@
             ActionDefault = "#FFFFFF",
             ActionDisabled = "#555555",
             ActionDisabledBackground = "#222222"
+        },
+        Typography = new Typography
+        {
+            Default = new Default { FontFamily = CeefaxFont },
+            H1 = new H1 { FontFamily = CeefaxFont },
+            H2 = new H2 { FontFamily = CeefaxFont },
+            H3 = new H3 { FontFamily = CeefaxFont },
+            H4 = new H4 { FontFamily = CeefaxFont },
+            H5 = new H5 { FontFamily = CeefaxFont },
+            H6 = new H6 { FontFamily = CeefaxFont },
+            Subtitle1 = new Subtitle1 { FontFamily = CeefaxFont },
+            Subtitle2 = new Subtitle2 { FontFamily = CeefaxFont },
+            Button = new Button { FontFamily = CeefaxFont },
+            Body1 = new Body1 { FontFamily = CeefaxFont },
+            Body2 = new Body2 { FontFamily = CeefaxFont },
+            Caption = new Caption { FontFamily = CeefaxFont },
+            Overline = new Overline { FontFamily = CeefaxFont }
         }
     };
 

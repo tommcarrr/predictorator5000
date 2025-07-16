@@ -62,11 +62,7 @@ window.app = (() => {
     }
 
     function setCeefax(enabled) {
-        if (enabled) {
-            document.body.classList.add('ceefax-font');
-        } else {
-            document.body.classList.remove('ceefax-font');
-        }
+        // font handled by MudTheme
     }
 
     function isMobileDevice() {
