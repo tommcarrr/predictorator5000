@@ -4,7 +4,7 @@
 
 <MudIconButton Icon="@Icons.Material.Outlined.Article"
               OnClick="ToggleCeefax"
-              Color="@(ThemeService.IsCeefax ? Color.Primary : Color.Dark)"
+              Color="@(ThemeService.IsCeefax ? Color.Inherit : Color.Dark)"
               UserAttributes="@(new Dictionary<string, object>{{"id","ceefaxToggle"}})" />
 
 @code {
