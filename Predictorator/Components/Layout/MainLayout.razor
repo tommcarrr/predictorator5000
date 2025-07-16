@@ -34,8 +34,9 @@
 </MudLayout>
 
 @code {
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        await ThemeService.InitializeAsync();
         ThemeService.OnChange += OnThemeChanged;
     }
 

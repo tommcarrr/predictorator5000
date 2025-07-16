@@ -15,6 +15,11 @@ public class ThemeService
     public bool IsDarkMode { get; private set; }
     public bool IsCeefax { get; private set; }
 
+    public MudTheme DefaultTheme { get; } = new MudTheme()
+    {
+        // Light mode palette overrides can be specified here
+    };
+
     public MudTheme CeefaxTheme { get; } = new MudTheme()
     {
         PaletteDark = new PaletteDark()
@@ -39,7 +44,7 @@ public class ThemeService
         }
     };
 
-    public MudTheme? CurrentTheme => IsCeefax ? CeefaxTheme : null;
+    public MudTheme CurrentTheme => IsCeefax ? CeefaxTheme : DefaultTheme;
 
     public event Action? OnChange;
 
