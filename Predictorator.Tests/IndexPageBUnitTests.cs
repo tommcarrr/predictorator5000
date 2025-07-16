@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using Microsoft.JSInterop;
 using MudBlazor.Services;
 using NSubstitute;
 using Predictorator.Components.Layout;
@@ -19,13 +18,12 @@ public class IndexPageBUnitTests
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();
+        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
-        var jsRuntime = Substitute.For<IJSRuntime>();
-        ctx.Services.AddSingleton(jsRuntime);
-        var browser = new BrowserInteropService(jsRuntime);
-        ctx.Services.AddSingleton(browser);
-        var theme = new ThemeService(browser);
+        var storage = new FakeBrowserStorage();
+        ctx.Services.AddSingleton<IBrowserStorage>(storage);
+        var theme = new ThemeService(storage);
         ctx.Services.AddSingleton(theme);
         ctx.Services.AddScoped<ToastInterop>();
         var fixtures = new FixturesResponse { Response = [] };

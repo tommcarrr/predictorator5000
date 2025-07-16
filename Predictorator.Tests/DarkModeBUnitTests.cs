@@ -2,7 +2,6 @@ using Bunit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using Microsoft.JSInterop;
 using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
@@ -18,13 +17,12 @@ public class DarkModeBUnitTests
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();
+        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
-        var jsRuntime = Substitute.For<IJSRuntime>();
-        ctx.Services.AddSingleton(jsRuntime);
-        var browser = new BrowserInteropService(jsRuntime);
-        ctx.Services.AddSingleton(browser);
-        var theme = new ThemeService(browser);
+        var storage = new FakeBrowserStorage();
+        ctx.Services.AddSingleton<IBrowserStorage>(storage);
+        var theme = new ThemeService(storage);
         ctx.Services.AddSingleton(theme);
         ctx.Services.AddScoped<ToastInterop>();
         var fixtures = new FixturesResponse { Response = [] };
@@ -70,15 +68,13 @@ public class DarkModeBUnitTests
     public async Task Initialize_Uses_Existing_State()
     {
         await using var ctx = new BunitContext();
+        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
-        var jsRuntime = Substitute.For<IJSRuntime>();
-        ctx.Services.AddSingleton(jsRuntime);
-        jsRuntime.InvokeAsync<string?>("app.getLocalStorage", Arg.Any<object[]>())
-            .Returns("true");
-        var browser = new BrowserInteropService(jsRuntime);
-        ctx.Services.AddSingleton(browser);
-        var theme = new ThemeService(browser);
+        var storage = new FakeBrowserStorage();
+        await storage.SetAsync("darkMode", true);
+        ctx.Services.AddSingleton<IBrowserStorage>(storage);
+        var theme = new ThemeService(storage);
         ctx.Services.AddSingleton(theme);
         ctx.Services.AddScoped<ToastInterop>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());

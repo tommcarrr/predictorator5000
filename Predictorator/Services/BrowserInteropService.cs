@@ -21,9 +21,4 @@ public class BrowserInteropService
 
     public ValueTask AlertAsync(string message) => _js.InvokeVoidAsync("alert", message);
 
-    public ValueTask SetLocalStorageAsync(string key, string value) =>
-        _js.InvokeVoidAsync("app.setLocalStorage", key, value);
-
-    public ValueTask<string?> GetLocalStorageAsync(string key) =>
-        _js.InvokeAsync<string?>("app.getLocalStorage", key);
 }
