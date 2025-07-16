@@ -31,12 +31,10 @@
                            Color="Color.Inherit"
                            UserAttributes="@(new Dictionary<string, object>{{"id","donateLink"}})" />
         </MudTooltip>
-        <MudIconButton @rendermode="InteractiveServer"
-                       Icon="@(IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+        <MudIconButton Icon="@(IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
                        OnClick="@ToggleDarkModeAsync" Color="Color.Inherit"
                        UserAttributes="@(new Dictionary<string, object>{{"id","darkModeToggle"}})" />
-        <MudIconButton @rendermode="InteractiveServer"
-                      Icon="@Icons.Material.Outlined.Article"
+        <MudIconButton Icon="@Icons.Material.Outlined.Article"
                       OnClick="@ToggleCeefaxAsync" Color="@(IsCeefax ? Color.Inherit : Color.Dark)"
                       UserAttributes="@(new Dictionary<string, object>{{"id","ceefaxToggle"}})" />
     </MudAppBar>
