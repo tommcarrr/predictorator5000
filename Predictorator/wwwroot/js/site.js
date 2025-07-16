@@ -139,3 +139,10 @@ window.app = (() => {
         copyPredictions
     };
 })();
+
+// delegate click so the handler works regardless of render timing
+document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'copyBtn') {
+        window.app.copyPredictions();
+    }
+});

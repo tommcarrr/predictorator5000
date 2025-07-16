@@ -127,4 +127,18 @@ public class IndexPageBUnitTests
         Assert.False(prev.HasAttribute("disabled"));
     }
 
+    [Fact]
+    public async Task CopyButton_Has_Expected_Id_And_No_OnClick()
+    {
+        await using var ctx = CreateContext();
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.CloseComponent();
+        };
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        var btn = cut.Find("#copyBtn");
+        Assert.False(btn.HasAttribute("onclick"));
+    }
+
 }
