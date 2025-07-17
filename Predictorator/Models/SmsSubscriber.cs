@@ -1,6 +1,6 @@
 namespace Predictorator.Models;
 
-public class SmsSubscriber
+public class SmsSubscriber : ISubscriber
 {
     public int Id { get; set; }
     public string PhoneNumber { get; set; } = string.Empty;

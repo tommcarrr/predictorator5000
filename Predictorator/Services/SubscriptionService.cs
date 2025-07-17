@@ -17,6 +17,34 @@ public class SubscriptionService
     private readonly IDateTimeProvider _dateTime;
     private readonly IBackgroundJobClient _jobs;
 
+    private async Task<bool> VerifySubscriberAsync<TEntity>(DbSet<TEntity> set, string token) where TEntity : class, ISubscriber
+    {
+        var entity = await set.FirstOrDefaultAsync(s => s.VerificationToken == token);
+        if (entity == null) return false;
+        entity.IsVerified = true;
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    private async Task<bool> UnsubscribeSubscriberAsync<TEntity>(DbSet<TEntity> set, string token) where TEntity : class, ISubscriber
+    {
+        var entity = await set.FirstOrDefaultAsync(s => s.UnsubscribeToken == token);
+        if (entity == null) return false;
+        set.Remove(entity);
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
+    private async Task<bool> RemoveExpiredSubscribersAsync<TEntity>(DbSet<TEntity> set, DateTime cutoff) where TEntity : class, ISubscriber
+    {
+        var expired = await set
+            .Where(s => !s.IsVerified && s.CreatedAt < cutoff)
+            .ToListAsync();
+        if (!expired.Any()) return false;
+        set.RemoveRange(expired);
+        return true;
+    }
+
     public SubscriptionService(ApplicationDbContext db, IResend resend, IConfiguration config, ITwilioSmsSender smsSender, IDateTimeProvider dateTime, IBackgroundJobClient jobs)
     {
         _db = db;
@@ -105,61 +133,24 @@ public class SubscriptionService
 
     public async Task<bool> VerifyAsync(string token)
     {
-        var subscriber = await _db.Subscribers.FirstOrDefaultAsync(s => s.VerificationToken == token);
-        if (subscriber != null)
-        {
-            subscriber.IsVerified = true;
-            await _db.SaveChangesAsync();
-            return true;
-        }
-
-        var smsSubscriber = await _db.SmsSubscribers.FirstOrDefaultAsync(s => s.VerificationToken == token);
-        if (smsSubscriber != null)
-        {
-            smsSubscriber.IsVerified = true;
-            await _db.SaveChangesAsync();
-            return true;
-        }
-        return false;
+        return await VerifySubscriberAsync(_db.Subscribers, token)
+            || await VerifySubscriberAsync(_db.SmsSubscribers, token);
     }
 
     public async Task<bool> UnsubscribeAsync(string token)
     {
-        var subscriber = await _db.Subscribers.FirstOrDefaultAsync(s => s.UnsubscribeToken == token);
-        if (subscriber != null)
-        {
-            _db.Subscribers.Remove(subscriber);
-            await _db.SaveChangesAsync();
-            return true;
-        }
-
-        var smsSubscriber = await _db.SmsSubscribers.FirstOrDefaultAsync(s => s.UnsubscribeToken == token);
-        if (smsSubscriber != null)
-        {
-            _db.SmsSubscribers.Remove(smsSubscriber);
-            await _db.SaveChangesAsync();
-            return true;
-        }
-        return false;
+        return await UnsubscribeSubscriberAsync(_db.Subscribers, token)
+            || await UnsubscribeSubscriberAsync(_db.SmsSubscribers, token);
     }
 
     public async Task RemoveExpiredUnverifiedAsync()
     {
         var cutoff = _dateTime.UtcNow.AddHours(-1);
 
-        var expiredEmail = await _db.Subscribers
-            .Where(s => !s.IsVerified && s.CreatedAt < cutoff)
-            .ToListAsync();
-        if (expiredEmail.Any())
-            _db.Subscribers.RemoveRange(expiredEmail);
+        var removed = await RemoveExpiredSubscribersAsync(_db.Subscribers, cutoff);
+        removed |= await RemoveExpiredSubscribersAsync(_db.SmsSubscribers, cutoff);
 
-        var expiredSms = await _db.SmsSubscribers
-            .Where(s => !s.IsVerified && s.CreatedAt < cutoff)
-            .ToListAsync();
-        if (expiredSms.Any())
-            _db.SmsSubscribers.RemoveRange(expiredSms);
-
-        if (expiredEmail.Any() || expiredSms.Any())
+        if (removed)
             await _db.SaveChangesAsync();
     }
 }

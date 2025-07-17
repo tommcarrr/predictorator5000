@@ -1,6 +1,6 @@
 namespace Predictorator.Models;
 
-public class Subscriber
+public class Subscriber : ISubscriber
 {
     public int Id { get; set; }
     public string Email { get; set; } = string.Empty;
