@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Predictotronix", "Predictotronix\Predictotronix\Predictotronix.csproj", "{9472B33C-D4F4-483D-BBF5-7C01872D30FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Predictotronix.Client", "Predictotronix\Predictotronix.Client\Predictotronix.Client.csproj", "{7B70EDB8-1ACE-4D43-AE6E-3533FF0BFA2C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B8187D21-AE7A-4E6D-896B-BB0B841D3754}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yml = docker-compose.yml
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9472B33C-D4F4-483D-BBF5-7C01872D30FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9472B33C-D4F4-483D-BBF5-7C01872D30FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9472B33C-D4F4-483D-BBF5-7C01872D30FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9472B33C-D4F4-483D-BBF5-7C01872D30FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B70EDB8-1ACE-4D43-AE6E-3533FF0BFA2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B70EDB8-1ACE-4D43-AE6E-3533FF0BFA2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B70EDB8-1ACE-4D43-AE6E-3533FF0BFA2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B70EDB8-1ACE-4D43-AE6E-3533FF0BFA2C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

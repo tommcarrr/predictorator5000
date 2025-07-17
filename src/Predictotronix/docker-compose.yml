@@ -1,0 +1,8 @@
+﻿services:
+  predictotronix:
+    image: predictotronix
+    build:
+      context: .
+      dockerfile: Predictotronix/Predictotronix/Dockerfile
+    ports:
+      - "8081:8080"
