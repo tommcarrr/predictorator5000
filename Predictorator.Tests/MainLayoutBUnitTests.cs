@@ -26,6 +26,7 @@ public class MainLayoutBUnitTests
         var storage = new FakeBrowserStorage();
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
         ctx.Services.AddScoped<ToastInterop>();
+        ctx.Services.AddScoped<UiModeService>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
 
         var settings = new Dictionary<string, string?>();

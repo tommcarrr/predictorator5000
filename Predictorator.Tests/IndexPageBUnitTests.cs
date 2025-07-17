@@ -23,6 +23,7 @@ public class IndexPageBUnitTests
         var storage = new FakeBrowserStorage();
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
         ctx.Services.AddScoped<ToastInterop>();
+        ctx.Services.AddScoped<UiModeService>();
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
         var provider = new FakeDateTimeProvider

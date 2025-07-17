@@ -24,6 +24,7 @@ public class DarkModeBUnitTests
         var storage = new FakeBrowserStorage();
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
         ctx.Services.AddScoped<ToastInterop>();
+        ctx.Services.AddScoped<UiModeService>();
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
         var provider = new FakeDateTimeProvider
@@ -53,14 +54,15 @@ public class DarkModeBUnitTests
         await using var ctx = CreateContext();
         var cut = ctx.Render<App>();
         var layout = cut.FindComponent<MainLayout>();
+        var service = ctx.Services.GetRequiredService<UiModeService>();
         var toggle = cut.Find("#darkModeToggle");
-        Assert.False(layout.Instance.IsDarkMode);
+        Assert.False(service.IsDarkMode);
 
         toggle.Click();
 
         cut.WaitForAssertion(() =>
         {
-            Assert.True(layout.Instance.IsDarkMode);
+            Assert.True(service.IsDarkMode);
         }, timeout: TimeSpan.FromSeconds(1));
     }
 
@@ -75,6 +77,7 @@ public class DarkModeBUnitTests
         await storage.SetAsync("darkMode", true);
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
         ctx.Services.AddScoped<ToastInterop>();
+        ctx.Services.AddScoped<UiModeService>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) }));
@@ -92,10 +95,11 @@ public class DarkModeBUnitTests
 
         var cut = ctx.Render<App>();
         var layout = cut.FindComponent<MainLayout>();
+        var service = ctx.Services.GetRequiredService<UiModeService>();
 
         cut.WaitForAssertion(() =>
         {
-            Assert.True(layout.Instance.IsDarkMode);
+            Assert.True(service.IsDarkMode);
         }, timeout: TimeSpan.FromSeconds(1));
     }
 }

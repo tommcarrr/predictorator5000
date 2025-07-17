@@ -3,6 +3,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IJSRuntime Js
 @inject IBrowserStorage Storage
+@inject UiModeService UiMode
 
 <MudThemeProvider Theme="@CurrentTheme"
                   @bind-IsDarkMode="@IsDarkMode"/>
@@ -48,8 +49,17 @@
 </CascadingValue>
 
 @code {
-    public bool IsDarkMode { get; set; }
-    public bool IsCeefax { get; set; }
+    public bool IsDarkMode
+    {
+        get => UiMode.IsDarkMode;
+        set => UiMode.IsDarkMode = value;
+    }
+
+    public bool IsCeefax
+    {
+        get => UiMode.IsCeefax;
+        set => UiMode.IsCeefax = value;
+    }
 
     private static readonly string[] CeefaxFont = new[] { "'BBC-Ceefax'", "monospace" };
 

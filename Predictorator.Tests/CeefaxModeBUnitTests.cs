@@ -24,6 +24,7 @@ public class CeefaxModeBUnitTests
         var storage = new FakeBrowserStorage();
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
         ctx.Services.AddScoped<ToastInterop>();
+        ctx.Services.AddScoped<UiModeService>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
@@ -49,12 +50,13 @@ public class CeefaxModeBUnitTests
         await using var ctx = CreateContext();
         var cut = ctx.Render<App>();
         var layout = cut.FindComponent<MainLayout>();
+        var service = ctx.Services.GetRequiredService<UiModeService>();
         var toggle = cut.Find("#ceefaxToggle");
-        Assert.False(layout.Instance.IsCeefax);
+        Assert.False(service.IsCeefax);
         toggle.Click();
         cut.WaitForAssertion(() =>
         {
-            Assert.True(layout.Instance.IsCeefax);
+            Assert.True(service.IsCeefax);
         }, timeout: TimeSpan.FromSeconds(1));
     }
 
@@ -85,6 +87,7 @@ public class CeefaxModeBUnitTests
         await storage.SetAsync("ceefaxMode", true);
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
         ctx.Services.AddScoped<ToastInterop>();
+        ctx.Services.AddScoped<UiModeService>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) }));
@@ -102,10 +105,11 @@ public class CeefaxModeBUnitTests
 
         var cut = ctx.Render<App>();
         var layout = cut.FindComponent<MainLayout>();
+        var service = ctx.Services.GetRequiredService<UiModeService>();
 
         cut.WaitForAssertion(() =>
         {
-            Assert.True(layout.Instance.IsCeefax);
+            Assert.True(service.IsCeefax);
         }, timeout: TimeSpan.FromSeconds(1));
     }
 }
