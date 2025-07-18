@@ -44,6 +44,28 @@ public static class Themes
             // Transparency
             OverlayDark = "rgba(0, 0, 0, 0.6)"
         },
+        PaletteDark = new PaletteDark()
+        {
+            Primary = "#1E5F3E",
+            PrimaryContrastText = "#FFFFFF",
+            Secondary = "#FFB300",
+            SecondaryContrastText = "#212121",
+            Background = "#121212",
+            Surface = "#1E1E1E",
+            AppbarBackground = "#1E5F3E",
+            DrawerBackground = "#1E1E1E",
+            DrawerText = "#FFFFFF",
+            TextPrimary = "#FFFFFF",
+            TextSecondary = "#BBBBBB",
+            TextDisabled = "#777777",
+            Success = "#4CAF50",
+            Info = "#2196F3",
+            Warning = "#FB8C00",
+            Error = "#E53935",
+            Divider = "#424242",
+            TableLines = "#616161",
+            OverlayDark = "rgba(0, 0, 0, 0.6)"
+        },
         Typography = new Typography()
         {
             Default = new Default()
