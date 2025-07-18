@@ -89,6 +89,10 @@ html, body {
     text-transform: inherit;
 }
 
+.bottom-buttons {
+    flex-direction: row;
+}
+
 @media (max-width: 600px) {
     .fixture-line {
         grid-template-columns: 1fr 20px 2rem 0.5rem 2rem 20px 1fr;
