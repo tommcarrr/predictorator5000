@@ -16,6 +16,13 @@
 <CascadingValue Value="this">
 <MudLayout>
     <ToastInit/>
+    @if (IsCeefax)
+    {
+        <div id="ceefaxHeader" class="ceefax-header d-flex px-2">
+            <span>Ceefax 1 303</span>
+            <span class="ms-auto"><span id="ceefaxDate"></span> <span id="ceefaxTime"></span></span>
+        </div>
+    }
     <MudAppBar Elevation="1" Color="Color.Primary">
         @if (IsCeefax)
         {

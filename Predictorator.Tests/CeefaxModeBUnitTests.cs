@@ -165,6 +165,37 @@ public class CeefaxModeBUnitTests
     }
 
     [Fact]
+    public async Task CeefaxHeader_Renders_When_Enabled()
+    {
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<App>();
+        IElement toggle;
+        try
+        {
+            toggle = cut.Find("#ceefaxToggle");
+        }
+        catch (ElementNotFoundException)
+        {
+            cut.Find("#menuToggle").Click();
+            toggle = cut.Find("#ceefaxToggle");
+        }
+
+        toggle.Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.NotNull(cut.Find("#ceefaxHeader"));
+        }, timeout: TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public async Task CeefaxHeader_NotRendered_When_Disabled()
+    {
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<App>();
+
+        Assert.Empty(cut.FindAll("#ceefaxHeader"));
+    }
     public async Task Initialize_Ceefax_Enables_DarkMode()
     {
         await using var ctx = new BunitContext();

@@ -93,6 +93,14 @@ html, body {
     flex-direction: row;
 }
 
+.ceefax-header {
+    display: flex;
+    justify-content: space-between;
+    background-color: #000;
+    color: #00FF00;
+    font-family: 'BBC-Ceefax', monospace;
+}
+
 @media (max-width: 600px) {
     .fixture-line {
         grid-template-columns: 1fr 20px 2rem 0.5rem 2rem 20px 1fr;

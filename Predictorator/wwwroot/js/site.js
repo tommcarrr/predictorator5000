@@ -61,8 +61,29 @@ window.app = (() => {
         return fallbackCopyHtml(html);
     }
 
+    let ceefaxTimer = null;
+
+    function updateCeefaxClock() {
+        const now = new Date();
+        const dateEl = document.getElementById('ceefaxDate');
+        const timeEl = document.getElementById('ceefaxTime');
+        if (dateEl) {
+            dateEl.textContent = now.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
+        }
+        if (timeEl) {
+            timeEl.textContent = now.toLocaleTimeString('en-GB', { hour12: false });
+        }
+    }
+
     function setCeefax(enabled) {
         document.body.classList.toggle('ceefax', enabled);
+        if (enabled) {
+            updateCeefaxClock();
+            ceefaxTimer = setInterval(updateCeefaxClock, 1000);
+        } else if (ceefaxTimer) {
+            clearInterval(ceefaxTimer);
+            ceefaxTimer = null;
+        }
     }
 
     function isMobileDevice() {
