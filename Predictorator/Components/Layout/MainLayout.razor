@@ -4,6 +4,9 @@
 @inject IJSRuntime Js
 @inject IBrowserStorage Storage
 @inject UiModeService UiMode
+@inject IDialogService DialogService
+@inject NotificationFeatureService NotificationFeatures
+@using Predictorator.Components.Pages.Subscription
 
 <MudThemeProvider Theme="@CurrentTheme"
                   @bind-IsDarkMode="@IsDarkMode"/>
@@ -29,25 +32,49 @@
             </MudText>
         }
         <MudSpacer/>
-        @if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true &&
-             HttpContextAccessor.HttpContext.User.IsInRole("Admin"))
-        {
-            <MudButton Variant="Variant.Text" Href="/Admin/SendNotification">Admin</MudButton>
-        }
-        <SubscribeButton/>
-        <MudTooltip Text="Contribute to hosting costs">
-            <MudIconButton Icon="@Icons.Material.Filled.VolunteerActivism"
-                           Href="https://paypal.me/tommcarrr?country.x=GB&locale.x=en_GB"
-                           Target="_blank" Rel="noopener"
-                           Color="Color.Inherit"
-                           UserAttributes="@(new Dictionary<string, object> { { "id", "donateLink" } })"/>
-        </MudTooltip>
-        <MudIconButton Icon="@(IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
-                       OnClick="@ToggleDarkModeAsync" Color="Color.Inherit"
-                       UserAttributes="@(new Dictionary<string, object> { { "id", "darkModeToggle" } })"/>
-        <MudIconButton Icon="@Icons.Material.Outlined.Article"
-                       OnClick="@ToggleCeefaxAsync" Color="@(IsCeefax ? Color.Inherit : Color.Dark)"
-                       UserAttributes="@(new Dictionary<string, object> { { "id", "ceefaxToggle" } })"/>
+        <MudHidden Breakpoint="Breakpoint.SmAndDown">
+            @if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true &&
+                 HttpContextAccessor.HttpContext.User.IsInRole("Admin"))
+            {
+                <MudButton Variant="Variant.Text" Href="/Admin/SendNotification">Admin</MudButton>
+            }
+            <SubscribeButton/>
+            <MudTooltip Text="Contribute to hosting costs">
+                <MudIconButton Icon="@Icons.Material.Filled.VolunteerActivism"
+                               Href="https://paypal.me/tommcarrr?country.x=GB&locale.x=en_GB"
+                               Target="_blank" Rel="noopener"
+                               Color="Color.Inherit"
+                               UserAttributes="@(new Dictionary<string, object> { { "id", "donateLink" } })"/>
+            </MudTooltip>
+            <MudIconButton Icon="@(IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+                           OnClick="@ToggleDarkModeAsync" Color="Color.Inherit"
+                           UserAttributes="@(new Dictionary<string, object> { { "id", "darkModeToggle" } })"/>
+            <MudIconButton Icon="@Icons.Material.Outlined.Article"
+                           OnClick="@ToggleCeefaxAsync" Color="@(IsCeefax ? Color.Inherit : Color.Dark)"
+                           UserAttributes="@(new Dictionary<string, object> { { "id", "ceefaxToggle" } })"/>
+        </MudHidden>
+        <MudHidden Breakpoint="Breakpoint.MdAndUp">
+            <MudMenu>
+                <ActivatorContent>
+                    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit"
+                                   UserAttributes="@(new Dictionary<string, object> { { "id", "menuToggle" } })" />
+                </ActivatorContent>
+                <ChildContent>
+                    @if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true &&
+                         HttpContextAccessor.HttpContext.User.IsInRole("Admin"))
+                    {
+                        <MudMenuItem Href="/Admin/SendNotification">Admin</MudMenuItem>
+                    }
+                    @if (NotificationFeatures.AnyEnabled)
+                    {
+                        <MudMenuItem OnClick="@OpenSubscribe" UserAttributes="@(new Dictionary<string, object> { { "id", "subscribeButton" } })">Subscribe</MudMenuItem>
+                    }
+                    <MudMenuItem Href="https://paypal.me/tommcarrr?country.x=GB&locale.x=en_GB" Target="_blank" UserAttributes="@(new Dictionary<string, object> { { "id", "donateLink" } })">Donate</MudMenuItem>
+                    <MudMenuItem OnClick="@ToggleDarkModeAsync" UserAttributes="@(new Dictionary<string, object> { { "id", "darkModeToggle" } })">@((IsDarkMode ? "Light Mode" : "Dark Mode"))</MudMenuItem>
+                    <MudMenuItem OnClick="@ToggleCeefaxAsync" Class="@(IsCeefax ? "mud-inherit-text" : "mud-dark-text")" UserAttributes="@(new Dictionary<string, object> { { "id", "ceefaxToggle" } })">Ceefax Mode</MudMenuItem>
+                </ChildContent>
+            </MudMenu>
+        </MudHidden>
     </MudAppBar>
 
     <MudMainContent>
@@ -147,6 +174,11 @@
         await Storage.SetAsync("ceefaxMode", IsCeefax);
         await Js.InvokeVoidAsync("app.setCeefax", IsCeefax);
         await InvokeAsync(StateHasChanged);
+    }
+
+    private void OpenSubscribe()
+    {
+        DialogService.Show<Subscribe>("Subscribe");
     }
 
     public void Dispose()

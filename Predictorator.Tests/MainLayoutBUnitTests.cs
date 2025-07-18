@@ -7,6 +7,7 @@ using Microsoft.JSInterop;
 using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
+using AngleSharp.Dom;
 using Predictorator.Components.Layout;
 using Predictorator.Tests.Helpers;
 using Predictorator.Components.Pages.Subscription;
@@ -61,7 +62,15 @@ public class MainLayoutBUnitTests
         RenderFragment body = b => b.AddMarkupContent(0, "<p>child</p>");
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
         var buttons = cut.FindAll("button");
-        Assert.Contains(buttons, b => b.TextContent.Trim() == "Subscribe");
+        if (!buttons.Any(b => b.TextContent.Trim() == "Subscribe"))
+        {
+            cut.Find("#menuToggle").Click();
+            Assert.NotNull(cut.Find("#subscribeButton"));
+        }
+        else
+        {
+            Assert.Contains(buttons, b => b.TextContent.Trim() == "Subscribe");
+        }
     }
 
     [Fact]
@@ -70,7 +79,16 @@ public class MainLayoutBUnitTests
         await using var ctx = CreateContext();
         RenderFragment body = b => b.AddMarkupContent(0, "<p>child</p>");
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
-        var link = cut.Find("#donateLink");
+        IElement link;
+        try
+        {
+            link = cut.Find("#donateLink");
+        }
+        catch (ElementNotFoundException)
+        {
+            cut.Find("#menuToggle").Click();
+            link = cut.Find("#donateLink");
+        }
         Assert.NotNull(link);
         Assert.Equal("_blank", link.GetAttribute("target"));
     }
@@ -81,7 +99,16 @@ public class MainLayoutBUnitTests
         await using var ctx = CreateContext();
         RenderFragment body = b => b.AddMarkupContent(0, "<p>child</p>");
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
-        var toggle = cut.Find("#darkModeToggle");
+        IElement toggle;
+        try
+        {
+            toggle = cut.Find("#darkModeToggle");
+        }
+        catch (ElementNotFoundException)
+        {
+            cut.Find("#menuToggle").Click();
+            toggle = cut.Find("#darkModeToggle");
+        }
         toggle.Click();
         cut.WaitForAssertion(() =>
         {
@@ -96,7 +123,17 @@ public class MainLayoutBUnitTests
         var dialog = ctx.Services.GetRequiredService<IDialogService>();
         RenderFragment body = b => b.AddMarkupContent(0, "<p>child</p>");
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
-        var button = cut.FindAll("button").First(b => b.TextContent.Trim() == "Subscribe");
+        var buttons = cut.FindAll("button");
+        IElement button;
+        if (!buttons.Any(b => b.TextContent.Trim() == "Subscribe"))
+        {
+            cut.Find("#menuToggle").Click();
+            button = cut.Find("#subscribeButton");
+        }
+        else
+        {
+            button = buttons.First(b => b.TextContent.Trim() == "Subscribe");
+        }
         button.Click();
         dialog.Received().Show<Subscribe>(Arg.Any<string>());
     }
