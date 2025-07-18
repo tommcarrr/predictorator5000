@@ -75,7 +75,7 @@ html, body {
     justify-content: center;
     box-sizing: border-box;
     aspect-ratio: 1 / 1;
-    font-size: 40px;
+    font-size: calc( var(--mud-appbar-height) - 24px);
     line-height: 1;
     -webkit-font-smoothing: none;
     text-rendering: geometricPrecision;
