@@ -77,6 +77,7 @@ builder.Services.Configure<TwilioOptions>(builder.Configuration.GetSection(Twili
 builder.Services.AddTransient<ITwilioSmsSender, TwilioSmsSender>();
 builder.Services.AddTransient<SubscriptionService>();
 builder.Services.AddTransient<NotificationService>();
+builder.Services.AddTransient<AdminService>();
 builder.Services.AddSingleton<NotificationFeatureService>();
 builder.Services.Configure<AdminUserOptions>(options =>
 {
@@ -104,7 +105,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/admin";
+    options.LoginPath = "/login";
 });
 
 // Add services to the container.
@@ -122,6 +123,7 @@ builder.Services.AddScoped<IBrowserStorage, ProtectedLocalStorageBrowserStorage>
 builder.Services.AddScoped<ToastInterop>();
 builder.Services.AddScoped<UiModeService>();
 builder.Services.AddScoped<ISignInService, SignInManagerSignInService>();
+builder.Services.AddAuthorization();
 builder.Services.AddRazorPages();
 
 if (!builder.Environment.IsEnvironment("Testing"))
