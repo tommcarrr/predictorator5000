@@ -1,4 +1,3 @@
-using Predictotronix.Client.Pages;
 using Predictotronix.Components;
 
 var builder = WebApplication.CreateBuilder(args);
