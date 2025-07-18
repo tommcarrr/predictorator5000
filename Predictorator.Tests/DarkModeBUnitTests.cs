@@ -112,4 +112,11 @@ public class DarkModeBUnitTests
             Assert.True(service.IsDarkMode);
         }, timeout: TimeSpan.FromSeconds(1));
     }
+
+    [Fact]
+    public void FootballTheme_Defines_DarkPalette()
+    {
+        Assert.Equal("#121212", Themes.FootballPredictorTheme.PaletteDark!.Background);
+        Assert.Equal("#1E5F3E", Themes.FootballPredictorTheme.PaletteDark.Primary);
+    }
 }
