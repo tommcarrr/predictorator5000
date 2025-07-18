@@ -10,6 +10,7 @@ using Resend;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
+using System.Linq.Expressions;
 
 namespace Predictorator.Tests;
 
@@ -60,7 +61,7 @@ public class NotificationServiceTests
     }
 
     [Fact]
-    public async Task CheckFixturesAsync_enqueues_new_fixture_job()
+    public async Task CheckFixturesAsync_schedules_new_fixture_job()
     {
         var now = new DateTime(2024, 6, 1, 8, 0, 0, DateTimeKind.Utc);
         var fixture = now.AddDays(2);
@@ -68,7 +69,9 @@ public class NotificationServiceTests
 
         await service.CheckFixturesAsync();
 
-        jobs.Received().Create(Arg.Any<Job>(), Arg.Any<IState>());
+        jobs.Received().Create(
+            Arg.Is<Job>(j => j.Method.Name == nameof(NotificationService.SendNewFixturesAvailableAsync)),
+            Arg.Is<IState>(s => s is ScheduledState));
     }
 
     [Fact]

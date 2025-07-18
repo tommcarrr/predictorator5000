@@ -181,7 +181,7 @@ if (!app.Environment.IsEnvironment("Testing"))
     RecurringJob.AddOrUpdate<NotificationService>(
         "fixture-notifications",
         s => s.CheckFixturesAsync(),
-        "0 10 * * *",
+        "0 1 * * *",
         new RecurringJobOptions
         {
             TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time")

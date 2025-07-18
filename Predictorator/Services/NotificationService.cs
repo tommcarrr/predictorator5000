@@ -1,6 +1,4 @@
 using Hangfire;
-using Hangfire.Common;
-using Hangfire.States;
 using Microsoft.EntityFrameworkCore;
 using Predictorator.Data;
 using Predictorator.Models;
@@ -57,6 +55,8 @@ public class NotificationService
             return;
 
         var nowUtc = _time.UtcNow;
+        var ukTz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+        var nowUk = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, ukTz);
         var future = response.Response
             .Where(f => f.Fixture.Date.ToUniversalTime() > nowUtc)
             .OrderBy(f => f.Fixture.Date)
@@ -68,15 +68,18 @@ public class NotificationService
                 .AnyAsync(n => n.Type == "NewFixtures" && n.Key == key);
             if (!sent)
             {
-                var job = Job.FromExpression<NotificationService>(s => s.SendNewFixturesAvailableAsync(key, baseUrl));
-                _jobs.Create(job, new EnqueuedState());
+                var sendTimeUk = nowUk.Date.AddHours(10);
+                var sendTimeUtc = TimeZoneInfo.ConvertTimeToUtc(sendTimeUk, ukTz);
+                var delay = sendTimeUtc - nowUtc;
+                if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
+                _jobs.Schedule<NotificationService>(
+                    s => s.SendNewFixturesAvailableAsync(key, baseUrl),
+                    delay);
             }
         }
 
         var first = response.Response.OrderBy(f => f.Fixture.Date).First();
-        var ukTz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
         var firstUk = TimeZoneInfo.ConvertTime(first.Fixture.Date, ukTz);
-        var nowUk = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, ukTz);
         if (firstUk.Date == nowUk.Date)
         {
             var key = first.Fixture.Date.ToString("O");

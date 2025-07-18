@@ -44,6 +44,8 @@ else
         </MudTable>
         <MudStack Row="true" Spacing="2" Class="mt-2">
             <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Send Test</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@SendNewFixturesSampleAsync">New Fixtures Sample</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@SendStartingSoonSampleAsync">Starting Soon Sample</MudButton>
         </MudStack>
     </EditForm>
 }
@@ -84,6 +86,24 @@ else
         if (selected.Any())
         {
             await AdminService.SendTestAsync(selected);
+        }
+    }
+
+    private async Task SendNewFixturesSampleAsync()
+    {
+        var selected = _items!.Where(i => i.Selected).Cast<AdminSubscriberDto>().ToList();
+        if (selected.Any())
+        {
+            await AdminService.SendNewFixturesSampleAsync(selected);
+        }
+    }
+
+    private async Task SendStartingSoonSampleAsync()
+    {
+        var selected = _items!.Where(i => i.Selected).Cast<AdminSubscriberDto>().ToList();
+        if (selected.Any())
+        {
+            await AdminService.SendFixturesStartingSoonSampleAsync(selected);
         }
     }
 }
