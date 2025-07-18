@@ -58,6 +58,14 @@ html, body {
     padding: 0 0.5rem;
 }
 
+body.ceefax .fixture-line img {
+    width: 15px;
+    height: 15px;
+    image-rendering: pixelated;
+    transform: scale(2);
+    transform-origin: center;
+}
+
 .ceefax-logo
 {
     display: flex;

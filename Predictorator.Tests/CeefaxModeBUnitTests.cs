@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
+using Microsoft.JSInterop;
 using AngleSharp.Dom;
 using Predictorator.Components;
 using Predictorator.Components.Layout;
@@ -19,9 +20,10 @@ public class CeefaxModeBUnitTests
     private BunitContext CreateContext()
     {
         var ctx = new BunitContext();
-        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
+        var jsRuntime = Substitute.For<IJSRuntime>();
+        ctx.Services.AddSingleton(jsRuntime);
         var storage = new FakeBrowserStorage();
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
         ctx.Services.AddScoped<ToastInterop>();
@@ -128,12 +130,36 @@ public class CeefaxModeBUnitTests
     }
 
     [Fact]
+    public async Task CeefaxToggle_Invokes_JsRuntime()
+    {
+        await using var ctx = CreateContext();
+        var js = ctx.Services.GetRequiredService<IJSRuntime>();
+        var cut = ctx.Render<App>();
+        IElement toggle;
+        try
+        {
+            toggle = cut.Find("#ceefaxToggle");
+        }
+        catch (ElementNotFoundException)
+        {
+            cut.Find("#menuToggle").Click();
+            toggle = cut.Find("#ceefaxToggle");
+        }
+        toggle.Click();
+        cut.WaitForAssertion(() =>
+        {
+            js.Received().InvokeVoidAsync("app.setCeefax", true);
+        }, timeout: TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
     public async Task Initialize_Uses_Existing_State()
     {
         await using var ctx = new BunitContext();
-        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
+        var jsRuntime = Substitute.For<IJSRuntime>();
+        ctx.Services.AddSingleton(jsRuntime);
         var storage = new FakeBrowserStorage();
         await storage.SetAsync("ceefaxMode", true);
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
@@ -168,9 +194,10 @@ public class CeefaxModeBUnitTests
     public async Task Initialize_Ceefax_Enables_DarkMode()
     {
         await using var ctx = new BunitContext();
-        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
         ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
+        var jsRuntime = Substitute.For<IJSRuntime>();
+        ctx.Services.AddSingleton(jsRuntime);
         var storage = new FakeBrowserStorage();
         await storage.SetAsync("ceefaxMode", true);
         ctx.Services.AddSingleton<IBrowserStorage>(storage);
