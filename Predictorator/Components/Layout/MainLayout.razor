@@ -152,7 +152,7 @@
         }
     };
 
-    private MudTheme? CurrentTheme => IsCeefax ? CeefaxTheme : null;
+    private MudTheme CurrentTheme => IsCeefax ? CeefaxTheme : Themes.FootballPredictorTheme;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
