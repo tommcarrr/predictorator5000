@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
 @inject ILogger<Login> Logger
-@inject ISignInService SignInService
+@inject IJSRuntime JS
 
 <h1>Log in</h1>
 <EditForm Model="_input" OnValidSubmit="HandleLogin">
@@ -41,14 +41,13 @@
         _error = null;
         try
         {
-            var result = await SignInService.PasswordSignInAsync(_input.Email, _input.Password, _input.RememberMe);
-            if (result.Succeeded)
+            var result = await JS.InvokeAsync<string>("app.login", _input);
+            if (string.IsNullOrEmpty(result))
             {
-                NavigationManager.NavigateTo("/admin");
                 return;
             }
 
-            _error = result.IsLockedOut ? "User locked out." : "Invalid login attempt.";
+            _error = result;
         }
         catch (Exception ex)
         {
