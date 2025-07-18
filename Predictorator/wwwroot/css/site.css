@@ -115,4 +115,15 @@ html, body {
     body.ceefax .fixture-line img {
         display: none;
     }
+
+    /* Hide numeric input arrows on small screens */
+    .score-input input {
+        -moz-appearance: textfield;
+    }
+
+    .score-input input::-webkit-inner-spin-button,
+    .score-input input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
 }
