@@ -98,4 +98,38 @@ public class AdminService
             }
         }
     }
+
+    public async Task SendNewFixturesSampleAsync(IEnumerable<AdminSubscriberDto> recipients)
+    {
+        var baseUrl = _config["BASE_URL"] ?? "http://localhost";
+        await SendSampleAsync(recipients, "New fixtures are available!", baseUrl);
+    }
+
+    public async Task SendFixturesStartingSoonSampleAsync(IEnumerable<AdminSubscriberDto> recipients)
+    {
+        var baseUrl = _config["BASE_URL"] ?? "http://localhost";
+        await SendSampleAsync(recipients, "Fixtures start in 1 hour!", baseUrl);
+    }
+
+    private async Task SendSampleAsync(IEnumerable<AdminSubscriberDto> recipients, string message, string baseUrl)
+    {
+        foreach (var s in recipients)
+        {
+            if (s.Type == "Email")
+            {
+                var email = new EmailMessage
+                {
+                    From = _config["Resend:From"] ?? "Predictorator <noreply@example.com>",
+                    Subject = "Predictorator Sample Notification",
+                    HtmlBody = $"<p>{message} <a href=\"{baseUrl}\">View fixtures</a>.</p>"
+                };
+                email.To.Add(s.Contact);
+                await _resend.EmailSendAsync(email);
+            }
+            else
+            {
+                await _sms.SendSmsAsync(s.Contact, $"{message} {baseUrl}");
+            }
+        }
+    }
 }
