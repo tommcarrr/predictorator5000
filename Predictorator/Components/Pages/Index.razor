@@ -74,7 +74,7 @@ else if (_fixtures.Response.Any())
     }
 }
 
-<MudStack Class="py-4 bottom-buttons" Row="true" Spacing="2" Justify="Justify.Center">
+<MudStack Class="py-4 bottom-buttons" Spacing="2" Justify="Justify.Center">
     <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="@FillRandomScores"
                UserAttributes="@(new Dictionary<string, object>{{"id","fillRandomBtn"}})">Complete with Random Scores</MudButton>
     <MudButton Color="Color.Warning" Variant="Variant.Filled" OnClick="@ClearScores"
