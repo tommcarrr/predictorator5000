@@ -3,7 +3,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "Your_password123"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
     ports:
       - "1433:1433"
     volumes:
@@ -15,12 +15,16 @@ services:
       dockerfile: Dockerfile
     environment:
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Server=db;Database=Predictorator;User Id=sa;Password=Your_password123;Encrypt=False
-      ADMIN_EMAIL: admin@example.com
-      ADMIN_PASSWORD: Admin123!
-      Twilio__AccountSid: your_sid
-      Twilio__AuthToken: your_token
-      Twilio__FromNumber: +10000000000
+      ConnectionStrings__DefaultConnection: Server=db;Database=Predictorator;User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=False
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      Twilio__AccountSid: ${TWILIO_ACCOUNT_SID}
+      Twilio__AuthToken: ${TWILIO_AUTH_TOKEN}
+      Twilio__FromNumber: ${TWILIO_FROM_NUMBER}
+      Resend__ApiToken: ${RESEND_API_TOKEN}
+      Resend__From: ${RESEND_FROM}
+      ApiSettings__RapidApiKey: ${RAPID_API_KEY}
+      BASE_URL: ${BASE_URL}
       DataProtection__KeyPath: /var/dp-keys
     depends_on:
       - db
