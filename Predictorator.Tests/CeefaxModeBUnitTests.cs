@@ -71,6 +71,30 @@ public class CeefaxModeBUnitTests
     }
 
     [Fact]
+    public async Task ToggleCeefax_Enables_DarkMode()
+    {
+        await using var ctx = CreateContext();
+        var cut = ctx.Render<App>();
+        var service = ctx.Services.GetRequiredService<UiModeService>();
+        IElement toggle;
+        try
+        {
+            toggle = cut.Find("#ceefaxToggle");
+        }
+        catch (ElementNotFoundException)
+        {
+            cut.Find("#menuToggle").Click();
+            toggle = cut.Find("#ceefaxToggle");
+        }
+        Assert.False(service.IsDarkMode);
+        toggle.Click();
+        cut.WaitForAssertion(() =>
+        {
+            Assert.True(service.IsDarkMode);
+        }, timeout: TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
     public async Task CeefaxToggle_Uses_Dark_Color_When_Off()
     {
         await using var ctx = CreateContext();
@@ -171,5 +195,40 @@ public class CeefaxModeBUnitTests
         var cut = ctx.Render<App>();
 
         Assert.Empty(cut.FindAll("#ceefaxHeader"));
+    }
+    public async Task Initialize_Ceefax_Enables_DarkMode()
+    {
+        await using var ctx = new BunitContext();
+        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+        ctx.Services.AddMudServices();
+        ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
+        var storage = new FakeBrowserStorage();
+        await storage.SetAsync("ceefaxMode", true);
+        ctx.Services.AddSingleton<IBrowserStorage>(storage);
+        ctx.Services.AddScoped<ToastInterop>();
+        ctx.Services.AddScoped<UiModeService>();
+        ctx.Services.AddSingleton(Substitute.For<IDialogService>());
+        ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
+        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) }));
+
+        var settings = new Dictionary<string, string?>
+        {
+            ["Resend:ApiToken"] = "token",
+            ["Twilio:AccountSid"] = "sid",
+            ["Twilio:AuthToken"] = "token",
+            ["Twilio:FromNumber"] = "+1"
+        };
+        var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
+        ctx.Services.AddSingleton<IConfiguration>(config);
+        ctx.Services.AddSingleton<NotificationFeatureService>();
+
+        var cut = ctx.Render<App>();
+        var layout = cut.FindComponent<MainLayout>();
+        var service = ctx.Services.GetRequiredService<UiModeService>();
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.True(service.IsDarkMode);
+        }, timeout: TimeSpan.FromSeconds(1));
     }
 }

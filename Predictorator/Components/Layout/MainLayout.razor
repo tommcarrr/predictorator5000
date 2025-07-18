@@ -170,7 +170,14 @@
 
             var ceefax = await Storage.GetAsync("ceefaxMode");
             if (ceefax.HasValue)
+            {
                 IsCeefax = ceefax.Value;
+                if (IsCeefax)
+                {
+                    IsDarkMode = true;
+                    await Storage.SetAsync("darkMode", IsDarkMode);
+                }
+            }
 
             await Js.InvokeVoidAsync("app.setCeefax", IsCeefax);
             await InvokeAsync(StateHasChanged);
@@ -188,6 +195,11 @@
     {
         IsCeefax = !IsCeefax;
         await Storage.SetAsync("ceefaxMode", IsCeefax);
+        if (IsCeefax)
+        {
+            IsDarkMode = true;
+            await Storage.SetAsync("darkMode", IsDarkMode);
+        }
         await Js.InvokeVoidAsync("app.setCeefax", IsCeefax);
         await InvokeAsync(StateHasChanged);
     }
