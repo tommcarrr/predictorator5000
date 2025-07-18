@@ -157,10 +157,27 @@ window.app = (() => {
         });
     }
 
+    async function login(data) {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        if (response.ok) {
+            window.location.href = '/admin';
+            return '';
+        }
+
+        return await response.text();
+    }
+
     return {
         copyPredictions,
         registerToastHandler,
-        setCeefax
+        setCeefax,
+        login
     };
 })();
 
