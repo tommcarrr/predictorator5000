@@ -88,3 +88,27 @@ html, body {
     /* ensure the spans inherit the uppercase */
     text-transform: inherit;
 }
+
+@media (max-width: 600px) {
+    .fixture-line {
+        grid-template-columns: 1fr 20px 2rem 0.5rem 2rem 20px 1fr;
+        gap: 0.25rem;
+    }
+
+    .bottom-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    body.ceefax .ceefax-title {
+        font-size: 1.25rem;
+    }
+
+    body.ceefax .fixture-line {
+        grid-template-columns: 1fr 2rem 0.5rem 2rem 1fr;
+    }
+
+    body.ceefax .fixture-line img {
+        display: none;
+    }
+}

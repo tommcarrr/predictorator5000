@@ -19,11 +19,20 @@
     <MudAppBar Elevation="1" Color="Color.Primary">
         @if (IsCeefax)
         {
-            <MudText Typo="Typo.h5" Class="ml-2 ceefax-logo">
-                <a href="/" style="color:inherit;text-decoration:none">
-                    <span>P</span><span>r</span><span>e</span><span>d</span><span>i</span><span>c</span><span>t</span><span>o</span><span>t</span><span>r</span><span>o</span><span>n</span><span>i</span><span>x</span>
-                </a>
-            </MudText>
+            <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                <MudText Typo="Typo.h5" Class="ml-2 ceefax-logo">
+                    <a href="/" style="color:inherit;text-decoration:none">
+                        <span>P</span><span>r</span><span>e</span><span>d</span><span>i</span><span>c</span><span>t</span><span>o</span><span>t</span><span>r</span><span>o</span><span>n</span><span>i</span><span>x</span>
+                    </a>
+                </MudText>
+            </MudHidden>
+            <MudHidden Breakpoint="Breakpoint.MdAndUp">
+                <MudText Typo="Typo.h6" Class="ml-2 ceefax-logo">
+                    <a href="/" style="color:inherit;text-decoration:none">
+                        <span>P</span><span>R</span><span>D</span><span>C</span><span>T</span>
+                    </a>
+                </MudText>
+            </MudHidden>
         }
         else
         {
