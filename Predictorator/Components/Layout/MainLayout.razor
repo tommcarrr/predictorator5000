@@ -46,7 +46,7 @@
             @if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true &&
                  HttpContextAccessor.HttpContext.User.IsInRole("Admin"))
             {
-                <MudButton Variant="Variant.Text" Href="/Admin/SendNotification">Admin</MudButton>
+                <MudButton Variant="Variant.Text" Href="/admin">Admin</MudButton>
             }
             <SubscribeButton/>
             <MudTooltip Text="Contribute to hosting costs">
@@ -73,7 +73,7 @@
                     @if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true &&
                          HttpContextAccessor.HttpContext.User.IsInRole("Admin"))
                     {
-                        <MudMenuItem Href="/Admin/SendNotification">Admin</MudMenuItem>
+                        <MudMenuItem Href="/admin">Admin</MudMenuItem>
                     }
                     @if (NotificationFeatures.AnyEnabled)
                     {

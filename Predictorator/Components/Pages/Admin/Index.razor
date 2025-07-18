@@ -12,7 +12,7 @@
 }
 else
 {
-    <EditForm OnValidSubmit="SendTestAsync">
+    <EditForm Model="this" OnValidSubmit="SendTestAsync">
         <MudTable Items="_items" Hover="true">
             <HeaderContent>
                 <MudTh></MudTh>
