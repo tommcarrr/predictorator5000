@@ -8,7 +8,7 @@
 
 @if (UiModeService.IsCeefax)
 {
-    <MudText Typo="Typo.h3" Class="my-4 pa-2 ceefax-title" Align="Align.Left" Color="Color.Success">Premiership Results Fixtures</MudText>
+    <MudText Typo="Typo.h3" Class="my-4 pa-2 ceefax-title" Align="Align.Center" Color="Color.Success">Premiership Results Fixtures</MudText>
 }
 else
 {
@@ -42,7 +42,7 @@ else if (_fixtures.Response.Any())
     foreach (var group in groups)
     {
         <MudPaper Class="my-4 fixture-group" Elevation="1" data-date="@group.Key.ToString("dddd, MMMM d, yyyy")">
-            <MudText Typo="Typo.h6" Class="pa-2" Align="@(UiModeService.IsCeefax ? Align.Left: Align.Center)" Color="@(UiModeService.IsCeefax ? Color.Success: Color.Inherit)">@group.Key.ToString("dddd, MMMM d, yyyy")</MudText>
+            <MudText Typo="Typo.h6" Class="pa-2" Align="Align.Center" Color="@(UiModeService.IsCeefax ? Color.Success: Color.Inherit)">@group.Key.ToString("dddd, MMMM d, yyyy")</MudText>
             <MudPaper Class="pa-2">
                 @foreach (var fixture in group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name))
                 {
