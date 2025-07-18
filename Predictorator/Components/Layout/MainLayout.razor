@@ -14,9 +14,20 @@
 <MudLayout>
     <ToastInit/>
     <MudAppBar Elevation="1" Color="Color.Primary">
-        <MudText Typo="Typo.h5" Class="ml-2">
-            <a href="/" style="color:inherit;text-decoration:none">Predictotronix</a>
-        </MudText>
+        @if (IsCeefax)
+        {
+            <MudText Typo="Typo.h5" Class="ml-2 ceefax-logo">
+                <a href="/" style="color:inherit;text-decoration:none">
+                    <span>P</span><span>r</span><span>e</span><span>d</span><span>i</span><span>c</span><span>t</span><span>o</span><span>t</span><span>r</span><span>o</span><span>n</span><span>i</span><span>x</span>
+                </a>
+            </MudText>
+        }
+        else
+        {
+            <MudText Typo="Typo.h5" Class="ml-2">
+                <a href="/" style="color:inherit;text-decoration:none">Predictotronix</a>
+            </MudText>
+        }
         <MudSpacer/>
         @if (HttpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated == true &&
              HttpContextAccessor.HttpContext.User.IsInRole("Admin"))
@@ -29,14 +40,14 @@
                            Href="https://paypal.me/tommcarrr?country.x=GB&locale.x=en_GB"
                            Target="_blank" Rel="noopener"
                            Color="Color.Inherit"
-                           UserAttributes="@(new Dictionary<string, object>{{"id","donateLink"}})" />
+                           UserAttributes="@(new Dictionary<string, object> { { "id", "donateLink" } })"/>
         </MudTooltip>
         <MudIconButton Icon="@(IsDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
                        OnClick="@ToggleDarkModeAsync" Color="Color.Inherit"
-                       UserAttributes="@(new Dictionary<string, object>{{"id","darkModeToggle"}})" />
+                       UserAttributes="@(new Dictionary<string, object> { { "id", "darkModeToggle" } })"/>
         <MudIconButton Icon="@Icons.Material.Outlined.Article"
-                      OnClick="@ToggleCeefaxAsync" Color="@(IsCeefax ? Color.Inherit : Color.Dark)"
-                      UserAttributes="@(new Dictionary<string, object>{{"id","ceefaxToggle"}})" />
+                       OnClick="@ToggleCeefaxAsync" Color="@(IsCeefax ? Color.Inherit : Color.Dark)"
+                       UserAttributes="@(new Dictionary<string, object> { { "id", "ceefaxToggle" } })"/>
     </MudAppBar>
 
     <MudMainContent>
@@ -52,10 +63,10 @@
     public bool IsDarkMode
     {
         get => UiMode.IsDarkMode;
-        set => UiMode.IsDarkMode = value;
+        private set => UiMode.IsDarkMode = value;
     }
 
-    public bool IsCeefax
+    private bool IsCeefax
     {
         get => UiMode.IsCeefax;
         set => UiMode.IsCeefax = value;
@@ -123,14 +134,14 @@
         }
     }
 
-    public async Task ToggleDarkModeAsync()
+    private async Task ToggleDarkModeAsync()
     {
         IsDarkMode = !IsDarkMode;
         await Storage.SetAsync("darkMode", IsDarkMode);
         await InvokeAsync(StateHasChanged);
     }
 
-    public async Task ToggleCeefaxAsync()
+    private async Task ToggleCeefaxAsync()
     {
         IsCeefax = !IsCeefax;
         await Storage.SetAsync("ceefaxMode", IsCeefax);
