@@ -48,7 +48,7 @@ else if (_fixtures.Response.Any())
                 {
                     <div class="fixture-row" data-testid="fixture-row">
                         <div class="fixture-line">
-                            <span class="team-name home-name">@fixture.Teams.Home.Name</span>
+                            <MudText Class="team-name home-name" HtmlTag="span">@fixture.Teams.Home.Name</MudText>
                             <MudImage Src="@fixture.Teams.Home.Logo" Alt="@fixture.Teams.Home.Name" Width="30" Height="30" />
                             <MudNumericField T="int?" Class="score-input" Immediate="true"
                                              @bind-Value="_predictions[fixture.Fixture.Id].Home"
@@ -60,7 +60,7 @@ else if (_fixtures.Response.Any())
                                              Disabled="@(fixture.Score?.Fulltime.Away != null)" Max="20" Min="0"
                                              UserAttributes="@(new Dictionary<string, object>{{"data-testid","score-input"}})" />
                             <MudImage Src="@fixture.Teams.Away.Logo" Alt="@fixture.Teams.Away.Name" Width="30" Height="30" />
-                            <span class="team-name away-name">@fixture.Teams.Away.Name</span>
+                            <MudText Class="team-name away-name" HtmlTag="span">@fixture.Teams.Away.Name</MudText>
                         </div>
                         <div class="fixture-info mud-text-secondary">
                             @{ var ukTz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
