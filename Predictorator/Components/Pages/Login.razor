@@ -2,7 +2,7 @@
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
 @inject ILogger<Login> Logger
-@inject HttpClient Http
+@inject ISignInService SignInService
 
 <h1>Log in</h1>
 <EditForm Model="_input" OnValidSubmit="HandleLogin">
@@ -41,19 +41,14 @@
         _error = null;
         try
         {
-            var absoluteUrl = NavigationManager.ToAbsoluteUri("/login");
-            var response = await Http.PostAsJsonAsync(absoluteUrl, _input);
-            if (response.IsSuccessStatusCode)
+            var result = await SignInService.PasswordSignInAsync(_input.Email, _input.Password, _input.RememberMe);
+            if (result.Succeeded)
             {
                 NavigationManager.NavigateTo("/admin");
                 return;
             }
 
-            _error = await response.Content.ReadAsStringAsync();
-            if (string.IsNullOrWhiteSpace(_error))
-            {
-                _error = "Invalid login attempt.";
-            }
+            _error = result.IsLockedOut ? "User locked out." : "Invalid login attempt.";
         }
         catch (Exception ex)
         {
