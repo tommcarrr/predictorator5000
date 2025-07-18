@@ -153,5 +153,39 @@ public class SubscriptionService
         if (removed)
             await _db.SaveChangesAsync();
     }
+
+    public async Task<bool> UnsubscribeByContactAsync(string contact)
+    {
+        if (string.IsNullOrWhiteSpace(contact))
+            throw new ArgumentException("Contact is required", nameof(contact));
+
+        if (contact.Contains('@'))
+        {
+            var normalized = contact.Trim().ToLowerInvariant();
+            var subscriber = await _db.Subscribers
+                .FirstOrDefaultAsync(s => s.Email.ToLower() == normalized);
+            if (subscriber == null)
+                return false;
+            _db.Subscribers.Remove(subscriber);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+        else
+        {
+            var normalized = NormalizePhone(contact);
+            var subs = await _db.SmsSubscribers.ToListAsync();
+            var subscriber = subs.FirstOrDefault(s => NormalizePhone(s.PhoneNumber) == normalized);
+            if (subscriber == null)
+                return false;
+            _db.SmsSubscribers.Remove(subscriber);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+    }
+
+    private static string NormalizePhone(string phone)
+    {
+        return string.Concat(phone.Where(char.IsDigit));
+    }
 }
 

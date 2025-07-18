@@ -1,0 +1,38 @@
+@page "/Subscription/Remove"
+@rendermode InteractiveServer
+@inject SubscriptionService SubscriptionService
+
+<MudPaper Class="pa-4" Elevation="1">
+    <h2>Unsubscribe</h2>
+    @if (_result != null)
+    {
+        <p>You have been unsubscribed if a matching subscription was found.</p>
+    }
+    else
+    {
+        <EditForm Model="_model" OnValidSubmit="HandleSubmit">
+            <MudStack Spacing="2">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+                <MudTextField @bind-Value="_model.Contact" Label="Email or phone" For="@(() => _model.Contact)" />
+                <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Unsubscribe</MudButton>
+            </MudStack>
+        </EditForm>
+    }
+</MudPaper>
+
+@code {
+    private class ContactModel
+    {
+        [Required]
+        public string Contact { get; set; } = string.Empty;
+    }
+
+    private readonly ContactModel _model = new();
+    private bool? _result;
+
+    private async Task HandleSubmit()
+    {
+        _result = await SubscriptionService.UnsubscribeByContactAsync(_model.Contact);
+    }
+}
