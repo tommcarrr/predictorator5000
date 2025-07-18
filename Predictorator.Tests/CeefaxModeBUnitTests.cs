@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
+using AngleSharp.Dom;
 using Predictorator.Components;
 using Predictorator.Components.Layout;
 using Predictorator.Models.Fixtures;
@@ -51,7 +52,16 @@ public class CeefaxModeBUnitTests
         var cut = ctx.Render<App>();
         var layout = cut.FindComponent<MainLayout>();
         var service = ctx.Services.GetRequiredService<UiModeService>();
-        var toggle = cut.Find("#ceefaxToggle");
+        IElement toggle;
+        try
+        {
+            toggle = cut.Find("#ceefaxToggle");
+        }
+        catch (ElementNotFoundException)
+        {
+            cut.Find("#menuToggle").Click();
+            toggle = cut.Find("#ceefaxToggle");
+        }
         Assert.False(service.IsCeefax);
         toggle.Click();
         cut.WaitForAssertion(() =>
@@ -65,12 +75,29 @@ public class CeefaxModeBUnitTests
     {
         await using var ctx = CreateContext();
         var cut = ctx.Render<App>();
-        var toggle = cut.Find("#ceefaxToggle");
+        IElement toggle;
+        try
+        {
+            toggle = cut.Find("#ceefaxToggle");
+        }
+        catch (ElementNotFoundException)
+        {
+            cut.Find("#menuToggle").Click();
+            toggle = cut.Find("#ceefaxToggle");
+        }
         Assert.Contains("mud-dark-text", toggle.ClassName);
 
         toggle.Click();
         cut.WaitForAssertion(() =>
         {
+            try
+            {
+                cut.Find("#ceefaxToggle");
+            }
+            catch (ElementNotFoundException)
+            {
+                cut.Find("#menuToggle").Click();
+            }
             var t = cut.Find("#ceefaxToggle");
             Assert.Contains("mud-inherit-text", t.ClassName);
         }, timeout: TimeSpan.FromSeconds(1));

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using MudBlazor;
 using MudBlazor.Services;
 using NSubstitute;
+using AngleSharp.Dom;
 using Predictorator.Components;
 using Predictorator.Components.Layout;
 using Predictorator.Models.Fixtures;
@@ -55,7 +56,16 @@ public class DarkModeBUnitTests
         var cut = ctx.Render<App>();
         var layout = cut.FindComponent<MainLayout>();
         var service = ctx.Services.GetRequiredService<UiModeService>();
-        var toggle = cut.Find("#darkModeToggle");
+        IElement toggle;
+        try
+        {
+            toggle = cut.Find("#darkModeToggle");
+        }
+        catch (ElementNotFoundException)
+        {
+            cut.Find("#menuToggle").Click();
+            toggle = cut.Find("#darkModeToggle");
+        }
         Assert.False(service.IsDarkMode);
 
         toggle.Click();

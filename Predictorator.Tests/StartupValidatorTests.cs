@@ -14,6 +14,7 @@ public class StartupValidatorTests
         });
         builder.Configuration["ConnectionStrings:DefaultConnection"] = "Data Source=test.db";
         builder.Configuration["Resend:ApiToken"] = "token";
+        builder.Configuration["ApiSettings:RapidApiKey"] = null;
 
         var result = StartupValidator.Validate(builder);
 
