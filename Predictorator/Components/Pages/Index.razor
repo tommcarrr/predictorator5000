@@ -51,11 +51,13 @@ else if (_fixtures.Response.Any())
                             <MudText Class="team-name home-name" HtmlTag="span" Color="@(UiModeService.IsCeefax ? Color.Info: Color.Inherit)">@fixture.Teams.Home.Name</MudText>
                             <MudImage Src="@fixture.Teams.Home.Logo" Alt="@fixture.Teams.Home.Name" Width="30" Height="30" />
                             <MudNumericField T="int?" Class="score-input" Immediate="true"
+                                             HideSpinButtons="true"
                                              @bind-Value="_predictions[fixture.Fixture.Id].Home"
                                              Disabled="@(fixture.Score?.Fulltime.Home != null)" Max="20" Min="0"
                                              UserAttributes="@(new Dictionary<string, object>{{"data-testid","score-input"}})" />
                             <span class="hyphen">-</span>
                             <MudNumericField T="int?" Class="score-input" Immediate="true"
+                                             HideSpinButtons="true"
                                              @bind-Value="_predictions[fixture.Fixture.Id].Away"
                                              Disabled="@(fixture.Score?.Fulltime.Away != null)" Max="20" Min="0"
                                              UserAttributes="@(new Dictionary<string, object>{{"data-testid","score-input"}})" />
