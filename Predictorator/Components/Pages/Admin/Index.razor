@@ -1,0 +1,89 @@
+@page "/admin"
+@rendermode InteractiveServer
+@using Predictorator.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles="Admin")]
+@inject AdminService AdminService
+
+<h2>Subscribers</h2>
+@if (_items == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm OnValidSubmit="SendTestAsync">
+        <MudTable Items="_items" Hover="true">
+            <HeaderContent>
+                <MudTh></MudTh>
+                <MudTh>Contact</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate Context="row">
+                <MudTd><MudCheckBox T="bool" @bind-Value="row.Selected" /></MudTd>
+                <MudTd>@row.Contact</MudTd>
+                <MudTd>
+                    @if (row.IsVerified)
+                    {
+                        <MudChip T="string" Color="Color.Success" Variant="Variant.Filled">Verified</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled">Pending</MudChip>
+                    }
+                </MudTd>
+                <MudTd>
+                    @if (!row.IsVerified)
+                    {
+                        <MudButton Size="Size.Small" Color="Color.Success" OnClick="@(()=>ConfirmAsync(row))">Confirm</MudButton>
+                    }
+                    <MudButton Size="Size.Small" Color="Color.Error" OnClick="@(()=>DeleteAsync(row))">Delete</MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+        <MudStack Row="true" Spacing="2" Class="mt-2">
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Send Test</MudButton>
+        </MudStack>
+    </EditForm>
+}
+
+@code {
+    private class Item : AdminSubscriberDto
+    {
+        public Item(int id, string contact, bool verified, string type) : base(id, contact, verified, type)
+        {
+        }
+
+        public bool Selected { get; set; }
+    }
+
+    private List<Item>? _items;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var data = await AdminService.GetSubscribersAsync();
+        _items = data.Select(d => new Item(d.Id, d.Contact, d.IsVerified, d.Type)).ToList();
+    }
+
+    private async Task ConfirmAsync(Item item)
+    {
+        await AdminService.ConfirmAsync(item.Type, item.Id);
+        item.IsVerified = true;
+    }
+
+    private async Task DeleteAsync(Item item)
+    {
+        await AdminService.DeleteAsync(item.Type, item.Id);
+        _items!.Remove(item);
+    }
+
+    private async Task SendTestAsync()
+    {
+        var selected = _items!.Where(i => i.Selected).Cast<AdminSubscriberDto>().ToList();
+        if (selected.Any())
+        {
+            await AdminService.SendTestAsync(selected);
+        }
+    }
+}

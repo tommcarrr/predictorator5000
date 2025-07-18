@@ -1,4 +1,4 @@
-@page "/admin"
+@page "/login"
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
 @inject ILogger<Login> Logger
@@ -45,7 +45,7 @@
             var response = await Http.PostAsJsonAsync(absoluteUrl, _input);
             if (response.IsSuccessStatusCode)
             {
-                NavigationManager.NavigateTo("/");
+                NavigationManager.NavigateTo("/admin");
                 return;
             }
 

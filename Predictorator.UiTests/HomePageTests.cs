@@ -103,9 +103,9 @@ public class HomePageTests
     }
 
     [Test]
-    public async Task Admin_Route_Should_Display_Login_Page()
+    public async Task Login_Route_Should_Display_Login_Page()
     {
-        await NavigateWithRetriesAsync(_page!, $"{BaseUrl}/admin");
+        await NavigateWithRetriesAsync(_page!, $"{BaseUrl}/login");
         await _page!.Locator("h1").WaitForAsync();
         var header = await _page!.TextContentAsync("h1");
         Assert.That(header, Does.Contain("Log in"));
