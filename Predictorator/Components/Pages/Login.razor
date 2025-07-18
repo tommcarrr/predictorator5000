@@ -41,7 +41,8 @@
         _error = null;
         try
         {
-            var response = await Http.PostAsJsonAsync("/login", _input);
+            var absoluteUrl = NavigationManager.ToAbsoluteUri("/login");
+            var response = await Http.PostAsJsonAsync(absoluteUrl, _input);
             if (response.IsSuccessStatusCode)
             {
                 NavigationManager.NavigateTo("/");
