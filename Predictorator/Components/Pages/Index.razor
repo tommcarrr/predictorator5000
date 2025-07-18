@@ -123,8 +123,11 @@ else if (_fixtures.Response.Any())
                 if (!_predictions.ContainsKey(f.Fixture.Id))
                     _predictions[f.Fixture.Id] = new PredictionInput();
 
-                _predictions[f.Fixture.Id].Home = f.Score?.Fulltime.Home;
-                _predictions[f.Fixture.Id].Away = f.Score?.Fulltime.Away;
+                var pred = _predictions[f.Fixture.Id];
+                if (pred.Home == null)
+                    pred.Home = f.Score?.Fulltime.Home;
+                if (pred.Away == null)
+                    pred.Away = f.Score?.Fulltime.Away;
             }
         }
     }
