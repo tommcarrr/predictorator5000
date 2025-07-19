@@ -45,11 +45,6 @@ jobs:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_2687F5A3498747E1A95ADE36D92A159E }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F68BC6B164FA4A818B4561CE37FB31B5 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_E02E41A1857446D5AE38550D3A7CF31C }}
-      - name: Run Flyway migrations
-        uses: joshuaavalon/flyway-action@v3.0.0
-        with:
-          url: ${{ secrets.SQL_CONNECTION_STRING }}
-          locations: 'filesystem:flyway/sql'
       - name: Deploy to production
         id: deploy
         uses: azure/webapps-deploy@v3
