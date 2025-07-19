@@ -150,4 +150,30 @@ public class SubscriptionServiceTests
         Assert.Contains(recent, db.Subscribers);
         Assert.Contains(verified, db.SmsSubscribers);
     }
+
+    [Fact]
+    public async Task UnsubscribeByContactAsync_email_case_insensitive()
+    {
+        var service = CreateService(out var db, out _, out _, out _);
+        db.Subscribers.Add(new Subscriber { Email = "User@Example.com", VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        var result = await service.UnsubscribeByContactAsync("user@example.com");
+
+        Assert.True(result);
+        Assert.Empty(db.Subscribers);
+    }
+
+    [Fact]
+    public async Task UnsubscribeByContactAsync_matches_phone_formats()
+    {
+        var service = CreateService(out var db, out _, out _, out _);
+        db.SmsSubscribers.Add(new SmsSubscriber { PhoneNumber = "5551234567", VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        var result = await service.UnsubscribeByContactAsync("(555) 123-4567");
+
+        Assert.True(result);
+        Assert.Empty(db.SmsSubscribers);
+    }
 }

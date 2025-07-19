@@ -113,27 +113,28 @@ public class NotificationService
     {
         var emails = await _db.Subscribers
             .Where(s => s.IsVerified)
-            .Select(s => s.Email)
+            .Select(s => new { s.Email, s.UnsubscribeToken })
             .ToListAsync();
-        foreach (var email in emails)
+        foreach (var sub in emails)
         {
             var emailMessage = new EmailMessage
             {
                 From = _config["Resend:From"] ?? "Prediction Fairy <no-reply@example.com>",
                 Subject = "Predictorator Notification",
-                HtmlBody = $"<p>{message} <a href=\"{baseUrl}\">View fixtures</a>.</p>"
+                HtmlBody = $"<p>{message} <a href=\"{baseUrl}\">View fixtures</a>. <a href=\"{baseUrl}/Subscription/Unsubscribe?token={sub.UnsubscribeToken}\">Unsubscribe</a></p>"
             };
-            emailMessage.To.Add(email);
+            emailMessage.To.Add(sub.Email);
             await _resend.EmailSendAsync(emailMessage);
         }
 
         var phones = await _db.SmsSubscribers
             .Where(s => s.IsVerified)
-            .Select(s => s.PhoneNumber)
+            .Select(s => new { s.PhoneNumber, s.UnsubscribeToken })
             .ToListAsync();
-        foreach (var phone in phones)
+        foreach (var sub in phones)
         {
-            await _sms.SendSmsAsync(phone, $"{message} {baseUrl}");
+            var link = $"{baseUrl}/Subscription/Unsubscribe?token={sub.UnsubscribeToken}";
+            await _sms.SendSmsAsync(sub.PhoneNumber, $"{message} {baseUrl} Unsubscribe: {link}");
         }
 
         _db.SentNotifications.Add(new SentNotification

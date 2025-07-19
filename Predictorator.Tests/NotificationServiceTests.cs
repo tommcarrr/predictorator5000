@@ -85,8 +85,8 @@ public class NotificationServiceTests
 
         await service.SendNewFixturesAvailableAsync("key", "http://localhost");
 
-        await resend.Received().EmailSendAsync(Arg.Any<EmailMessage>());
-        await sms.Received().SendSmsAsync("+1", Arg.Any<string>());
+        await resend.Received().EmailSendAsync(Arg.Is<EmailMessage>(m => m.HtmlBody != null && m.HtmlBody.Contains("Unsubscribe")));
+        await sms.Received().SendSmsAsync("+1", Arg.Is<string>(msg => msg.Contains("Unsubscribe:")));
         Assert.Equal(1, db.SentNotifications.Count());
     }
 }
