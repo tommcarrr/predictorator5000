@@ -177,8 +177,8 @@ app.MapGet("/logout", async (SignInManager<IdentityUser> sm) =>
 
 if (!app.Environment.IsEnvironment("Testing"))
 {
-    app.UseHangfireDashboard();
     await ApplicationDbInitializer.SeedAdminUserAsync(app.Services);
+    app.UseHangfireDashboard();
     RecurringJob.AddOrUpdate<NotificationService>(
         "fixture-notifications",
         s => s.CheckFixturesAsync(),
