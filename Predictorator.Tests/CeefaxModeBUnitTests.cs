@@ -65,11 +65,11 @@ public class CeefaxModeBUnitTests
             cut.Find("#menuToggle").Click();
             toggle = cut.Find("#ceefaxToggle");
         }
-        Assert.False(service.IsCeefax);
+        Assert.True(service.IsCeefax);
         toggle.Click();
         cut.WaitForAssertion(() =>
         {
-            Assert.True(service.IsCeefax);
+            Assert.False(service.IsCeefax);
         }, timeout: TimeSpan.FromSeconds(1));
     }
 
@@ -77,6 +77,9 @@ public class CeefaxModeBUnitTests
     public async Task ToggleCeefax_Enables_DarkMode()
     {
         await using var ctx = CreateContext();
+        var storage = (FakeBrowserStorage)ctx.Services.GetRequiredService<IBrowserStorage>();
+        await storage.SetAsync("ceefaxMode", false);
+        await storage.SetAsync("darkMode", false);
         var cut = ctx.Render<App>();
         var service = ctx.Services.GetRequiredService<UiModeService>();
         IElement toggle;
@@ -101,6 +104,8 @@ public class CeefaxModeBUnitTests
     public async Task CeefaxToggle_Uses_Dark_Color_When_Off()
     {
         await using var ctx = CreateContext();
+        var storage = (FakeBrowserStorage)ctx.Services.GetRequiredService<IBrowserStorage>();
+        await storage.SetAsync("ceefaxMode", false);
         var cut = ctx.Render<App>();
         IElement toggle;
         try
@@ -135,6 +140,8 @@ public class CeefaxModeBUnitTests
     {
         await using var ctx = CreateContext();
         var js = ctx.Services.GetRequiredService<IJSRuntime>();
+        var storage = (FakeBrowserStorage)ctx.Services.GetRequiredService<IBrowserStorage>();
+        await storage.SetAsync("ceefaxMode", false);
         var cut = ctx.Render<App>();
         IElement toggle;
         try

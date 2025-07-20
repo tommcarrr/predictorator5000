@@ -66,13 +66,13 @@ public class DarkModeBUnitTests
             cut.Find("#menuToggle").Click();
             toggle = cut.Find("#darkModeToggle");
         }
-        Assert.False(service.IsDarkMode);
+        Assert.True(service.IsDarkMode);
 
         toggle.Click();
 
         cut.WaitForAssertion(() =>
         {
-            Assert.True(service.IsDarkMode);
+            Assert.False(service.IsDarkMode);
         }, timeout: TimeSpan.FromSeconds(1));
     }
 
