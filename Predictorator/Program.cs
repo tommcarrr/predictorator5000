@@ -79,6 +79,7 @@ builder.Services.AddTransient<SubscriptionService>();
 builder.Services.AddTransient<NotificationService>();
 builder.Services.AddTransient<AdminService>();
 builder.Services.AddSingleton<EmailCssInliner>();
+builder.Services.AddSingleton<EmailTemplateRenderer>();
 builder.Services.AddSingleton<NotificationFeatureService>();
 builder.Services.Configure<AdminUserOptions>(options =>
 {

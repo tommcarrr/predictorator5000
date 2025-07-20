@@ -35,13 +35,14 @@ public class AdminServiceTests
         Directory.CreateDirectory(Path.Combine(env.WebRootPath, "css"));
         File.WriteAllText(Path.Combine(env.WebRootPath, "css", "email.css"), "p{color:red;}");
         var inliner = new EmailCssInliner(env);
+        var renderer = new EmailTemplateRenderer();
         var provider = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow };
         var fixtures = new FakeFixtureService(new FixturesResponse());
         var range = new DateRangeCalculator(provider);
         var features = new NotificationFeatureService(config);
         var jobs = Substitute.For<IBackgroundJobClient>();
-        var notifications = new NotificationService(db, resend, sms, config, fixtures, range, features, provider, jobs, inliner);
-        return new AdminService(db, resend, sms, config, inliner, notifications);
+        var notifications = new NotificationService(db, resend, sms, config, fixtures, range, features, provider, jobs, inliner, renderer);
+        return new AdminService(db, resend, sms, config, inliner, renderer, notifications);
     }
 
     [Fact]

@@ -47,7 +47,8 @@ public class SubscribeComponentBUnitTests
         Directory.CreateDirectory(Path.Combine(env.WebRootPath, "css"));
         File.WriteAllText(Path.Combine(env.WebRootPath, "css", "email.css"), "p{color:red;}");
         var inliner = new EmailCssInliner(env);
-        ctx.Services.AddSingleton(new SubscriptionService(db, resend, config, sms, time, jobs, inliner));
+        var renderer = new EmailTemplateRenderer();
+        ctx.Services.AddSingleton(new SubscriptionService(db, resend, config, sms, time, jobs, inliner, renderer));
         return ctx;
     }
 
