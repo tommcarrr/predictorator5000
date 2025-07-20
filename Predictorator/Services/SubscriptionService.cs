@@ -4,6 +4,7 @@ using Hangfire.Common;
 using Hangfire.States;
 using Predictorator.Data;
 using Predictorator.Models;
+using Predictorator.Options;
 using Resend;
 
 namespace Predictorator.Services;
@@ -18,12 +19,36 @@ public class SubscriptionService
     private readonly IBackgroundJobClient _jobs;
     private readonly EmailCssInliner _inliner;
 
+    private string AdminEmail =>
+        _config["ADMIN_EMAIL"] ?? _config[$"{AdminUserOptions.SectionName}:Email"] ?? "admin@example.com";
+
+    private async Task SendAdminEmailAsync(string subject, string body)
+    {
+        var message = new EmailMessage
+        {
+            From = _config["Resend:From"] ?? "Prediction Fairy <no-reply@example.com>",
+            Subject = subject,
+            HtmlBody = _inliner.InlineCss($"<p>{body}</p>")
+        };
+        message.To.Add(AdminEmail);
+        await _resend.EmailSendAsync(message);
+    }
+
     private async Task<bool> VerifySubscriberAsync<TEntity>(DbSet<TEntity> set, string token) where TEntity : class, ISubscriber
     {
         var entity = await set.FirstOrDefaultAsync(s => s.VerificationToken == token);
         if (entity == null) return false;
         entity.IsVerified = true;
         await _db.SaveChangesAsync();
+
+        var contact = entity switch
+        {
+            Subscriber s => s.Email,
+            SmsSubscriber sms => sms.PhoneNumber,
+            _ => ""
+        };
+        await SendAdminEmailAsync("Subscription confirmed", $"{contact} confirmed their subscription.");
+
         return true;
     }
 
@@ -96,6 +121,8 @@ public class SubscriptionService
         _db.Subscribers.Add(subscriber);
         await _db.SaveChangesAsync();
 
+        await SendAdminEmailAsync("New subscriber", $"Email subscriber {email} added.");
+
         var verifyLink = $"{baseUrl}/Subscription/Verify?token={subscriber.VerificationToken}";
         var unsubscribeLink = $"{baseUrl}/Subscription/Unsubscribe?token={subscriber.UnsubscribeToken}";
 
@@ -127,6 +154,8 @@ public class SubscriptionService
         };
         _db.SmsSubscribers.Add(subscriber);
         await _db.SaveChangesAsync();
+
+        await SendAdminEmailAsync("New subscriber", $"SMS subscriber {phoneNumber} added.");
 
         var verifyLink = $"{baseUrl}/Subscription/Verify?token={subscriber.VerificationToken}";
         var unsubscribeLink = $"{baseUrl}/Subscription/Unsubscribe?token={subscriber.UnsubscribeToken}";

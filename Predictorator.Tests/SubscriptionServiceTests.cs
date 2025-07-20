@@ -49,7 +49,7 @@ public class SubscriptionServiceTests
     [Fact]
     public async Task VerifyAsync_marks_subscriber_verified()
     {
-        var service = CreateService(out var db, out _, out _, out _);
+        var service = CreateService(out var db, out var resend, out _, out _);
         var subscriber = new Subscriber { Email = "a", VerificationToken = "token", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow };
         db.Subscribers.Add(subscriber);
         await db.SaveChangesAsync();
@@ -58,6 +58,7 @@ public class SubscriptionServiceTests
 
         Assert.True(result);
         Assert.True(subscriber.IsVerified);
+        await resend.Received().EmailSendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -77,12 +78,13 @@ public class SubscriptionServiceTests
     [Fact]
     public async Task SubscribeAsync_with_phone_sends_sms()
     {
-        var service = CreateService(out var db, out _, out var sms, out var jobs);
+        var service = CreateService(out var db, out var resend, out var sms, out var jobs);
         await service.SubscribeAsync(null, "+123", "http://localhost");
         jobs.Received().Create(Arg.Is<Job>(j => j.Method.Name == nameof(SubscriptionService.AddSmsSubscriberAsync)), Arg.Any<IState>());
         await service.AddSmsSubscriberAsync("+123", "http://localhost");
 
         await sms.Received().SendSmsAsync("+123", Arg.Any<string>());
+        await resend.Received().EmailSendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
         var subscriber = await db.SmsSubscribers.SingleAsync();
         Assert.False(subscriber.IsVerified);
     }
@@ -97,7 +99,7 @@ public class SubscriptionServiceTests
     [Fact]
     public async Task VerifyAsync_marks_sms_subscriber_verified()
     {
-        var service = CreateService(out var db, out _, out _, out _);
+        var service = CreateService(out var db, out var resend, out _, out _);
         var subscriber = new SmsSubscriber { PhoneNumber = "+1", VerificationToken = "t", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow };
         db.SmsSubscribers.Add(subscriber);
         await db.SaveChangesAsync();
@@ -106,6 +108,7 @@ public class SubscriptionServiceTests
 
         Assert.True(result);
         Assert.True(subscriber.IsVerified);
+        await resend.Received().EmailSendAsync(Arg.Any<EmailMessage>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
