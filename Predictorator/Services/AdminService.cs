@@ -28,14 +28,16 @@ public class AdminService
     private readonly ITwilioSmsSender _sms;
     private readonly IConfiguration _config;
     private readonly EmailCssInliner _inliner;
+    private readonly NotificationService _notifications;
 
-    public AdminService(ApplicationDbContext db, IResend resend, ITwilioSmsSender sms, IConfiguration config, EmailCssInliner inliner)
+    public AdminService(ApplicationDbContext db, IResend resend, ITwilioSmsSender sms, IConfiguration config, EmailCssInliner inliner, NotificationService notifications)
     {
         _db = db;
         _resend = resend;
         _sms = sms;
         _config = config;
         _inliner = inliner;
+        _notifications = notifications;
     }
 
     public async Task<List<AdminSubscriberDto>> GetSubscribersAsync()
@@ -105,35 +107,12 @@ public class AdminService
     public async Task SendNewFixturesSampleAsync(IEnumerable<AdminSubscriberDto> recipients)
     {
         var baseUrl = _config["BASE_URL"] ?? "http://localhost";
-        await SendSampleAsync(recipients, "New fixtures are available!", baseUrl);
+        await _notifications.SendSampleAsync(recipients, "New fixtures are available!", baseUrl);
     }
 
     public async Task SendFixturesStartingSoonSampleAsync(IEnumerable<AdminSubscriberDto> recipients)
     {
         var baseUrl = _config["BASE_URL"] ?? "http://localhost";
-        await SendSampleAsync(recipients, "Fixtures start in 1 hour!", baseUrl);
-    }
-
-    private async Task SendSampleAsync(IEnumerable<AdminSubscriberDto> recipients, string message, string baseUrl)
-    {
-        foreach (var s in recipients)
-        {
-            if (s.Type == "Email")
-            {
-                var email = new EmailMessage
-                {
-                    From = _config["Resend:From"] ?? "Predictorator <noreply@example.com>",
-                    Subject = "Predictorator Sample Notification",
-                    HtmlBody = $"<p>{message} <a href=\"{baseUrl}\">View fixtures</a>.</p>"
-                };
-                email.To.Add(s.Contact);
-                email.HtmlBody = _inliner.InlineCss(email.HtmlBody!);
-                await _resend.EmailSendAsync(email);
-            }
-            else
-            {
-                await _sms.SendSmsAsync(s.Contact, $"{message} {baseUrl}");
-            }
-        }
+        await _notifications.SendSampleAsync(recipients, "Fixtures start in 1 hour!", baseUrl);
     }
 }
