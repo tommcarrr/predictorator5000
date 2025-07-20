@@ -6,6 +6,9 @@ using Predictorator.Models;
 using Predictorator.Services;
 using Resend;
 using Predictorator.Tests.Helpers;
+using Predictorator.Models.Fixtures;
+using Hangfire;
+using System.Collections.Generic;
 using System.IO;
 using System;
 
@@ -32,7 +35,13 @@ public class AdminServiceTests
         Directory.CreateDirectory(Path.Combine(env.WebRootPath, "css"));
         File.WriteAllText(Path.Combine(env.WebRootPath, "css", "email.css"), "p{color:red;}");
         var inliner = new EmailCssInliner(env);
-        return new AdminService(db, resend, sms, config, inliner);
+        var provider = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow };
+        var fixtures = new FakeFixtureService(new FixturesResponse());
+        var range = new DateRangeCalculator(provider);
+        var features = new NotificationFeatureService(config);
+        var jobs = Substitute.For<IBackgroundJobClient>();
+        var notifications = new NotificationService(db, resend, sms, config, fixtures, range, features, provider, jobs, inliner);
+        return new AdminService(db, resend, sms, config, inliner, notifications);
     }
 
     [Fact]
@@ -64,7 +73,10 @@ public class AdminServiceTests
     [Fact]
     public async Task SendNewFixturesSampleAsync_sends_email_and_sms()
     {
-        var service = CreateService(out _, out var resend, out var sms);
+        var service = CreateService(out var db, out var resend, out var sms);
+        db.Subscribers.Add(new Subscriber { Id = 1, Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
+        db.SmsSubscribers.Add(new SmsSubscriber { Id = 2, PhoneNumber = "+1", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
+        await db.SaveChangesAsync();
         var recipients = new List<AdminSubscriberDto>
         {
             new(1, "user@example.com", true, "Email"),
@@ -80,7 +92,10 @@ public class AdminServiceTests
     [Fact]
     public async Task SendFixturesStartingSoonSampleAsync_sends_email_and_sms()
     {
-        var service = CreateService(out _, out var resend, out var sms);
+        var service = CreateService(out var db, out var resend, out var sms);
+        db.Subscribers.Add(new Subscriber { Id = 1, Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
+        db.SmsSubscribers.Add(new SmsSubscriber { Id = 2, PhoneNumber = "+1", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
+        await db.SaveChangesAsync();
         var recipients = new List<AdminSubscriberDto>
         {
             new(1, "user@example.com", true, "Email"),

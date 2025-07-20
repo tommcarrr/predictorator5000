@@ -112,34 +112,65 @@ public class NotificationService
         await SendToAllAsync("Fixtures start in 1 hour!", baseUrl, "FixturesStartingSoon", key);
     }
 
+    private EmailMessage CreateEmailMessage(string message, string baseUrl, Subscriber sub)
+    {
+        var emailMessage = new EmailMessage
+        {
+            From = _config["Resend:From"] ?? "Prediction Fairy <no-reply@example.com>",
+            Subject = "Predictorator Notification",
+            HtmlBody = $"<p>{message} <a href=\"{baseUrl}\">View fixtures</a>. <a href=\"{baseUrl}/Subscription/Unsubscribe?token={sub.UnsubscribeToken}\">Unsubscribe</a></p>"
+        };
+        emailMessage.To.Add(sub.Email);
+        emailMessage.HtmlBody = _inliner.InlineCss(emailMessage.HtmlBody!);
+        return emailMessage;
+    }
+
+    private string CreateSmsMessage(string message, string baseUrl, SmsSubscriber sub)
+    {
+        var link = $"{baseUrl}/Subscription/Unsubscribe?token={sub.UnsubscribeToken}";
+        return $"{message} {baseUrl} Unsubscribe: {link}";
+    }
+
+    public async Task SendNotificationAsync(string message, string baseUrl, Subscriber sub)
+    {
+        var emailMessage = CreateEmailMessage(message, baseUrl, sub);
+        await _resend.EmailSendAsync(emailMessage);
+    }
+
+    public async Task SendNotificationAsync(string message, string baseUrl, SmsSubscriber sub)
+    {
+        var smsMessage = CreateSmsMessage(message, baseUrl, sub);
+        await _sms.SendSmsAsync(sub.PhoneNumber, smsMessage);
+    }
+
+    public async Task SendSampleAsync(IEnumerable<AdminSubscriberDto> recipients, string message, string baseUrl)
+    {
+        foreach (var r in recipients)
+        {
+            if (r.Type == "Email")
+            {
+                var sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Id == r.Id);
+                if (sub != null)
+                    await SendNotificationAsync(message, baseUrl, sub);
+            }
+            else
+            {
+                var sub = await _db.SmsSubscribers.FirstOrDefaultAsync(s => s.Id == r.Id);
+                if (sub != null)
+                    await SendNotificationAsync(message, baseUrl, sub);
+            }
+        }
+    }
+
     private async Task SendToAllAsync(string message, string baseUrl, string type, string key)
     {
-        var emails = await _db.Subscribers
-            .Where(s => s.IsVerified)
-            .Select(s => new { s.Email, s.UnsubscribeToken })
-            .ToListAsync();
+        var emails = await _db.Subscribers.Where(s => s.IsVerified).ToListAsync();
         foreach (var sub in emails)
-        {
-            var emailMessage = new EmailMessage
-            {
-                From = _config["Resend:From"] ?? "Prediction Fairy <no-reply@example.com>",
-                Subject = "Predictorator Notification",
-                HtmlBody = $"<p>{message} <a href=\"{baseUrl}\">View fixtures</a>. <a href=\"{baseUrl}/Subscription/Unsubscribe?token={sub.UnsubscribeToken}\">Unsubscribe</a></p>"
-            };
-            emailMessage.To.Add(sub.Email);
-            emailMessage.HtmlBody = _inliner.InlineCss(emailMessage.HtmlBody!);
-            await _resend.EmailSendAsync(emailMessage);
-        }
+            await SendNotificationAsync(message, baseUrl, sub);
 
-        var phones = await _db.SmsSubscribers
-            .Where(s => s.IsVerified)
-            .Select(s => new { s.PhoneNumber, s.UnsubscribeToken })
-            .ToListAsync();
+        var phones = await _db.SmsSubscribers.Where(s => s.IsVerified).ToListAsync();
         foreach (var sub in phones)
-        {
-            var link = $"{baseUrl}/Subscription/Unsubscribe?token={sub.UnsubscribeToken}";
-            await _sms.SendSmsAsync(sub.PhoneNumber, $"{message} {baseUrl} Unsubscribe: {link}");
-        }
+            await SendNotificationAsync(message, baseUrl, sub);
 
         _db.SentNotifications.Add(new SentNotification
         {
