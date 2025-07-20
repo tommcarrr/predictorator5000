@@ -51,7 +51,7 @@ public class SubscribeComponentBUnitTests
         await using var ctx = CreateContext(new Dictionary<string, string?> { ["Resend:ApiToken"] = "token" });
         var cut = ctx.Render<Subscribe>();
         Assert.Contains("Email address", cut.Markup);
-        Assert.DoesNotContain("Phone number", cut.Markup);
+        Assert.DoesNotContain("UK mobile number", cut.Markup);
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class SubscribeComponentBUnitTests
             ["Twilio:FromNumber"] = "+1"
         });
         var cut = ctx.Render<Subscribe>();
-        Assert.Contains("Phone number", cut.Markup);
+        Assert.Contains("UK mobile number", cut.Markup);
         Assert.DoesNotContain("Email address", cut.Markup);
     }
 
