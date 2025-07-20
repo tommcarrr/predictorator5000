@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles="Admin")]
 @inject AdminService AdminService
+@inject ToastInterop Toast
 
 <h2>Subscribers</h2>
 @if (_items == null)
@@ -83,27 +84,51 @@ else
     private async Task SendTestAsync()
     {
         var selected = _items!.Where(i => i.Selected).Cast<AdminSubscriberDto>().ToList();
-        if (selected.Any())
+        if (!selected.Any())
+            return;
+
+        try
         {
             await AdminService.SendTestAsync(selected);
+            await Toast.ShowToast("Test notifications sent!", "success");
+        }
+        catch
+        {
+            await Toast.ShowToast("Failed to send test notifications.", "error");
         }
     }
 
     private async Task SendNewFixturesSampleAsync()
     {
         var selected = _items!.Where(i => i.Selected).Cast<AdminSubscriberDto>().ToList();
-        if (selected.Any())
+        if (!selected.Any())
+            return;
+
+        try
         {
             await AdminService.SendNewFixturesSampleAsync(selected);
+            await Toast.ShowToast("Sample notifications sent!", "success");
+        }
+        catch
+        {
+            await Toast.ShowToast("Failed to send sample notifications.", "error");
         }
     }
 
     private async Task SendStartingSoonSampleAsync()
     {
         var selected = _items!.Where(i => i.Selected).Cast<AdminSubscriberDto>().ToList();
-        if (selected.Any())
+        if (!selected.Any())
+            return;
+
+        try
         {
             await AdminService.SendFixturesStartingSoonSampleAsync(selected);
+            await Toast.ShowToast("Sample notifications sent!", "success");
+        }
+        catch
+        {
+            await Toast.ShowToast("Failed to send sample notifications.", "error");
         }
     }
 }
