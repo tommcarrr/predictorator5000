@@ -159,19 +159,37 @@
         if (firstRender)
         {
             var dark = await Storage.GetAsync("darkMode");
-            if (dark.HasValue)
+            if (!dark.HasValue)
+            {
+                var darkCookie = GetCookieBool("darkMode");
+                if (darkCookie.HasValue)
+                    IsDarkMode = darkCookie.Value;
+            }
+            else
+            {
                 IsDarkMode = dark.Value;
+            }
 
             var ceefax = await Storage.GetAsync("ceefaxMode");
-            if (ceefax.HasValue)
+            if (!ceefax.HasValue)
+            {
+                var ceefaxCookie = GetCookieBool("ceefaxMode");
+                if (ceefaxCookie.HasValue)
+                    IsCeefax = ceefaxCookie.Value;
+            }
+            else
             {
                 IsCeefax = ceefax.Value;
-                if (IsCeefax)
-                {
-                    IsDarkMode = true;
-                    await Storage.SetAsync("darkMode", IsDarkMode);
-                }
             }
+
+            if (IsCeefax)
+            {
+                IsDarkMode = true;
+                await Storage.SetAsync("darkMode", IsDarkMode);
+            }
+
+            await SetCookie("darkMode", IsDarkMode);
+            await SetCookie("ceefaxMode", IsCeefax);
 
             await Js.InvokeVoidAsync("app.setCeefax", IsCeefax);
             await InvokeAsync(StateHasChanged);
@@ -182,6 +200,7 @@
     {
         IsDarkMode = !IsDarkMode;
         await Storage.SetAsync("darkMode", IsDarkMode);
+        await SetCookie("darkMode", IsDarkMode);
         await InvokeAsync(StateHasChanged);
     }
 
@@ -189,10 +208,12 @@
     {
         IsCeefax = !IsCeefax;
         await Storage.SetAsync("ceefaxMode", IsCeefax);
+        await SetCookie("ceefaxMode", IsCeefax);
         if (IsCeefax)
         {
             IsDarkMode = true;
             await Storage.SetAsync("darkMode", IsDarkMode);
+            await SetCookie("darkMode", IsDarkMode);
         }
         await Js.InvokeVoidAsync("app.setCeefax", IsCeefax);
         await InvokeAsync(StateHasChanged);
@@ -201,6 +222,20 @@
     private void OpenSubscribe()
     {
         DialogService.Show<Subscribe>("Subscribe");
+    }
+
+    private bool? GetCookieBool(string key)
+    {
+        var cookies = HttpContextAccessor.HttpContext?.Request.Cookies;
+        if (cookies != null && cookies.TryGetValue(key, out var value) && bool.TryParse(value, out var result))
+            return result;
+        return null;
+    }
+
+    private async Task SetCookie(string key, bool value)
+    {
+        // Use JS interop to update cookies after initial render
+        await Js.InvokeVoidAsync("eval", $"document.cookie='{key}={value};path=/;max-age=31536000'");
     }
 
     public void Dispose()

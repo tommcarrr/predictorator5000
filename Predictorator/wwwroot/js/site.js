@@ -77,6 +77,7 @@ window.app = (() => {
 
     function setCeefax(enabled) {
         document.body.classList.toggle('ceefax', enabled);
+        document.cookie = `ceefaxMode=${enabled};path=/;max-age=31536000`;
         if (enabled) {
             updateCeefaxClock();
             ceefaxTimer = setInterval(updateCeefaxClock, 1000);
