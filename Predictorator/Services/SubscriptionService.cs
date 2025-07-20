@@ -18,17 +18,19 @@ public class SubscriptionService
     private readonly IDateTimeProvider _dateTime;
     private readonly IBackgroundJobClient _jobs;
     private readonly EmailCssInliner _inliner;
+    private readonly EmailTemplateRenderer _renderer;
 
     private string AdminEmail =>
         _config["ADMIN_EMAIL"] ?? _config[$"{AdminUserOptions.SectionName}:Email"] ?? "admin@example.com";
 
     private async Task SendAdminEmailAsync(string subject, string body)
     {
+        var html = _renderer.Render(body, _config["BASE_URL"] ?? string.Empty, null);
         var message = new EmailMessage
         {
             From = _config["Resend:From"] ?? "Prediction Fairy <no-reply@example.com>",
             Subject = subject,
-            HtmlBody = _inliner.InlineCss($"<p>{body}</p>")
+            HtmlBody = _inliner.InlineCss(html)
         };
         message.To.Add(AdminEmail);
         await _resend.EmailSendAsync(message);
@@ -71,7 +73,7 @@ public class SubscriptionService
         return true;
     }
 
-    public SubscriptionService(ApplicationDbContext db, IResend resend, IConfiguration config, ITwilioSmsSender smsSender, IDateTimeProvider dateTime, IBackgroundJobClient jobs, EmailCssInliner inliner)
+    public SubscriptionService(ApplicationDbContext db, IResend resend, IConfiguration config, ITwilioSmsSender smsSender, IDateTimeProvider dateTime, IBackgroundJobClient jobs, EmailCssInliner inliner, EmailTemplateRenderer renderer)
     {
         _db = db;
         _resend = resend;
@@ -80,6 +82,7 @@ public class SubscriptionService
         _dateTime = dateTime;
         _jobs = jobs;
         _inliner = inliner;
+        _renderer = renderer;
     }
 
     public Task SubscribeAsync(string? email, string? phoneNumber, string baseUrl)
@@ -124,16 +127,15 @@ public class SubscriptionService
         await SendAdminEmailAsync("New subscriber", $"Email subscriber {email} added.");
 
         var verifyLink = $"{baseUrl}/Subscription/Verify?token={subscriber.VerificationToken}";
-        var unsubscribeLink = $"{baseUrl}/Subscription/Unsubscribe?token={subscriber.UnsubscribeToken}";
 
+        var html = _renderer.Render("Please verify your email.", baseUrl, subscriber.UnsubscribeToken, "VERIFY EMAIL", verifyLink);
         var message = new EmailMessage
         {
             From = _config["Resend:From"] ?? "Prediction Fairy <no-reply@example.com>",
             Subject = "Verify your email",
-            HtmlBody = $"<p>Please <a href=\"{verifyLink}\">verify your email</a>.</p><p>If you did not request this, you can <a href=\"{unsubscribeLink}\">unsubscribe</a>.</p>"
+            HtmlBody = _inliner.InlineCss(html)
         };
         message.To.Add(email);
-        message.HtmlBody = _inliner.InlineCss(message.HtmlBody);
 
         await _resend.EmailSendAsync(message);
     }

@@ -18,6 +18,7 @@ public class NotificationService
     private readonly IDateTimeProvider _time;
     private readonly IBackgroundJobClient _jobs;
     private readonly EmailCssInliner _inliner;
+    private readonly EmailTemplateRenderer _renderer;
 
     public NotificationService(
         ApplicationDbContext db,
@@ -29,7 +30,8 @@ public class NotificationService
         NotificationFeatureService features,
         IDateTimeProvider time,
         IBackgroundJobClient jobs,
-        EmailCssInliner inliner)
+        EmailCssInliner inliner,
+        EmailTemplateRenderer renderer)
     {
         _db = db;
         _resend = resend;
@@ -41,6 +43,7 @@ public class NotificationService
         _time = time;
         _jobs = jobs;
         _inliner = inliner;
+        _renderer = renderer;
     }
 
     public async Task CheckFixturesAsync()
@@ -114,14 +117,14 @@ public class NotificationService
 
     private EmailMessage CreateEmailMessage(string message, string baseUrl, Subscriber sub)
     {
+        var html = _renderer.Render(message, baseUrl, sub.UnsubscribeToken, "VIEW FIXTURES", baseUrl);
         var emailMessage = new EmailMessage
         {
             From = _config["Resend:From"] ?? "Prediction Fairy <no-reply@example.com>",
             Subject = "Predictorator Notification",
-            HtmlBody = $"<p>{message} <a href=\"{baseUrl}\">View fixtures</a>. <a href=\"{baseUrl}/Subscription/Unsubscribe?token={sub.UnsubscribeToken}\">Unsubscribe</a></p>"
+            HtmlBody = _inliner.InlineCss(html)
         };
         emailMessage.To.Add(sub.Email);
-        emailMessage.HtmlBody = _inliner.InlineCss(emailMessage.HtmlBody!);
         return emailMessage;
     }
 

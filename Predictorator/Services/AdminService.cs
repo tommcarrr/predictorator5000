@@ -28,15 +28,17 @@ public class AdminService
     private readonly ITwilioSmsSender _sms;
     private readonly IConfiguration _config;
     private readonly EmailCssInliner _inliner;
+    private readonly EmailTemplateRenderer _renderer;
     private readonly NotificationService _notifications;
 
-    public AdminService(ApplicationDbContext db, IResend resend, ITwilioSmsSender sms, IConfiguration config, EmailCssInliner inliner, NotificationService notifications)
+    public AdminService(ApplicationDbContext db, IResend resend, ITwilioSmsSender sms, IConfiguration config, EmailCssInliner inliner, EmailTemplateRenderer renderer, NotificationService notifications)
     {
         _db = db;
         _resend = resend;
         _sms = sms;
         _config = config;
         _inliner = inliner;
+        _renderer = renderer;
         _notifications = notifications;
     }
 
@@ -83,19 +85,24 @@ public class AdminService
 
     public async Task SendTestAsync(IEnumerable<AdminSubscriberDto> recipients)
     {
+        var baseUrl = _config["BASE_URL"] ?? "http://localhost";
         foreach (var s in recipients)
         {
             if (s.Type == "Email")
             {
-                var message = new EmailMessage
+                var sub = await _db.Subscribers.FirstOrDefaultAsync(x => x.Id == s.Id);
+                if (sub != null)
                 {
-                    From = _config["Resend:From"] ?? "Predictorator <noreply@example.com>",
-                    Subject = "Test Notification",
-                    HtmlBody = "<p>This is a test notification.</p>"
-                };
-                message.To.Add(s.Contact);
-                message.HtmlBody = _inliner.InlineCss(message.HtmlBody!);
-                await _resend.EmailSendAsync(message);
+                    var html = _renderer.Render("This is a test notification.", baseUrl, sub.UnsubscribeToken, "VIEW FIXTURES", baseUrl);
+                    var message = new EmailMessage
+                    {
+                        From = _config["Resend:From"] ?? "Predictorator <noreply@example.com>",
+                        Subject = "Test Notification",
+                        HtmlBody = _inliner.InlineCss(html)
+                    };
+                    message.To.Add(s.Contact);
+                    await _resend.EmailSendAsync(message);
+                }
             }
             else
             {

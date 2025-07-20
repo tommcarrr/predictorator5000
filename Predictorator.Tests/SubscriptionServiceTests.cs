@@ -30,7 +30,8 @@ public class SubscriptionServiceTests
         provider ??= new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
         var env = new FakeWebHostEnvironment { WebRootPath = Path.GetTempPath() };
         var inliner = new EmailCssInliner(env);
-        return new SubscriptionService(db, resend, config, sms, provider, jobs, inliner);
+        var renderer = new EmailTemplateRenderer();
+        return new SubscriptionService(db, resend, config, sms, provider, jobs, inliner, renderer);
     }
 
     [Fact]

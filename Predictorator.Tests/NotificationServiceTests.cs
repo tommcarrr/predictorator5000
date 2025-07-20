@@ -61,7 +61,8 @@ public class NotificationServiceTests
         Directory.CreateDirectory(Path.Combine(env.WebRootPath, "css"));
         File.WriteAllText(Path.Combine(env.WebRootPath, "css", "email.css"), "p{color:red;}");
         var inliner = new EmailCssInliner(env);
-        return new NotificationService(db, resend, sms, config, fixtures, calculator, features, provider, jobs, inliner);
+        var renderer = new EmailTemplateRenderer();
+        return new NotificationService(db, resend, sms, config, fixtures, calculator, features, provider, jobs, inliner, renderer);
     }
 
     [Fact]
