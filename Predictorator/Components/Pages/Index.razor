@@ -116,6 +116,30 @@ else if (_fixtures.Response.Any())
         _autoWeek = FromDate == null && ToDate == null;
         _fixtures = await FixtureService.GetFixturesAsync(from, to);
 
+        if (_autoWeek && WeekOffset == null && (_fixtures?.Response.Count ?? 0) == 0)
+        {
+            var offset = 1;
+            FixturesResponse? response = null;
+            do
+            {
+                var (nFrom, nTo) = DateRangeCalculator.GetDates(null, null, offset);
+                response = await FixtureService.GetFixturesAsync(nFrom, nTo);
+                if (response.Response.Count > 0)
+                {
+                    _fixtures = response;
+                    _fromDate = nFrom;
+                    _toDate = nTo;
+                    _selectedRange = new DateRange(nFrom, nTo);
+                    _currentWeekOffset = offset;
+                    WeekOffset = offset;
+                }
+                else
+                {
+                    offset++;
+                }
+            } while ((_fixtures?.Response.Count ?? 0) == 0 && offset < 52);
+        }
+
         if (_fixtures?.Response != null)
         {
             foreach (var f in _fixtures.Response)
