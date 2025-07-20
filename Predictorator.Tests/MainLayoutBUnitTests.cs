@@ -49,6 +49,8 @@ public class MainLayoutBUnitTests
     public async Task LayoutRendersHeaderWithCorrectFont()
     {
         await using var ctx = CreateContext();
+        var storage = (FakeBrowserStorage)ctx.Services.GetRequiredService<IBrowserStorage>();
+        await storage.SetAsync("ceefaxMode", false);
         RenderFragment body = b => b.AddMarkupContent(0, "<p>child</p>");
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
         var header = cut.Find("h5.mud-typography-h5");
@@ -112,7 +114,7 @@ public class MainLayoutBUnitTests
         toggle.Click();
         cut.WaitForAssertion(() =>
         {
-            Assert.True(cut.Instance.IsDarkMode);
+            Assert.False(cut.Instance.IsDarkMode);
         });
     }
 

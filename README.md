@@ -28,7 +28,8 @@ Verification links sent to subscribers are valid for one hour. A background job
 runs every 15 minutes to remove unverified subscriptions that have expired.
 
 Ceefax mode provides a retro Teletext-inspired theme. When enabled, dark mode is
-also automatically activated for optimal contrast.
+also automatically activated for optimal contrast. If no prior preference is
+stored in the browser, the site defaults to Ceefax mode with dark mode enabled.
 
 To run the application in Docker using the latest Compose Specification:
 

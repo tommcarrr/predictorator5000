@@ -159,30 +159,47 @@
         if (firstRender)
         {
             var dark = await Storage.GetAsync("darkMode");
-            if (!dark.HasValue)
+            bool darkSet = false;
+            if (dark.HasValue)
+            {
+                IsDarkMode = dark.Value;
+                darkSet = true;
+            }
+            else
             {
                 var darkCookie = GetCookieBool("darkMode");
                 if (darkCookie.HasValue)
+                {
                     IsDarkMode = darkCookie.Value;
-            }
-            else
-            {
-                IsDarkMode = dark.Value;
+                    darkSet = true;
+                }
             }
 
             var ceefax = await Storage.GetAsync("ceefaxMode");
-            if (!ceefax.HasValue)
+            bool ceefaxSet = false;
+            if (ceefax.HasValue)
             {
-                var ceefaxCookie = GetCookieBool("ceefaxMode");
-                if (ceefaxCookie.HasValue)
-                    IsCeefax = ceefaxCookie.Value;
+                IsCeefax = ceefax.Value;
+                ceefaxSet = true;
             }
             else
             {
-                IsCeefax = ceefax.Value;
+                var ceefaxCookie = GetCookieBool("ceefaxMode");
+                if (ceefaxCookie.HasValue)
+                {
+                    IsCeefax = ceefaxCookie.Value;
+                    ceefaxSet = true;
+                }
             }
 
-            if (IsCeefax)
+            if (!darkSet && !ceefaxSet)
+            {
+                IsCeefax = true;
+                IsDarkMode = true;
+                await Storage.SetAsync("ceefaxMode", IsCeefax);
+                await Storage.SetAsync("darkMode", IsDarkMode);
+            }
+            else if (IsCeefax)
             {
                 IsDarkMode = true;
                 await Storage.SetAsync("darkMode", IsDarkMode);
