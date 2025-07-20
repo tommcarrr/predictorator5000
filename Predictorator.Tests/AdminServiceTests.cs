@@ -5,6 +5,9 @@ using Predictorator.Data;
 using Predictorator.Models;
 using Predictorator.Services;
 using Resend;
+using Predictorator.Tests.Helpers;
+using System.IO;
+using System;
 
 namespace Predictorator.Tests;
 
@@ -25,7 +28,11 @@ public class AdminServiceTests
                 ["BASE_URL"] = "http://localhost"
             })
             .Build();
-        return new AdminService(db, resend, sms, config);
+        var env = new FakeWebHostEnvironment { WebRootPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()) };
+        Directory.CreateDirectory(Path.Combine(env.WebRootPath, "css"));
+        File.WriteAllText(Path.Combine(env.WebRootPath, "css", "email.css"), "p{color:red;}");
+        var inliner = new EmailCssInliner(env);
+        return new AdminService(db, resend, sms, config, inliner);
     }
 
     [Fact]
@@ -66,7 +73,7 @@ public class AdminServiceTests
 
         await service.SendNewFixturesSampleAsync(recipients);
 
-        await resend.Received().EmailSendAsync(Arg.Any<EmailMessage>());
+        await resend.Received().EmailSendAsync(Arg.Is<EmailMessage>(m => m.HtmlBody != null && m.HtmlBody.Contains("style=")));
         await sms.Received().SendSmsAsync("+1", Arg.Any<string>());
     }
 
@@ -82,7 +89,7 @@ public class AdminServiceTests
 
         await service.SendFixturesStartingSoonSampleAsync(recipients);
 
-        await resend.Received().EmailSendAsync(Arg.Any<EmailMessage>());
+        await resend.Received().EmailSendAsync(Arg.Is<EmailMessage>(m => m.HtmlBody != null && m.HtmlBody.Contains("style=")));
         await sms.Received().SendSmsAsync("+1", Arg.Any<string>());
     }
 }

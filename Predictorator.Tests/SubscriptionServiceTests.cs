@@ -8,6 +8,7 @@ using Hangfire.Common;
 using Hangfire.States;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
+using System.IO;
 using Resend;
 
 namespace Predictorator.Tests;
@@ -27,7 +28,9 @@ public class SubscriptionServiceTests
             .AddInMemoryCollection(new Dictionary<string, string?> { ["Resend:From"] = "from@example.com" })
             .Build();
         provider ??= new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
-        return new SubscriptionService(db, resend, config, sms, provider, jobs);
+        var env = new FakeWebHostEnvironment { WebRootPath = Path.GetTempPath() };
+        var inliner = new EmailCssInliner(env);
+        return new SubscriptionService(db, resend, config, sms, provider, jobs, inliner);
     }
 
     [Fact]

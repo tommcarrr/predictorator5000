@@ -27,13 +27,15 @@ public class AdminService
     private readonly IResend _resend;
     private readonly ITwilioSmsSender _sms;
     private readonly IConfiguration _config;
+    private readonly EmailCssInliner _inliner;
 
-    public AdminService(ApplicationDbContext db, IResend resend, ITwilioSmsSender sms, IConfiguration config)
+    public AdminService(ApplicationDbContext db, IResend resend, ITwilioSmsSender sms, IConfiguration config, EmailCssInliner inliner)
     {
         _db = db;
         _resend = resend;
         _sms = sms;
         _config = config;
+        _inliner = inliner;
     }
 
     public async Task<List<AdminSubscriberDto>> GetSubscribersAsync()
@@ -90,6 +92,7 @@ public class AdminService
                     HtmlBody = "<p>This is a test notification.</p>"
                 };
                 message.To.Add(s.Contact);
+                message.HtmlBody = _inliner.InlineCss(message.HtmlBody!);
                 await _resend.EmailSendAsync(message);
             }
             else
@@ -124,6 +127,7 @@ public class AdminService
                     HtmlBody = $"<p>{message} <a href=\"{baseUrl}\">View fixtures</a>.</p>"
                 };
                 email.To.Add(s.Contact);
+                email.HtmlBody = _inliner.InlineCss(email.HtmlBody!);
                 await _resend.EmailSendAsync(email);
             }
             else

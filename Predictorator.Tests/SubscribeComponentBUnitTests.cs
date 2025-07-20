@@ -10,6 +10,8 @@ using Predictorator.Components.Pages.Subscription;
 using Predictorator.Data;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
+using System.IO;
+using System;
 using Resend;
 
 namespace Predictorator.Tests;
@@ -41,7 +43,11 @@ public class SubscribeComponentBUnitTests
         var jobs = Substitute.For<Hangfire.IBackgroundJobClient>();
         var time = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
         ctx.Services.AddSingleton<IDateTimeProvider>(time);
-        ctx.Services.AddSingleton(new SubscriptionService(db, resend, config, sms, time, jobs));
+        var env = new FakeWebHostEnvironment { WebRootPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()) };
+        Directory.CreateDirectory(Path.Combine(env.WebRootPath, "css"));
+        File.WriteAllText(Path.Combine(env.WebRootPath, "css", "email.css"), "p{color:red;}");
+        var inliner = new EmailCssInliner(env);
+        ctx.Services.AddSingleton(new SubscriptionService(db, resend, config, sms, time, jobs, inliner));
         return ctx;
     }
 

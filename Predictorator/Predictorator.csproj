@@ -27,6 +27,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.7" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.7" />
     <PackageReference Include="MudBlazor" Version="7.2.0" />
+    <PackageReference Include="PreMailer.Net" Version="2.2.0" />
     <PackageReference Include="Resend" Version="0.1.4" />
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.7.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />

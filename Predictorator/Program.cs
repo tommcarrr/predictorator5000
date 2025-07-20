@@ -78,6 +78,7 @@ builder.Services.AddTransient<ITwilioSmsSender, TwilioSmsSender>();
 builder.Services.AddTransient<SubscriptionService>();
 builder.Services.AddTransient<NotificationService>();
 builder.Services.AddTransient<AdminService>();
+builder.Services.AddSingleton<EmailCssInliner>();
 builder.Services.AddSingleton<NotificationFeatureService>();
 builder.Services.Configure<AdminUserOptions>(options =>
 {

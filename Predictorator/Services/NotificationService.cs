@@ -17,6 +17,7 @@ public class NotificationService
     private readonly NotificationFeatureService _features;
     private readonly IDateTimeProvider _time;
     private readonly IBackgroundJobClient _jobs;
+    private readonly EmailCssInliner _inliner;
 
     public NotificationService(
         ApplicationDbContext db,
@@ -27,7 +28,8 @@ public class NotificationService
         IDateRangeCalculator range,
         NotificationFeatureService features,
         IDateTimeProvider time,
-        IBackgroundJobClient jobs)
+        IBackgroundJobClient jobs,
+        EmailCssInliner inliner)
     {
         _db = db;
         _resend = resend;
@@ -38,6 +40,7 @@ public class NotificationService
         _features = features;
         _time = time;
         _jobs = jobs;
+        _inliner = inliner;
     }
 
     public async Task CheckFixturesAsync()
@@ -124,6 +127,7 @@ public class NotificationService
                 HtmlBody = $"<p>{message} <a href=\"{baseUrl}\">View fixtures</a>. <a href=\"{baseUrl}/Subscription/Unsubscribe?token={sub.UnsubscribeToken}\">Unsubscribe</a></p>"
             };
             emailMessage.To.Add(sub.Email);
+            emailMessage.HtmlBody = _inliner.InlineCss(emailMessage.HtmlBody!);
             await _resend.EmailSendAsync(emailMessage);
         }
 
