@@ -154,6 +154,27 @@
 
     private MudTheme CurrentTheme => IsCeefax ? CeefaxTheme : Themes.FootballPredictorTheme;
 
+    protected override void OnInitialized()
+    {
+        var darkCookie = GetCookieBool("darkMode");
+        if (darkCookie.HasValue)
+            IsDarkMode = darkCookie.Value;
+
+        var ceefaxCookie = GetCookieBool("ceefaxMode");
+        if (ceefaxCookie.HasValue)
+            IsCeefax = ceefaxCookie.Value;
+
+        if (!darkCookie.HasValue && !ceefaxCookie.HasValue)
+        {
+            IsCeefax = true;
+            IsDarkMode = true;
+        }
+        else if (IsCeefax)
+        {
+            IsDarkMode = true;
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
