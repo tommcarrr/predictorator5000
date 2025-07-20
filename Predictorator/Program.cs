@@ -193,7 +193,10 @@ if (!app.Environment.IsEnvironment("Testing"))
         "cleanup-unverified",
         service => service.RemoveExpiredUnverifiedAsync(),
         "*/15 * * * *",
-        new RecurringJobOptions());
+        new RecurringJobOptions
+        {
+            TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time")
+        });
 }
 
 app.Run();
