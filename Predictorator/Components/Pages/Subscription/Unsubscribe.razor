@@ -1,6 +1,8 @@
 @page "/Subscription/Unsubscribe"
 @rendermode InteractiveServer
 @inject SubscriptionService SubscriptionService
+@inject PersistentComponentState State
+@implements IDisposable
 
 <h2>Unsubscribe</h2>
 @if (_result == null)
@@ -21,9 +23,32 @@ else
     public string? token { get; set; }
 
     private bool? _result;
+    private PersistingComponentStateSubscription? _persistSubscription;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
+        if (State.TryTakeFromJson<bool?>(nameof(_result), out var result))
+        {
+            _result = result;
+            return;
+        }
+
         _result = await SubscriptionService.UnsubscribeAsync(token ?? "");
+    }
+
+    protected override void OnInitialized()
+    {
+        _persistSubscription = State.RegisterOnPersisting(PersistState);
+    }
+
+    private Task PersistState()
+    {
+        State.PersistAsJson(nameof(_result), _result);
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        _persistSubscription?.Dispose();
     }
 }
