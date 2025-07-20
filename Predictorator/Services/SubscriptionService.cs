@@ -16,6 +16,7 @@ public class SubscriptionService
     private readonly ITwilioSmsSender _smsSender;
     private readonly IDateTimeProvider _dateTime;
     private readonly IBackgroundJobClient _jobs;
+    private readonly EmailCssInliner _inliner;
 
     private async Task<bool> VerifySubscriberAsync<TEntity>(DbSet<TEntity> set, string token) where TEntity : class, ISubscriber
     {
@@ -45,7 +46,7 @@ public class SubscriptionService
         return true;
     }
 
-    public SubscriptionService(ApplicationDbContext db, IResend resend, IConfiguration config, ITwilioSmsSender smsSender, IDateTimeProvider dateTime, IBackgroundJobClient jobs)
+    public SubscriptionService(ApplicationDbContext db, IResend resend, IConfiguration config, ITwilioSmsSender smsSender, IDateTimeProvider dateTime, IBackgroundJobClient jobs, EmailCssInliner inliner)
     {
         _db = db;
         _resend = resend;
@@ -53,6 +54,7 @@ public class SubscriptionService
         _smsSender = smsSender;
         _dateTime = dateTime;
         _jobs = jobs;
+        _inliner = inliner;
     }
 
     public Task SubscribeAsync(string? email, string? phoneNumber, string baseUrl)
@@ -104,6 +106,7 @@ public class SubscriptionService
             HtmlBody = $"<p>Please <a href=\"{verifyLink}\">verify your email</a>.</p><p>If you did not request this, you can <a href=\"{unsubscribeLink}\">unsubscribe</a>.</p>"
         };
         message.To.Add(email);
+        message.HtmlBody = _inliner.InlineCss(message.HtmlBody);
 
         await _resend.EmailSendAsync(message);
     }

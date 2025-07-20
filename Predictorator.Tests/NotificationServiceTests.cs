@@ -11,6 +11,7 @@ using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
 using System.Linq.Expressions;
+using System.IO;
 
 namespace Predictorator.Tests;
 
@@ -56,8 +57,11 @@ public class NotificationServiceTests
                 }
             }
         });
-
-        return new NotificationService(db, resend, sms, config, fixtures, calculator, features, provider, jobs);
+        var env = new FakeWebHostEnvironment { WebRootPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()) };
+        Directory.CreateDirectory(Path.Combine(env.WebRootPath, "css"));
+        File.WriteAllText(Path.Combine(env.WebRootPath, "css", "email.css"), "p{color:red;}");
+        var inliner = new EmailCssInliner(env);
+        return new NotificationService(db, resend, sms, config, fixtures, calculator, features, provider, jobs, inliner);
     }
 
     [Fact]
@@ -85,7 +89,7 @@ public class NotificationServiceTests
 
         await service.SendNewFixturesAvailableAsync("key", "http://localhost");
 
-        await resend.Received().EmailSendAsync(Arg.Is<EmailMessage>(m => m.HtmlBody != null && m.HtmlBody.Contains("Unsubscribe")));
+        await resend.Received().EmailSendAsync(Arg.Is<EmailMessage>(m => m.HtmlBody != null && m.HtmlBody.Contains("Unsubscribe") && m.HtmlBody.Contains("style=")));
         await sms.Received().SendSmsAsync("+1", Arg.Is<string>(msg => msg.Contains("Unsubscribe:")));
         Assert.Equal(1, db.SentNotifications.Count());
     }
