@@ -37,7 +37,7 @@
                         <MudStack Spacing="2">
                             <DataAnnotationsValidator />
                             <ValidationSummary />
-                            <MudTextField @bind-Value="_phoneModel.PhoneNumber" Label="Phone number" For="@(() => _phoneModel.PhoneNumber)" />
+                            <MudTextField @bind-Value="_phoneModel.PhoneNumber" Label="UK mobile number" HelperText="Format: 07xxxxxxxxx" For="@(() => _phoneModel.PhoneNumber)" />
                             <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Subscribe</MudButton>
                         </MudStack>
                     </EditForm>
@@ -56,7 +56,8 @@
 
     private class PhoneModel
     {
-        [Required, Phone]
+        [Required]
+        [RegularExpression("^07\\d{9}$", ErrorMessage = "UK mobile numbers must start with 07 and contain 11 digits.")]
         public string PhoneNumber { get; set; } = string.Empty;
     }
 
