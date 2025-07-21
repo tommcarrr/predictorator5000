@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Predictorator.Data;
+using Microsoft.Extensions.Logging;
 using Predictorator.Models;
 using Resend;
 
@@ -30,8 +31,9 @@ public class AdminService
     private readonly EmailCssInliner _inliner;
     private readonly EmailTemplateRenderer _renderer;
     private readonly NotificationService _notifications;
+    private readonly ILogger<AdminService> _logger;
 
-    public AdminService(ApplicationDbContext db, IResend resend, ITwilioSmsSender sms, IConfiguration config, EmailCssInliner inliner, EmailTemplateRenderer renderer, NotificationService notifications)
+    public AdminService(ApplicationDbContext db, IResend resend, ITwilioSmsSender sms, IConfiguration config, EmailCssInliner inliner, EmailTemplateRenderer renderer, NotificationService notifications, ILogger<AdminService> logger)
     {
         _db = db;
         _resend = resend;
@@ -40,16 +42,19 @@ public class AdminService
         _inliner = inliner;
         _renderer = renderer;
         _notifications = notifications;
+        _logger = logger;
     }
 
     public async Task<List<AdminSubscriberDto>> GetSubscribersAsync()
     {
+        _logger.LogInformation("Fetching SMS subscribers");
         var emails = await _db.Subscribers
             .Select(s => new AdminSubscriberDto(s.Id, s.Email, s.IsVerified, "Email"))
             .ToListAsync();
         var phones = await _db.SmsSubscribers
             .Select(s => new AdminSubscriberDto(s.Id, s.PhoneNumber, s.IsVerified, "SMS"))
             .ToListAsync();
+        _logger.LogInformation("Fetched {Count} SMS subscribers", phones.Count);
         return emails.Concat(phones).OrderBy(s => s.Contact).ToList();
     }
 
@@ -62,6 +67,7 @@ public class AdminService
         }
         else
         {
+            _logger.LogInformation("Confirming SMS subscriber {Id}", id);
             var entity = await _db.SmsSubscribers.FindAsync(id);
             if (entity != null) entity.IsVerified = true;
         }
@@ -77,6 +83,7 @@ public class AdminService
         }
         else
         {
+            _logger.LogInformation("Deleting SMS subscriber {Id}", id);
             var entity = await _db.SmsSubscribers.FindAsync(id);
             if (entity != null) _db.SmsSubscribers.Remove(entity);
         }
@@ -106,6 +113,7 @@ public class AdminService
             }
             else
             {
+                _logger.LogInformation("Sending test SMS to {Phone}", s.Contact);
                 await _sms.SendSmsAsync(s.Contact, "Test notification");
             }
         }

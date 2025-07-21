@@ -8,6 +8,7 @@ using Predictorator.Services;
 using Predictorator.Tests.Helpers;
 using Resend;
 using Hangfire;
+using Microsoft.Extensions.Logging.Abstractions;
 using Hangfire.Common;
 using Hangfire.States;
 using System.Linq.Expressions;
@@ -62,7 +63,8 @@ public class NotificationServiceTests
         File.WriteAllText(Path.Combine(env.WebRootPath, "css", "email.css"), "p{color:red;}");
         var inliner = new EmailCssInliner(env);
         var renderer = new EmailTemplateRenderer();
-        return new NotificationService(db, resend, sms, config, fixtures, calculator, features, provider, jobs, inliner, renderer);
+        var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<NotificationService>.Instance;
+        return new NotificationService(db, resend, sms, config, fixtures, calculator, features, provider, jobs, inliner, renderer, logger);
     }
 
     [Fact]

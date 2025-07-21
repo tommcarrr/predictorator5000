@@ -1,5 +1,6 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Predictorator.Data;
 using Predictorator.Models;
 using Resend;
@@ -19,6 +20,7 @@ public class NotificationService
     private readonly IBackgroundJobClient _jobs;
     private readonly EmailCssInliner _inliner;
     private readonly EmailTemplateRenderer _renderer;
+    private readonly ILogger<NotificationService> _logger;
 
     public NotificationService(
         ApplicationDbContext db,
@@ -31,7 +33,8 @@ public class NotificationService
         IDateTimeProvider time,
         IBackgroundJobClient jobs,
         EmailCssInliner inliner,
-        EmailTemplateRenderer renderer)
+        EmailTemplateRenderer renderer,
+        ILogger<NotificationService> logger)
     {
         _db = db;
         _resend = resend;
@@ -44,6 +47,7 @@ public class NotificationService
         _jobs = jobs;
         _inliner = inliner;
         _renderer = renderer;
+        _logger = logger;
     }
 
     public async Task CheckFixturesAsync()
@@ -158,9 +162,13 @@ public class NotificationService
             }
             else
             {
+                _logger.LogInformation("Fetching SMS subscriber {Id} for sample", r.Id);
                 var sub = await _db.SmsSubscribers.FirstOrDefaultAsync(s => s.Id == r.Id);
                 if (sub != null)
+                {
+                    _logger.LogInformation("Sending sample SMS to {Phone}", sub.PhoneNumber);
                     await SendNotificationAsync(message, baseUrl, sub);
+                }
             }
         }
     }
@@ -171,7 +179,9 @@ public class NotificationService
         foreach (var sub in emails)
             await SendNotificationAsync(message, baseUrl, sub);
 
+        _logger.LogInformation("Retrieving all verified SMS subscribers");
         var phones = await _db.SmsSubscribers.Where(s => s.IsVerified).ToListAsync();
+        _logger.LogInformation("Sending notification to {Count} SMS subscribers", phones.Count);
         foreach (var sub in phones)
             await SendNotificationAsync(message, baseUrl, sub);
 
