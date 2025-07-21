@@ -13,6 +13,7 @@ using Predictorator.Tests.Helpers;
 using System.IO;
 using System;
 using Resend;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Predictorator.Tests;
 
@@ -48,7 +49,8 @@ public class SubscribeComponentBUnitTests
         File.WriteAllText(Path.Combine(env.WebRootPath, "css", "email.css"), "p{color:red;}");
         var inliner = new EmailCssInliner(env);
         var renderer = new EmailTemplateRenderer();
-        ctx.Services.AddSingleton(new SubscriptionService(db, resend, config, sms, time, jobs, inliner, renderer));
+        var logger = NullLogger<SubscriptionService>.Instance;
+        ctx.Services.AddSingleton(new SubscriptionService(db, resend, config, sms, time, jobs, inliner, renderer, logger));
         return ctx;
     }
 
