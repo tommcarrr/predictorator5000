@@ -135,7 +135,7 @@ public class NotificationService
     private string CreateSmsMessage(string message, string baseUrl, SmsSubscriber sub)
     {
         var link = $"{baseUrl}/Subscription/Unsubscribe?token={sub.UnsubscribeToken}";
-        return $"{message} {baseUrl} Unsubscribe: {link}";
+        return $"{message} {baseUrl}\n\n---\n\nUnsubscribe: {link}";
     }
 
     public async Task SendNotificationAsync(string message, string baseUrl, Subscriber sub)
