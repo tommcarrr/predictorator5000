@@ -70,6 +70,9 @@ public class GameWeekServiceTests
 
         Assert.NotNull(result);
         Assert.Equal(3, result!.Number);
+    }
+
+    [Fact]
     public async Task AddOrUpdateAsync_updates_when_key_changes()
     {
         var service = CreateService(out var db);
