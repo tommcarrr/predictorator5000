@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using Predictorator.Components;
 using Hangfire;
+using Hangfire.Dashboard;
 using Predictorator.Data;
 using Predictorator.Options;
 using Predictorator.Services;
@@ -180,7 +181,10 @@ app.MapGet("/logout", async (SignInManager<IdentityUser> sm) =>
 if (!app.Environment.IsEnvironment("Testing"))
 {
     await ApplicationDbInitializer.SeedAdminUserAsync(app.Services);
-    app.UseHangfireDashboard();
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = new[] { new Predictorator.Authorization.HangfireDashboardAuthorizationFilter() }
+    });
     RecurringJob.AddOrUpdate<NotificationService>(
         "fixture-notifications",
         s => s.CheckFixturesAsync(),
