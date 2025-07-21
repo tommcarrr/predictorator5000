@@ -64,4 +64,45 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
 
         Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
     }
+
+    [Fact]
+    public async Task Excluded_ip_is_not_rate_limited()
+    {
+        string? observedIp = null;
+        var factory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
+                services.AddDbContext<ApplicationDbContext>(options =>
+                    options.UseInMemoryDatabase("TestDbExempt"));
+                services.AddRateLimiter(options =>
+                {
+                    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                    var excluded = new HashSet<string> { "unknown" };
+                    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+                    {
+                        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                        observedIp = ip;
+                        if (excluded.Contains(ip))
+                            return RateLimitPartition.GetNoLimiter(ip);
+                        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 1,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        });
+                    });
+                });
+            });
+        });
+
+        var client = factory.CreateClient();
+        var first = await client.GetAsync("/");
+        var second = await client.GetAsync("/");
+
+        Assert.Equal("unknown", observedIp);
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+    }
 }

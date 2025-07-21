@@ -21,6 +21,9 @@ SMS notifications use Twilio. Set `Twilio__AccountSid`, `Twilio__AuthToken`, and
 `Twilio__FromNumber` environment variables with your Twilio credentials.
 Set `BASE_URL` to the public address of the site so scheduled notifications
 contain valid links.
+The global rate limiter can exclude specific IP addresses. Add them under
+`RateLimiting:ExcludedIPs` in configuration or via environment variables such as
+`RateLimiting__ExcludedIPs__0=127.0.0.1`.
 
 All variables used by Docker Compose can be placed in a `.env` file. A sample
 is provided at `.env.example`. Copy this file to `.env` and update the values

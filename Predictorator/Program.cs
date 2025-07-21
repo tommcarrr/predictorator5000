@@ -35,7 +35,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
 var error = StartupValidator.Validate(builder);
 if (error.HasValue)
 {
-    Console.Error.WriteLine($"Error {(int)error.Value}: {error.Value}");
+    Log.Logger.Fatal("Error {ExitCode}: {ExitCodeName}", (int)error.Value, error.Value);
     Environment.Exit((int)error.Value);
 }
 
@@ -51,12 +51,16 @@ builder.Services.AddHttpClient("fixtures", client =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddTransient<IFixtureService, FixtureService>();
 builder.Services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
+var excludedIps = new HashSet<string>(
+    builder.Configuration.GetSection("RateLimiting:ExcludedIPs").Get<string[]>() ?? Array.Empty<string>());
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
     {
         var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        if (excludedIps.Contains(ip))
+            return RateLimitPartition.GetNoLimiter(ip);
         return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
         {
             PermitLimit = 100,
