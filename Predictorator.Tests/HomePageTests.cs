@@ -60,6 +60,10 @@ public class HomePageTests : IClassFixture<WebApplicationFactory<Program>>
                         }
                     }));
 
+                var gwService = new FakeGameWeekService();
+                gwService.Items.Add(new Predictorator.Models.GameWeek { Season = "24-25", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) });
+                services.AddSingleton<IGameWeekService>(gwService);
+
                 services.RemoveAll(typeof(IBrowserStorage));
                 services.AddSingleton<IBrowserStorage>(new FakeBrowserStorage());
                 services.AddScoped<UiModeService>();

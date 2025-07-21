@@ -7,6 +7,7 @@
 @inject IGameWeekService GameWeekService
 @inject UiModeService UiModeService
 @using Predictorator.Components.Layout
+@using Predictorator.Models
 
 @if (UiModeService.IsCeefax)
 {
@@ -18,15 +19,23 @@ else
 }
 
 <MudPaper Class="my-4 pa-2" Elevation="1">
-    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
-        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(-1))"
-                       UserAttributes="@(new Dictionary<string, object>{{"id","prevWeekBtn"}})" />
-        <MudText Typo="Typo.h6" Class="d-flex align-center cursor-pointer" @onclick="TogglePicker">
-            @($"{_fromDate:dd/MM/yyyy} - {_toDate:dd/MM/yyyy}")
-            <MudIcon Icon="@(_showPicker ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Class="ml-1" />
-        </MudText>
-        <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Disabled="!_autoWeek" OnClick="@(() => ChangeWeek(1))"
-                       UserAttributes="@(new Dictionary<string, object>{{"id","nextWeekBtn"}})" />
+    <MudStack Row="false" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="1">
+        @if (_currentGameWeek != null)
+        {
+            <MudText Typo="Typo.subtitle2" Align="Align.Center" UserAttributes="@(new Dictionary<string, object>{{"data-testid","gameweekLabel"}})">
+                Gameweek @_currentGameWeek.Number
+            </MudText>
+        }
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" Disabled="!_useGameWeek" OnClick="@(() => ChangeGameWeek(-1))"
+                           UserAttributes="@(new Dictionary<string, object>{{"id","prevWeekBtn"}})" />
+            <MudText Typo="Typo.h6" Class="d-flex align-center cursor-pointer" @onclick="TogglePicker">
+                @($"{_fromDate:dd/MM/yyyy} - {_toDate:dd/MM/yyyy}")
+                <MudIcon Icon="@(_showPicker ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)" Class="ml-1" />
+            </MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" Disabled="!_useGameWeek" OnClick="@(() => ChangeGameWeek(1))"
+                           UserAttributes="@(new Dictionary<string, object>{{"id","nextWeekBtn"}})" />
+        </MudStack>
     </MudStack>
     <MudCollapse Expanded="_showPicker">
         <MudDateRangePicker DateRange="_selectedRange" DateRangeChanged="RangeChanged" Class="my-2"
@@ -91,9 +100,10 @@ else if (_fixtures.Response.Any())
     private FixturesResponse? _fixtures;
     private DateTime? _fromDate;
     private DateTime? _toDate;
-    private bool _autoWeek;
+    private bool _useGameWeek;
     private bool _showPicker;
-    private int _currentWeekOffset;
+    private GameWeek? _currentGameWeek;
+    private List<GameWeek>? _gameWeeks;
     private readonly Dictionary<int, PredictionInput> _predictions = new();
     private DateRange _selectedRange = new(null, null);
 
@@ -104,56 +114,40 @@ else if (_fixtures.Response.Any())
 
     [Parameter, SupplyParameterFromQuery(Name = "fromDate")] public DateTime? FromDate { get; set; }
     [Parameter, SupplyParameterFromQuery(Name = "toDate")] public DateTime? ToDate { get; set; }
-    [Parameter, SupplyParameterFromQuery(Name = "weekOffset")] public int? WeekOffset { get; set; }
 
     protected override async Task OnParametersSetAsync()
     {
         var query = QueryHelpers.ParseQuery(new Uri(NavigationManager.Uri).Query);
         if (!query.ContainsKey("fromDate")) FromDate = null;
         if (!query.ContainsKey("toDate")) ToDate = null;
-        if (!query.ContainsKey("weekOffset")) WeekOffset = null;
 
-        if (!string.IsNullOrEmpty(Season) && Week.HasValue)
+        if (string.IsNullOrEmpty(Season) || !Week.HasValue)
         {
-            var gw = await GameWeekService.GetGameWeekAsync(Season, Week.Value);
-            if (gw != null)
+            var next = await GameWeekService.GetNextGameWeekAsync(DateTime.Today);
+            if (next != null)
             {
-                FromDate = gw.StartDate;
-                ToDate = gw.EndDate;
+                NavigationManager.NavigateTo($"/{next.Season}/gw{next.Number}", true);
+                return;
             }
         }
 
-        var (from, to) = DateRangeCalculator.GetDates(FromDate, ToDate, WeekOffset);
+        if (!string.IsNullOrEmpty(Season) && Week.HasValue)
+        {
+            _currentGameWeek = await GameWeekService.GetGameWeekAsync(Season, Week.Value);
+            if (_currentGameWeek != null)
+            {
+                FromDate = _currentGameWeek.StartDate;
+                ToDate = _currentGameWeek.EndDate;
+            }
+        }
+
+        var (from, to) = DateRangeCalculator.GetDates(FromDate, ToDate, null);
         _fromDate = from;
         _toDate = to;
         _selectedRange = new DateRange(from, to);
-        _currentWeekOffset = WeekOffset ?? 0;
-        _autoWeek = FromDate == null && ToDate == null;
+        _useGameWeek = _currentGameWeek != null;
+        _gameWeeks ??= await GameWeekService.GetGameWeeksAsync();
         _fixtures = await FixtureService.GetFixturesAsync(from, to);
-
-        if (_autoWeek && WeekOffset == null && (_fixtures?.Response.Count ?? 0) == 0)
-        {
-            var offset = 1;
-            FixturesResponse? response = null;
-            do
-            {
-                var (nFrom, nTo) = DateRangeCalculator.GetDates(null, null, offset);
-                response = await FixtureService.GetFixturesAsync(nFrom, nTo);
-                if (response.Response.Count > 0)
-                {
-                    _fixtures = response;
-                    _fromDate = nFrom;
-                    _toDate = nTo;
-                    _selectedRange = new DateRange(nFrom, nTo);
-                    _currentWeekOffset = offset;
-                    WeekOffset = offset;
-                }
-                else
-                {
-                    offset++;
-                }
-            } while ((_fixtures?.Response.Count ?? 0) == 0 && offset < 52);
-        }
 
         if (_fixtures?.Response != null)
         {
@@ -202,14 +196,21 @@ else if (_fixtures.Response.Any())
         _showPicker = !_showPicker;
     }
 
-    private void ChangeWeek(int delta)
+    private void ChangeGameWeek(int delta)
     {
-        var offset = _currentWeekOffset + delta;
-        var uri = QueryHelpers.AddQueryString("/", new Dictionary<string, string?>
-        {
-            ["weekOffset"] = offset.ToString()
-        });
-        NavigationManager.NavigateTo(uri);
+        if (_currentGameWeek == null || _gameWeeks == null)
+            return;
+
+        var index = _gameWeeks.FindIndex(g => g.Season == _currentGameWeek.Season && g.Number == _currentGameWeek.Number);
+        if (index == -1)
+            return;
+
+        var newIndex = index + delta;
+        if (newIndex < 0 || newIndex >= _gameWeeks.Count)
+            return;
+
+        var gw = _gameWeeks[newIndex];
+        NavigationManager.NavigateTo($"/{gw.Season}/gw{gw.Number}");
     }
 
     private void FillRandomScores()

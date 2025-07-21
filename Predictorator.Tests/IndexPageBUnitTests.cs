@@ -26,7 +26,12 @@ public class IndexPageBUnitTests
         ctx.Services.AddScoped<UiModeService>();
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
-        ctx.Services.AddSingleton<IGameWeekService>(new FakeGameWeekService());
+        var gwService = new FakeGameWeekService();
+        gwService.Items.AddRange([
+            new Predictorator.Models.GameWeek { Season = "24-25", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) },
+            new Predictorator.Models.GameWeek { Season = "24-25", Number = 2, StartDate = DateTime.Today.AddDays(7), EndDate = DateTime.Today.AddDays(13) }
+        ]);
+        ctx.Services.AddSingleton<IGameWeekService>(gwService);
         var provider = new FakeDateTimeProvider
         {
             Today = new DateTime(2024, 1, 1),
@@ -54,6 +59,8 @@ public class IndexPageBUnitTests
         RenderFragment body = b =>
         {
             b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
             b.CloseComponent();
         };
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
@@ -86,6 +93,8 @@ public class IndexPageBUnitTests
         RenderFragment body = b =>
         {
             b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
             b.CloseComponent();
         };
 
@@ -98,13 +107,15 @@ public class IndexPageBUnitTests
     }
 
     [Fact]
-    public async Task WeekNavigation_Uses_WeekOffset_And_Buttons_Remain_Enabled()
+    public async Task GameWeekNavigation_Uses_GameWeek_Route_And_Buttons_Remain_Enabled()
     {
         await using var ctx = CreateContext();
         var navMan = (NavigationManager)ctx.Services.GetRequiredService<NavigationManager>();
         RenderFragment body = b =>
         {
             b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
             b.CloseComponent();
         };
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
@@ -114,7 +125,7 @@ public class IndexPageBUnitTests
         Assert.False(prev.HasAttribute("disabled"));
 
         next.Click();
-        Assert.Contains("weekOffset=1", navMan.Uri);
+        Assert.Contains("/24-25/gw2", navMan.Uri);
         Assert.DoesNotContain("fromDate", navMan.Uri);
         Assert.DoesNotContain("toDate", navMan.Uri);
 
@@ -140,80 +151,14 @@ public class IndexPageBUnitTests
     }
 
     [Fact]
-    public async Task AutoWeek_Increments_Offset_When_No_Fixtures()
+    public async Task RootPath_Navigates_To_Next_GameWeek()
     {
-        await using var ctx = new BunitContext();
-        ctx.JSInterop.Mode = JSRuntimeMode.Loose;
-        ctx.Services.AddMudServices();
-        ctx.Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor());
-        ctx.Services.AddSingleton<IBrowserStorage>(new FakeBrowserStorage());
-        ctx.Services.AddScoped<ToastInterop>();
-        ctx.Services.AddScoped<UiModeService>();
-
-        var provider = new FakeDateTimeProvider
-        {
-            Today = new DateTime(2024, 1, 1),
-            UtcNow = new DateTime(2024, 1, 1)
-        };
-        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider));
-        var fixtureService = new AutoWeekFixtureService();
-        ctx.Services.AddSingleton<IFixtureService>(fixtureService);
-        ctx.Services.AddSingleton<IGameWeekService>(new FakeGameWeekService());
-
-        var settings = new Dictionary<string, string?>
-        {
-            ["Resend:ApiToken"] = "token",
-            ["Twilio:AccountSid"] = "sid",
-            ["Twilio:AuthToken"] = "token",
-            ["Twilio:FromNumber"] = "+1"
-        };
-        var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
-        ctx.Services.AddSingleton<IConfiguration>(config);
-        ctx.Services.AddSingleton<NotificationFeatureService>();
-
+        await using var ctx = CreateContext();
         var navMan = (NavigationManager)ctx.Services.GetRequiredService<NavigationManager>();
         RenderFragment body = b => { b.OpenComponent<IndexPage>(0); b.CloseComponent(); };
-        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
 
-        cut.WaitForAssertion(() =>
-        {
-            Assert.True(fixtureService.RequestedFromDates.Count >= 2);
-            Assert.Equal(new DateTime(2023, 12, 29), fixtureService.RequestedFromDates[0]);
-            Assert.Equal(new DateTime(2024, 1, 5), fixtureService.RequestedFromDates[1]);
-            cut.Find("[data-testid=fixture-row]");
-        }, timeout: TimeSpan.FromSeconds(1));
-
-        cut.Find("#nextWeekBtn").Click();
-        Assert.Contains("weekOffset=2", navMan.Uri);
-    }
-
-    private class AutoWeekFixtureService : IFixtureService
-    {
-        public List<DateTime> RequestedFromDates { get; } = new();
-
-        public Task<FixturesResponse> GetFixturesAsync(DateTime fromDate, DateTime toDate)
-        {
-            RequestedFromDates.Add(fromDate.Date);
-            if (fromDate.Date == new DateTime(2023, 12, 29))
-            {
-                return Task.FromResult(new FixturesResponse { FromDate = fromDate, ToDate = toDate });
-            }
-
-            return Task.FromResult(new FixturesResponse
-            {
-                FromDate = fromDate,
-                ToDate = toDate,
-                Response = new List<FixtureData>
-                {
-                    new()
-                    {
-                        Fixture = new Fixture { Id = 1, Date = fromDate, Venue = new Venue { Name = "A", City = "B" } },
-                        Teams = new Teams { Home = new Team { Name = "Home", Logo = string.Empty }, Away = new Team { Name = "Away", Logo = string.Empty } },
-                        Score = new Score { Fulltime = new ScoreHomeAway() }
-                    }
-                }
-            });
-        }
+        Assert.Contains("/24-25/gw1", navMan.Uri);
     }
 
 }
