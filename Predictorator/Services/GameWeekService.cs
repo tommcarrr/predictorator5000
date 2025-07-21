@@ -15,7 +15,7 @@ public class GameWeekService : IGameWeekService
 
     public Task<List<GameWeek>> GetGameWeeksAsync(string? season = null)
     {
-        var query = _db.GameWeeks.AsQueryable();
+        var query = _db.GameWeeks.AsNoTracking().AsQueryable();
         if (!string.IsNullOrEmpty(season))
             query = query.Where(g => g.Season == season);
         return query.OrderBy(g => g.Season).ThenBy(g => g.Number).ToListAsync();
@@ -24,6 +24,7 @@ public class GameWeekService : IGameWeekService
     public Task<GameWeek?> GetGameWeekAsync(string season, int number)
     {
         return _db.GameWeeks
+            .AsNoTracking()
             .FirstOrDefaultAsync(g => g.Season == season && g.Number == number);
     }
 
@@ -37,17 +38,31 @@ public class GameWeekService : IGameWeekService
 
     public async Task AddOrUpdateAsync(GameWeek gameWeek)
     {
-        var existing = await _db.GameWeeks
-            .FirstOrDefaultAsync(g => g.Season == gameWeek.Season && g.Number == gameWeek.Number);
+        GameWeek? existing = null;
+
+        if (gameWeek.Id != 0)
+        {
+            existing = await _db.GameWeeks.FindAsync(gameWeek.Id);
+        }
+
+        if (existing == null)
+        {
+            existing = await _db.GameWeeks
+                .FirstOrDefaultAsync(g => g.Season == gameWeek.Season && g.Number == gameWeek.Number);
+        }
+
         if (existing == null)
         {
             _db.GameWeeks.Add(gameWeek);
         }
         else
         {
+            existing.Season = gameWeek.Season;
+            existing.Number = gameWeek.Number;
             existing.StartDate = gameWeek.StartDate;
             existing.EndDate = gameWeek.EndDate;
         }
+
         await _db.SaveChangesAsync();
     }
 
