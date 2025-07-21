@@ -155,7 +155,7 @@ else
         }
 
         var uk = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
-        var sendLocal = _scheduleDate.Value.Date + _scheduleTime.Value;
+        var sendLocal = DateTime.SpecifyKind(_scheduleDate.Value.Date + _scheduleTime.Value, DateTimeKind.Unspecified);
         var sendUtc = TimeZoneInfo.ConvertTimeToUtc(sendLocal, uk);
 
         try
