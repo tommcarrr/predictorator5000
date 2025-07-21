@@ -38,7 +38,8 @@ public class FixtureServiceTestTokenTests
         services.AddHybridCache();
         var cache = services.BuildServiceProvider().GetRequiredService<HybridCache>();
 
-        var service = new FixtureService(httpClientFactory, cache, accessor, config, env);
+        var prefix = new CachePrefixService();
+        var service = new FixtureService(httpClientFactory, cache, prefix, accessor, config, env);
 
         var result = await service.GetFixturesAsync(DateTime.Today, DateTime.Today.AddDays(6));
 
@@ -73,7 +74,8 @@ public class FixtureServiceTestTokenTests
         services.AddHybridCache();
         var cache = services.BuildServiceProvider().GetRequiredService<HybridCache>();
 
-        var service = new FixtureService(httpClientFactory, cache, accessor, config, env);
+        var prefix = new CachePrefixService();
+        var service = new FixtureService(httpClientFactory, cache, prefix, accessor, config, env);
 
         var result = await service.GetFixturesAsync(DateTime.Today, DateTime.Today.AddDays(6));
 

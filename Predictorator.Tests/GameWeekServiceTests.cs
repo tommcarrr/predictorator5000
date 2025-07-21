@@ -41,7 +41,8 @@ public class GameWeekServiceTests
         var provider = services.BuildServiceProvider();
         var cache = provider.GetRequiredService<HybridCache>();
         var opts = provider.GetRequiredService<IOptions<GameWeekCacheOptions>>();
-        return new GameWeekService(factory, cache, opts);
+        var prefix = new CachePrefixService();
+        return new GameWeekService(factory, cache, prefix, opts);
     }
 
     [Fact]

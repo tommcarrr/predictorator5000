@@ -40,6 +40,7 @@ public class AdminService
     private readonly ILogger<AdminService> _logger;
     private readonly IBackgroundJobClient _jobs;
     private readonly IDateTimeProvider _time;
+    private readonly CachePrefixService _prefix;
 
     public AdminService(
         ApplicationDbContext db,
@@ -51,7 +52,8 @@ public class AdminService
         NotificationService notifications,
         ILogger<AdminService> logger,
         IBackgroundJobClient jobs,
-        IDateTimeProvider time)
+        IDateTimeProvider time,
+        CachePrefixService prefix)
     {
         _db = db;
         _resend = resend;
@@ -63,6 +65,7 @@ public class AdminService
         _logger = logger;
         _jobs = jobs;
         _time = time;
+        _prefix = prefix;
     }
 
     public async Task<List<AdminSubscriberDto>> GetSubscribersAsync()
@@ -157,6 +160,12 @@ public class AdminService
         var delay = sendUtc - _time.UtcNow;
         if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
         _jobs.Schedule<NotificationService>(s => s.SendSampleAsync(recipients, "Fixtures start in 2 hours!", baseUrl), delay);
+        return Task.CompletedTask;
+    }
+
+    public Task ClearCachesAsync()
+    {
+        _prefix.Clear();
         return Task.CompletedTask;
     }
 }

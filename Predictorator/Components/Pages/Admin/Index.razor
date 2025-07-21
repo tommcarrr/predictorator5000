@@ -1,171 +1,27 @@
 @page "/admin"
 @rendermode InteractiveServer
-@using Predictorator.Services
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles="Admin")]
 @inject AdminService AdminService
 @inject ToastInterop Toast
 
-<h2>Subscribers</h2>
-@if (_items == null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <EditForm Model="this" OnValidSubmit="SendTestAsync">
-        <MudTable Items="_items" Hover="true" Breakpoint="Breakpoint.None">
-            <HeaderContent>
-                <MudTh></MudTh>
-                <MudTh>Contact</MudTh>
-                <MudTh>Status</MudTh>
-                <MudTh></MudTh>
-            </HeaderContent>
-            <RowTemplate Context="row">
-                <MudTd><MudCheckBox T="bool" @bind-Value="row.Selected" /></MudTd>
-                <MudTd>@row.Contact</MudTd>
-                <MudTd>
-                    @if (row.IsVerified)
-                    {
-                        <MudChip T="string" Color="Color.Success" Variant="Variant.Filled">Verified</MudChip>
-                    }
-                    else
-                    {
-                        <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled">Pending</MudChip>
-                    }
-                </MudTd>
-                <MudTd>
-                    @if (!row.IsVerified)
-                    {
-                        <MudButton Size="Size.Small" Color="Color.Success" OnClick="@(()=>ConfirmAsync(row))">Confirm</MudButton>
-                    }
-                    <MudButton Size="Size.Small" Color="Color.Error" OnClick="@(()=>DeleteAsync(row))">Delete</MudButton>
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
-        <MudStack Row="true" Spacing="2" Class="mt-2">
-            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Send Test</MudButton>
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@SendNewFixturesSampleAsync">New Fixtures Sample</MudButton>
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@SendStartingSoonSampleAsync">Starting Soon Sample</MudButton>
-        </MudStack>
-        <MudStack Row="true" Spacing="2" Class="mt-2" AlignItems="AlignItems.Center">
-            <MudDatePicker @bind-Date="_scheduleDate" Label="Date" Class="mr-2" />
-            <MudTimePicker @bind-Time="_scheduleTime" Label="Time" Class="mr-2" />
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@ScheduleStartingSoonSampleAsync">Schedule Starting Soon Sample</MudButton>
-        </MudStack>
-    </EditForm>
-}
+<MudPaper Class="pa-2 mb-4">
+    <MudButton Color="Color.Error" OnClick="ClearCaches">Clear Caches</MudButton>
+</MudPaper>
+
+<MudTabs>
+    <MudTabPanel Text="Subscribers">
+        <Subscribers />
+    </MudTabPanel>
+    <MudTabPanel Text="Game Weeks">
+        <GameWeeks />
+    </MudTabPanel>
+</MudTabs>
 
 @code {
-    private class Item : AdminSubscriberDto
+    private async Task ClearCaches()
     {
-        public Item(int id, string contact, bool verified, string type) : base(id, contact, verified, type)
-        {
-        }
-
-        public bool Selected { get; set; }
-    }
-
-    private List<Item>? _items;
-    private DateTime? _scheduleDate = DateTime.Today;
-    private TimeSpan? _scheduleTime = TimeSpan.FromHours(9);
-
-    protected override async Task OnInitializedAsync()
-    {
-        var data = await AdminService.GetSubscribersAsync();
-        _items = data.Select(d => new Item(d.Id, d.Contact, d.IsVerified, d.Type)).ToList();
-    }
-
-    private async Task ConfirmAsync(Item item)
-    {
-        await AdminService.ConfirmAsync(item.Type, item.Id);
-        item.IsVerified = true;
-    }
-
-    private async Task DeleteAsync(Item item)
-    {
-        await AdminService.DeleteAsync(item.Type, item.Id);
-        _items!.Remove(item);
-    }
-
-    private async Task SendTestAsync()
-    {
-        var selected = _items!.Where(i => i.Selected).Cast<AdminSubscriberDto>().ToList();
-        if (!selected.Any())
-            return;
-
-        try
-        {
-            await AdminService.SendTestAsync(selected);
-            await Toast.ShowToast("Test notifications sent!", "success");
-        }
-        catch
-        {
-            await Toast.ShowToast("Failed to send test notifications.", "error");
-        }
-    }
-
-    private async Task SendNewFixturesSampleAsync()
-    {
-        var selected = _items!.Where(i => i.Selected).Cast<AdminSubscriberDto>().ToList();
-        if (!selected.Any())
-            return;
-
-        try
-        {
-            await AdminService.SendNewFixturesSampleAsync(selected);
-            await Toast.ShowToast("Sample notifications sent!", "success");
-        }
-        catch
-        {
-            await Toast.ShowToast("Failed to send sample notifications.", "error");
-        }
-    }
-
-    private async Task SendStartingSoonSampleAsync()
-    {
-        var selected = _items!.Where(i => i.Selected).Cast<AdminSubscriberDto>().ToList();
-        if (!selected.Any())
-            return;
-
-        try
-        {
-            await AdminService.SendFixturesStartingSoonSampleAsync(selected);
-            await Toast.ShowToast("Sample notifications sent!", "success");
-        }
-        catch
-        {
-            await Toast.ShowToast("Failed to send sample notifications.", "error");
-        }
-    }
-
-    private async Task ScheduleStartingSoonSampleAsync()
-    {
-        var selected = _items!.Where(i => i.Selected).Cast<AdminSubscriberDto>().ToList();
-        if (!selected.Any())
-        {
-            await Toast.ShowToast("Please select at least one subscriber.", "error");
-            return;
-        }
-
-        if (_scheduleDate == null || _scheduleTime == null)
-        {
-            await Toast.ShowToast("Please choose a date and time.", "error");
-            return;
-        }
-
-        var uk = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
-        var sendLocal = DateTime.SpecifyKind(_scheduleDate.Value.Date + _scheduleTime.Value, DateTimeKind.Unspecified);
-        var sendUtc = TimeZoneInfo.ConvertTimeToUtc(sendLocal, uk);
-
-        try
-        {
-            await AdminService.ScheduleFixturesStartingSoonSampleAsync(selected, sendUtc);
-            await Toast.ShowToast("Sample notification scheduled!", "success");
-        }
-        catch
-        {
-            await Toast.ShowToast("Failed to schedule sample notification.", "error");
-        }
+        await AdminService.ClearCachesAsync();
+        await Toast.ShowToast("Caches cleared!", "success");
     }
 }

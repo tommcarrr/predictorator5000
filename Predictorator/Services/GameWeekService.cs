@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Predictorator.Data;
 using Predictorator.Models;
 using Predictorator.Options;
+using System;
 
 namespace Predictorator.Services;
 
@@ -11,21 +12,24 @@ public class GameWeekService : IGameWeekService
 {
     private readonly IDbContextFactory<ApplicationDbContext> _dbFactory;
     private readonly HybridCache _cache;
+    private readonly CachePrefixService _prefix;
     private readonly TimeSpan _cacheDuration;
 
     public GameWeekService(
         IDbContextFactory<ApplicationDbContext> dbFactory,
         HybridCache cache,
+        CachePrefixService prefix,
         IOptions<GameWeekCacheOptions> options)
     {
         _dbFactory = dbFactory;
         _cache = cache;
+        _prefix = prefix;
         _cacheDuration = TimeSpan.FromHours(options.Value.CacheDurationHours);
     }
 
     public Task<List<GameWeek>> GetGameWeeksAsync(string? season = null)
     {
-        var cacheKey = $"gameweeks_{season ?? "all"}";
+        var cacheKey = $"{_prefix.Prefix}gameweeks_{season ?? "all"}";
         var options = new HybridCacheEntryOptions
         {
             Expiration = _cacheDuration,
@@ -44,7 +48,7 @@ public class GameWeekService : IGameWeekService
 
     public Task<GameWeek?> GetGameWeekAsync(string season, int number)
     {
-        var cacheKey = $"gameweek_{season}_{number}";
+        var cacheKey = $"{_prefix.Prefix}gameweek_{season}_{number}";
         var options = new HybridCacheEntryOptions
         {
             Expiration = _cacheDuration,
@@ -62,7 +66,7 @@ public class GameWeekService : IGameWeekService
 
     public Task<GameWeek?> GetNextGameWeekAsync(DateTime date)
     {
-        var cacheKey = $"next_{date:yyyy-MM-dd}";
+        var cacheKey = $"{_prefix.Prefix}next_{date:yyyy-MM-dd}";
         var options = new HybridCacheEntryOptions
         {
             Expiration = _cacheDuration,
@@ -109,11 +113,11 @@ public class GameWeekService : IGameWeekService
 
         await db.SaveChangesAsync();
 
-        await _cache.RemoveAsync("gameweeks_all");
-        await _cache.RemoveAsync($"gameweeks_{gameWeek.Season}");
-        await _cache.RemoveAsync($"gameweek_{gameWeek.Season}_{gameWeek.Number}");
-        await _cache.RemoveAsync($"next_{gameWeek.StartDate:yyyy-MM-dd}");
-        await _cache.RemoveAsync($"next_{gameWeek.EndDate:yyyy-MM-dd}");
+        await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_all");
+        await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_{gameWeek.Season}");
+        await _cache.RemoveAsync($"{_prefix.Prefix}gameweek_{gameWeek.Season}_{gameWeek.Number}");
+        await _cache.RemoveAsync($"{_prefix.Prefix}next_{gameWeek.StartDate:yyyy-MM-dd}");
+        await _cache.RemoveAsync($"{_prefix.Prefix}next_{gameWeek.EndDate:yyyy-MM-dd}");
     }
 
     public async Task DeleteAsync(int id)
@@ -124,11 +128,11 @@ public class GameWeekService : IGameWeekService
         {
             db.GameWeeks.Remove(entity);
             await db.SaveChangesAsync();
-            await _cache.RemoveAsync("gameweeks_all");
-            await _cache.RemoveAsync($"gameweeks_{entity.Season}");
-            await _cache.RemoveAsync($"gameweek_{entity.Season}_{entity.Number}");
-            await _cache.RemoveAsync($"next_{entity.StartDate:yyyy-MM-dd}");
-            await _cache.RemoveAsync($"next_{entity.EndDate:yyyy-MM-dd}");
+            await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_all");
+            await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_{entity.Season}");
+            await _cache.RemoveAsync($"{_prefix.Prefix}gameweek_{entity.Season}_{entity.Number}");
+            await _cache.RemoveAsync($"{_prefix.Prefix}next_{entity.StartDate:yyyy-MM-dd}");
+            await _cache.RemoveAsync($"{_prefix.Prefix}next_{entity.EndDate:yyyy-MM-dd}");
         }
     }
 }

@@ -9,6 +9,7 @@ namespace Predictorator.Services
     {
         private readonly HttpClient _httpClient;
         private readonly HybridCache _cache;
+        private readonly CachePrefixService _prefix;
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly IConfiguration _configuration;
         private readonly IWebHostEnvironment _environment;
@@ -17,12 +18,14 @@ namespace Predictorator.Services
         public FixtureService(
             IHttpClientFactory httpClientFactory,
             HybridCache cache,
+            CachePrefixService prefix,
             IHttpContextAccessor contextAccessor,
             IConfiguration configuration,
             IWebHostEnvironment environment)
         {
             _httpClient = httpClientFactory.CreateClient("fixtures");
             _cache = cache;
+            _prefix = prefix;
             _contextAccessor = contextAccessor;
             _configuration = configuration;
             _environment = environment;
@@ -30,7 +33,7 @@ namespace Predictorator.Services
 
         public async Task<FixturesResponse> GetFixturesAsync(DateTime fromDate, DateTime toDate)
         {
-            var cacheKey = $"{fromDate:yyyy-MM-dd}_{toDate:yyyy-MM-dd}";
+            var cacheKey = $"{_prefix.Prefix}{fromDate:yyyy-MM-dd}_{toDate:yyyy-MM-dd}";
 
             var options = new HybridCacheEntryOptions { Expiration = _cacheDuration, LocalCacheExpiration = _cacheDuration };
 
