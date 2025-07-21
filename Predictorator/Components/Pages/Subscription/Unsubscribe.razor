@@ -7,7 +7,8 @@
 <h2>Unsubscribe</h2>
 @if (_result == null)
 {
-    <p>Loading...</p>
+    <p>Are you sure you want to unsubscribe?</p>
+    <button class="btn btn-primary" @onclick="HandleUnsubscribe">Unsubscribe</button>
 }
 else if (_result == true)
 {
@@ -24,21 +25,22 @@ else
 
     private bool? _result;
     private PersistingComponentStateSubscription? _persistSubscription;
-
-    protected override async Task OnParametersSetAsync()
+    protected override void OnParametersSet()
     {
         if (State.TryTakeFromJson<bool?>(nameof(_result), out var result))
         {
             _result = result;
-            return;
         }
-
-        _result = await SubscriptionService.UnsubscribeAsync(token ?? "");
     }
 
     protected override void OnInitialized()
     {
         _persistSubscription = State.RegisterOnPersisting(PersistState);
+    }
+
+    private async Task HandleUnsubscribe()
+    {
+        _result = await SubscriptionService.UnsubscribeAsync(token ?? string.Empty);
     }
 
     private Task PersistState()
