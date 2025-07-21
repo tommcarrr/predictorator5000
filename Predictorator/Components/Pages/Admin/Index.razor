@@ -143,10 +143,16 @@ else
     {
         var selected = _items!.Where(i => i.Selected).Cast<AdminSubscriberDto>().ToList();
         if (!selected.Any())
+        {
+            await Toast.ShowToast("Please select at least one subscriber.", "error");
             return;
+        }
 
         if (_scheduleDate == null || _scheduleTime == null)
+        {
+            await Toast.ShowToast("Please choose a date and time.", "error");
             return;
+        }
 
         var uk = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
         var sendLocal = _scheduleDate.Value.Date + _scheduleTime.Value;
