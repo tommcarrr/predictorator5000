@@ -199,7 +199,7 @@ public class SubscriptionService
 
         var verifyLink = $"{baseUrl}/Subscription/Verify?token={subscriber.VerificationToken}";
         var unsubscribeLink = $"{baseUrl}/Subscription/Unsubscribe?token={subscriber.UnsubscribeToken}";
-        var message = $"Verify your phone subscription: {verifyLink} To unsubscribe: {unsubscribeLink}";
+        var message = $"Verify your phone subscription: {verifyLink}\n\n---\n\nTo unsubscribe: {unsubscribeLink}";
         await _smsSender.SendSmsAsync(phoneNumber, message);
         _logger.LogInformation("Verification SMS queued for {PhoneNumber}", phoneNumber);
     }
