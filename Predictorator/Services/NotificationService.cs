@@ -78,7 +78,8 @@ public class NotificationService
                 .AnyAsync(n => n.Type == "NewFixtures" && n.Key == key);
             if (!sent)
             {
-                var sendTimeUk = nowUk.Date.AddHours(10);
+                var futureUk = TimeZoneInfo.ConvertTime(future.Fixture.Date, ukTz);
+                var sendTimeUk = futureUk.Date.AddHours(10);
                 var sendTimeUtc = TimeZoneInfo.ConvertTimeToUtc(sendTimeUk, ukTz);
                 var delay = sendTimeUtc - nowUtc;
                 if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
@@ -97,7 +98,7 @@ public class NotificationService
                 .AnyAsync(n => n.Type == "FixturesStartingSoon" && n.Key == key);
             if (!sent)
             {
-                var sendTimeUtc = first.Fixture.Date.AddHours(-1);
+                var sendTimeUtc = first.Fixture.Date.AddHours(-2);
                 var delay = sendTimeUtc - nowUtc;
                 if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
                 _jobs.Schedule<NotificationService>(
@@ -110,13 +111,13 @@ public class NotificationService
     [AutomaticRetry(Attempts = 3)]
     public async Task SendNewFixturesAvailableAsync(string key, string baseUrl)
     {
-        await SendToAllAsync("New fixtures are available!", baseUrl, "NewFixtures", key);
+        await SendToAllAsync("Fixtures start today!", baseUrl, "NewFixtures", key);
     }
 
     [AutomaticRetry(Attempts = 3)]
     public async Task SendFixturesStartingSoonAsync(string key, string baseUrl)
     {
-        await SendToAllAsync("Fixtures start in 1 hour!", baseUrl, "FixturesStartingSoon", key);
+        await SendToAllAsync("Fixtures start in 2 hours!", baseUrl, "FixturesStartingSoon", key);
     }
 
     private EmailMessage CreateEmailMessage(string message, string baseUrl, Subscriber sub)
