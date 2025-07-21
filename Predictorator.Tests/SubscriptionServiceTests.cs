@@ -7,6 +7,7 @@ using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
 using Predictorator.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 using Predictorator.Tests.Helpers;
 using System.IO;
 using Resend;
@@ -31,7 +32,8 @@ public class SubscriptionServiceTests
         var env = new FakeWebHostEnvironment { WebRootPath = Path.GetTempPath() };
         var inliner = new EmailCssInliner(env);
         var renderer = new EmailTemplateRenderer();
-        return new SubscriptionService(db, resend, config, sms, provider, jobs, inliner, renderer);
+        var logger = NullLogger<SubscriptionService>.Instance;
+        return new SubscriptionService(db, resend, config, sms, provider, jobs, inliner, renderer, logger);
     }
 
     [Fact]

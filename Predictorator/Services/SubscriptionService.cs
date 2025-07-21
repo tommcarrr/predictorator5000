@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
+using Microsoft.Extensions.Logging;
 using Predictorator.Data;
 using Predictorator.Models;
 using Predictorator.Options;
@@ -19,6 +20,7 @@ public class SubscriptionService
     private readonly IBackgroundJobClient _jobs;
     private readonly EmailCssInliner _inliner;
     private readonly EmailTemplateRenderer _renderer;
+    private readonly ILogger<SubscriptionService> _logger;
 
     private string AdminEmail =>
         _config["ADMIN_EMAIL"] ?? _config[$"{AdminUserOptions.SectionName}:Email"] ?? "admin@example.com";
@@ -73,7 +75,16 @@ public class SubscriptionService
         return true;
     }
 
-    public SubscriptionService(ApplicationDbContext db, IResend resend, IConfiguration config, ITwilioSmsSender smsSender, IDateTimeProvider dateTime, IBackgroundJobClient jobs, EmailCssInliner inliner, EmailTemplateRenderer renderer)
+    public SubscriptionService(
+        ApplicationDbContext db,
+        IResend resend,
+        IConfiguration config,
+        ITwilioSmsSender smsSender,
+        IDateTimeProvider dateTime,
+        IBackgroundJobClient jobs,
+        EmailCssInliner inliner,
+        EmailTemplateRenderer renderer,
+        ILogger<SubscriptionService> logger)
     {
         _db = db;
         _resend = resend;
@@ -83,6 +94,7 @@ public class SubscriptionService
         _jobs = jobs;
         _inliner = inliner;
         _renderer = renderer;
+        _logger = logger;
     }
 
     public Task SubscribeAsync(string? email, string? phoneNumber, string baseUrl)
@@ -92,6 +104,7 @@ public class SubscriptionService
 
         if (!string.IsNullOrWhiteSpace(email))
         {
+            _logger.LogInformation("Scheduling email subscription for {Email}", email);
             var job = Job.FromExpression<SubscriptionService>(s => s.AddEmailSubscriberAsync(email, baseUrl));
             _jobs.Create(job, new EnqueuedState());
             return Task.CompletedTask;
@@ -99,6 +112,7 @@ public class SubscriptionService
 
         if (!string.IsNullOrWhiteSpace(phoneNumber))
         {
+            _logger.LogInformation("Scheduling SMS subscription for {PhoneNumber}", phoneNumber);
             var job = Job.FromExpression<SubscriptionService>(s => s.AddSmsSubscriberAsync(phoneNumber, baseUrl));
             _jobs.Create(job, new EnqueuedState());
             return Task.CompletedTask;
@@ -143,8 +157,13 @@ public class SubscriptionService
     [AutomaticRetry(Attempts = 3)]
     public async Task AddSmsSubscriberAsync(string phoneNumber, string baseUrl)
     {
+        _logger.LogInformation("Attempting to add SMS subscriber {PhoneNumber}", phoneNumber);
+
         if (await _db.SmsSubscribers.AnyAsync(s => s.PhoneNumber == phoneNumber))
+        {
+            _logger.LogInformation("SMS subscriber {PhoneNumber} already exists", phoneNumber);
             return;
+        }
 
         var subscriber = new SmsSubscriber
         {
@@ -156,13 +175,15 @@ public class SubscriptionService
         };
         _db.SmsSubscribers.Add(subscriber);
         await _db.SaveChangesAsync();
+        _logger.LogInformation("SMS subscriber {PhoneNumber} stored with id {Id}", phoneNumber, subscriber.Id);
 
         await SendAdminEmailAsync("New subscriber", $"SMS subscriber {phoneNumber} added.");
-
+        
         var verifyLink = $"{baseUrl}/Subscription/Verify?token={subscriber.VerificationToken}";
         var unsubscribeLink = $"{baseUrl}/Subscription/Unsubscribe?token={subscriber.UnsubscribeToken}";
         var message = $"Verify your phone subscription: {verifyLink} To unsubscribe: {unsubscribeLink}";
         await _smsSender.SendSmsAsync(phoneNumber, message);
+        _logger.LogInformation("Verification SMS queued for {PhoneNumber}", phoneNumber);
     }
 
     public async Task<bool> VerifyAsync(string token)
