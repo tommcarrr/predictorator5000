@@ -14,7 +14,9 @@ dotnet test Predictorator.sln
 
 The seeded admin account credentials are configured via `AdminUser` settings.
 You can override these values by setting the `ADMIN_EMAIL` and
-`ADMIN_PASSWORD` environment variables before running the application.
+`ADMIN_PASSWORD` environment variables before running the application. Once
+logged in as an administrator you can view background jobs via the Hangfire
+dashboard at `/hangfire`.
 SMS notifications use Twilio. Set `Twilio__AccountSid`, `Twilio__AuthToken`, and
 `Twilio__FromNumber` environment variables with your Twilio credentials.
 Set `BASE_URL` to the public address of the site so scheduled notifications
