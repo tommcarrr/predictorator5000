@@ -38,4 +38,13 @@ public class FakeGameWeekService : IGameWeekService
             query = query.Where(g => g.Season == season);
         return Task.FromResult(query.ToList());
     }
+
+    public Task<GameWeek?> GetNextGameWeekAsync(DateTime date)
+    {
+        var result = Items
+            .Where(g => g.EndDate >= date)
+            .OrderBy(g => g.StartDate)
+            .FirstOrDefault();
+        return Task.FromResult<GameWeek?>(result);
+    }
 }

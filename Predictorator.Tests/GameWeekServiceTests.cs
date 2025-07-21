@@ -54,4 +54,21 @@ public class GameWeekServiceTests
 
         Assert.Empty(db.GameWeeks);
     }
+
+    [Fact]
+    public async Task GetNextGameWeekAsync_returns_next_week()
+    {
+        var service = CreateService(out var db);
+        db.GameWeeks.AddRange(
+            new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today.AddDays(-14), EndDate = DateTime.Today.AddDays(-8) },
+            new GameWeek { Season = "25-26", Number = 2, StartDate = DateTime.Today.AddDays(-7), EndDate = DateTime.Today.AddDays(-1) },
+            new GameWeek { Season = "25-26", Number = 3, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) }
+        );
+        await db.SaveChangesAsync();
+
+        var result = await service.GetNextGameWeekAsync(DateTime.Today);
+
+        Assert.NotNull(result);
+        Assert.Equal(3, result!.Number);
+    }
 }
