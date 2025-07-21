@@ -9,10 +9,15 @@ namespace Predictorator.Services;
 
 public class AdminSubscriberDto
 {
-    public int Id { get; init; }
-    public string Contact { get; init; } = string.Empty;
+    public int Id { get; set; }
+    public string Contact { get; set; } = string.Empty;
     public bool IsVerified { get; set; }
-    public string Type { get; init; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+
+    // Parameterless constructor required for Hangfire deserialization
+    public AdminSubscriberDto()
+    {
+    }
 
     public AdminSubscriberDto(int id, string contact, bool isVerified, string type)
     {
