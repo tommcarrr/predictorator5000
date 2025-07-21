@@ -23,11 +23,12 @@ public class FixtureServiceTests
         var services = new ServiceCollection();
         services.AddHybridCache();
         var cache = services.BuildServiceProvider().GetRequiredService<HybridCache>();
+        var prefix = new CachePrefixService();
         var accessor = Substitute.For<IHttpContextAccessor>();
         var config = Substitute.For<IConfiguration>();
         var env = Substitute.For<IWebHostEnvironment>();
         env.ContentRootPath.Returns(Directory.GetCurrentDirectory());
-        var service = new FixtureService(httpClientFactory, cache, accessor, config, env);
+        var service = new FixtureService(httpClientFactory, cache, prefix, accessor, config, env);
 
         var result1 = await service.GetFixturesAsync(DateTime.Today, DateTime.Today);
         var result2 = await service.GetFixturesAsync(DateTime.Today, DateTime.Today);
