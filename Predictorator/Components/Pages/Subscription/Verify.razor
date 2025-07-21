@@ -1,11 +1,14 @@
 @page "/Subscription/Verify"
 @rendermode InteractiveServer
 @inject SubscriptionService SubscriptionService
+@inject PersistentComponentState State
+@implements IDisposable
 
 <h2>Verification</h2>
 @if (_result == null)
 {
-    <p>Loading...</p>
+    <p>Are you sure you want to verify your subscription?</p>
+    <button class="btn btn-primary" @onclick="HandleVerify">Verify</button>
 }
 else if (_result == true)
 {
@@ -21,9 +24,34 @@ else
     public string? token { get; set; }
 
     private bool? _result;
+    private PersistingComponentStateSubscription? _persistSubscription;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnParametersSet()
     {
-        _result = await SubscriptionService.VerifyAsync(token ?? "");
+        if (State.TryTakeFromJson<bool?>(nameof(_result), out var result))
+        {
+            _result = result;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        _persistSubscription = State.RegisterOnPersisting(PersistState);
+    }
+
+    private async Task HandleVerify()
+    {
+        _result = await SubscriptionService.VerifyAsync(token ?? string.Empty);
+    }
+
+    private Task PersistState()
+    {
+        State.PersistAsJson(nameof(_result), _result);
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        _persistSubscription?.Dispose();
     }
 }
