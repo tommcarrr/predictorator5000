@@ -1,8 +1,10 @@
 @page "/"
+@page "/{Season}/gw{Week:int}"
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
 @inject IFixtureService FixtureService
 @inject IDateRangeCalculator DateRangeCalculator
+@inject IGameWeekService GameWeekService
 @inject UiModeService UiModeService
 @using Predictorator.Components.Layout
 
@@ -97,6 +99,9 @@ else if (_fixtures.Response.Any())
 
     [CascadingParameter] public MainLayout? Layout { get; set; }
 
+    [Parameter] public string? Season { get; set; }
+    [Parameter] public int? Week { get; set; }
+
     [Parameter, SupplyParameterFromQuery(Name = "fromDate")] public DateTime? FromDate { get; set; }
     [Parameter, SupplyParameterFromQuery(Name = "toDate")] public DateTime? ToDate { get; set; }
     [Parameter, SupplyParameterFromQuery(Name = "weekOffset")] public int? WeekOffset { get; set; }
@@ -107,6 +112,16 @@ else if (_fixtures.Response.Any())
         if (!query.ContainsKey("fromDate")) FromDate = null;
         if (!query.ContainsKey("toDate")) ToDate = null;
         if (!query.ContainsKey("weekOffset")) WeekOffset = null;
+
+        if (!string.IsNullOrEmpty(Season) && Week.HasValue)
+        {
+            var gw = await GameWeekService.GetGameWeekAsync(Season, Week.Value);
+            if (gw != null)
+            {
+                FromDate = gw.StartDate;
+                ToDate = gw.EndDate;
+            }
+        }
 
         var (from, to) = DateRangeCalculator.GetDates(FromDate, ToDate, WeekOffset);
         _fromDate = from;

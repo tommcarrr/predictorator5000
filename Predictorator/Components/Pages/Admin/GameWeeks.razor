@@ -1,0 +1,117 @@
+@page "/admin/gameweeks"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles="Admin")]
+@inject IGameWeekService Service
+@inject ToastInterop Toast
+
+<h2>Game Weeks</h2>
+
+<MudPaper Class="pa-2" Elevation="1">
+    <EditForm Model="_model" OnValidSubmit="SaveAsync">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+            <MudTextField @bind-Value="_model.Season" Label="Season" Required="true" />
+            <MudNumericField T="int" @bind-Value="_model.Number" Label="Week" Required="true" />
+            <MudDatePicker @bind-Date="_start" Label="Start" Required="true" />
+            <MudDatePicker @bind-Date="_end" Label="End" Required="true" />
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary">Save</MudButton>
+            @if (_editingId != null)
+            {
+                <MudButton Color="Color.Default" OnClick="CancelEdit">Cancel</MudButton>
+            }
+        </MudStack>
+    </EditForm>
+</MudPaper>
+
+@if (_items == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <MudTable Items="_items" Hover="true" Breakpoint="Breakpoint.None">
+        <HeaderContent>
+            <MudTh>Season</MudTh>
+            <MudTh>Week</MudTh>
+            <MudTh>Start</MudTh>
+            <MudTh>End</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate Context="row">
+            <MudTd>@row.Season</MudTd>
+            <MudTd>@row.Number</MudTd>
+            <MudTd>@row.StartDate.ToString("yyyy-MM-dd")</MudTd>
+            <MudTd>@row.EndDate.ToString("yyyy-MM-dd")</MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" OnClick="() => Edit(row)">Edit</MudButton>
+                <MudButton Size="Size.Small" Color="Color.Error" OnClick="() => DeleteAsync(row.Id)">Delete</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<GameWeek>? _items;
+    private GameWeek _model = new();
+    private DateTime? _start;
+    private DateTime? _end;
+    private int? _editingId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _items = await Service.GetGameWeeksAsync();
+        StateHasChanged();
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_start == null || _end == null)
+        {
+            await Toast.ShowToast("Please choose start and end dates", "error");
+            return;
+        }
+        if (_start > _end)
+        {
+            await Toast.ShowToast("Start must be before end", "error");
+            return;
+        }
+        _model.StartDate = _start.Value.Date;
+        _model.EndDate = _end.Value.Date;
+        await Service.AddOrUpdateAsync(_model);
+        _model = new GameWeek();
+        _start = _end = null;
+        _editingId = null;
+        await LoadAsync();
+    }
+
+    private void Edit(GameWeek item)
+    {
+        _model = new GameWeek
+        {
+            Id = item.Id,
+            Season = item.Season,
+            Number = item.Number,
+        };
+        _start = item.StartDate;
+        _end = item.EndDate;
+        _editingId = item.Id;
+    }
+
+    private void CancelEdit()
+    {
+        _model = new GameWeek();
+        _start = _end = null;
+        _editingId = null;
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        await Service.DeleteAsync(id);
+        await LoadAsync();
+    }
+}

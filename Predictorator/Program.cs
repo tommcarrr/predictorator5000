@@ -102,6 +102,7 @@ builder.Services.AddTransient<ITwilioSmsSender, TwilioSmsSender>();
 builder.Services.AddTransient<SubscriptionService>();
 builder.Services.AddTransient<NotificationService>();
 builder.Services.AddTransient<AdminService>();
+builder.Services.AddTransient<IGameWeekService, GameWeekService>();
 builder.Services.AddSingleton<EmailCssInliner>();
 builder.Services.AddSingleton<EmailTemplateRenderer>();
 builder.Services.AddSingleton<NotificationFeatureService>();
