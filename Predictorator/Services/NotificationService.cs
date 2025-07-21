@@ -14,6 +14,7 @@ public class NotificationService
     private readonly ITwilioSmsSender _sms;
     private readonly IConfiguration _config;
     private readonly IFixtureService _fixtures;
+    private readonly IGameWeekService _gameWeeks;
     private readonly IDateRangeCalculator _range;
     private readonly NotificationFeatureService _features;
     private readonly IDateTimeProvider _time;
@@ -28,6 +29,7 @@ public class NotificationService
         ITwilioSmsSender sms,
         IConfiguration config,
         IFixtureService fixtures,
+        IGameWeekService gameWeeks,
         IDateRangeCalculator range,
         NotificationFeatureService features,
         IDateTimeProvider time,
@@ -41,6 +43,7 @@ public class NotificationService
         _sms = sms;
         _config = config;
         _fixtures = fixtures;
+        _gameWeeks = gameWeeks;
         _range = range;
         _features = features;
         _time = time;
@@ -59,7 +62,19 @@ public class NotificationService
         if (string.IsNullOrWhiteSpace(baseUrl))
             return;
 
-        var (from, to) = _range.GetDates(null, null, null);
+        var week = await _gameWeeks.GetNextGameWeekAsync(_time.Today);
+        DateTime from;
+        DateTime to;
+        if (week != null)
+        {
+            from = week.StartDate;
+            to = week.EndDate;
+        }
+        else
+        {
+            (from, to) = _range.GetDates(null, null, null);
+        }
+
         var response = await _fixtures.GetFixturesAsync(from, to);
         if (response.Response.Count == 0)
             return;

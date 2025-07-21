@@ -45,7 +45,9 @@ public class AdminServiceTests
         var features = new NotificationFeatureService(config);
         jobs = Substitute.For<IBackgroundJobClient>();
         var nLogger = NullLogger<NotificationService>.Instance;
-        var notifications = new NotificationService(db, resend, sms, config, fixtures, range, features, provider, jobs, inliner, renderer, nLogger);
+        var gameWeeks = new FakeGameWeekService();
+        gameWeeks.Items.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = provider.UtcNow.Date, EndDate = provider.UtcNow.Date.AddDays(6) });
+        var notifications = new NotificationService(db, resend, sms, config, fixtures, gameWeeks, range, features, provider, jobs, inliner, renderer, nLogger);
         var aLogger = NullLogger<AdminService>.Instance;
         return new AdminService(db, resend, sms, config, inliner, renderer, notifications, aLogger, jobs, provider);
     }

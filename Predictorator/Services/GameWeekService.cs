@@ -28,6 +28,14 @@ public class GameWeekService : IGameWeekService
             .FirstOrDefaultAsync(g => g.Season == season && g.Number == number);
     }
 
+    public Task<GameWeek?> GetNextGameWeekAsync(DateTime date)
+    {
+        return _db.GameWeeks
+            .Where(g => g.EndDate >= date)
+            .OrderBy(g => g.StartDate)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task AddOrUpdateAsync(GameWeek gameWeek)
     {
         GameWeek? existing = null;
