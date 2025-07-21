@@ -142,13 +142,13 @@ public class AdminService
     public async Task SendNewFixturesSampleAsync(IEnumerable<AdminSubscriberDto> recipients)
     {
         var baseUrl = _config["BASE_URL"] ?? "http://localhost";
-        await _notifications.SendSampleAsync(recipients, "New fixtures are available!", baseUrl);
+        await _notifications.SendSampleAsync(recipients, "Fixtures start today!", baseUrl);
     }
 
     public async Task SendFixturesStartingSoonSampleAsync(IEnumerable<AdminSubscriberDto> recipients)
     {
         var baseUrl = _config["BASE_URL"] ?? "http://localhost";
-        await _notifications.SendSampleAsync(recipients, "Fixtures start in 1 hour!", baseUrl);
+        await _notifications.SendSampleAsync(recipients, "Fixtures start in 2 hours!", baseUrl);
     }
 
     public Task ScheduleFixturesStartingSoonSampleAsync(IEnumerable<AdminSubscriberDto> recipients, DateTime sendUtc)
@@ -156,7 +156,7 @@ public class AdminService
         var baseUrl = _config["BASE_URL"] ?? "http://localhost";
         var delay = sendUtc - _time.UtcNow;
         if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
-        _jobs.Schedule<NotificationService>(s => s.SendSampleAsync(recipients, "Fixtures start in 1 hour!", baseUrl), delay);
+        _jobs.Schedule<NotificationService>(s => s.SendSampleAsync(recipients, "Fixtures start in 2 hours!", baseUrl), delay);
         return Task.CompletedTask;
     }
 }
