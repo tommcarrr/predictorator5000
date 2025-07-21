@@ -1,4 +1,6 @@
 using System.Threading.RateLimiting;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
@@ -18,6 +20,16 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var culture = new CultureInfo("en-GB");
+CultureInfo.DefaultThreadCurrentCulture = culture;
+CultureInfo.DefaultThreadCurrentUICulture = culture;
+var localizationOptions = new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(culture),
+    SupportedCultures = new[] { culture },
+    SupportedUICultures = new[] { culture }
+};
 
 builder.Host.UseSerilog((context, services, configuration) =>
 {
@@ -157,6 +169,7 @@ builder.Services.AddDataProtection()
 var app = builder.Build();
 
 
+app.UseRequestLocalization(localizationOptions);
 app.UseForwardedHeaders();
 app.UseRateLimiter();
 
