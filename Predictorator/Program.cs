@@ -78,7 +78,8 @@ builder.Services.AddRateLimiter(options =>
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
     {
         var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        if (excludedIps.Contains(ip))
+        if (excludedIps.Contains(ip) ||
+            context.Request.Path.StartsWithSegments("/hangfire"))
             return RateLimitPartition.GetNoLimiter(ip);
         return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
         {

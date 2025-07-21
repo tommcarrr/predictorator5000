@@ -151,4 +151,41 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal("1.2.3.4", observedIp);
         Assert.Equal(HttpStatusCode.OK, second.StatusCode);
     }
+
+    [Fact]
+    public async Task Hangfire_path_is_not_rate_limited()
+    {
+        var factory = _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
+                services.AddDbContext<ApplicationDbContext>(options =>
+                    options.UseInMemoryDatabase("TestDbHangfire"));
+                services.AddRateLimiter(options =>
+                {
+                    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+                    {
+                        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                        if (context.Request.Path.StartsWithSegments("/hangfire"))
+                            return RateLimitPartition.GetNoLimiter(ip);
+                        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 1,
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        });
+                    });
+                });
+            });
+        });
+
+        var client = factory.CreateClient();
+        var first = await client.GetAsync("/hangfire");
+        var second = await client.GetAsync("/hangfire");
+
+        Assert.Equal(HttpStatusCode.NotFound, second.StatusCode);
+    }
 }
