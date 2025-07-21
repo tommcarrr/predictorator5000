@@ -125,6 +125,17 @@ builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =
         .EnableSensitiveDataLogging()
         .LogTo(message => efLogger.LogError(message), LogLevel.Error);
 });
+builder.Services.AddDbContextFactory<ApplicationDbContext>((serviceProvider, options) =>
+{
+    var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+    var efLogger = loggerFactory.CreateLogger("EFCore");
+    options
+        .UseSqlServer(connectionString)
+        .UseLoggerFactory(loggerFactory)
+        .EnableDetailedErrors()
+        .EnableSensitiveDataLogging()
+        .LogTo(message => efLogger.LogError(message), LogLevel.Error);
+});
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultUI()

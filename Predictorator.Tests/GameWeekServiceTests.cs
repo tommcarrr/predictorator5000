@@ -7,37 +7,54 @@ namespace Predictorator.Tests;
 
 public class GameWeekServiceTests
 {
-    private static GameWeekService CreateService(out ApplicationDbContext db)
+    private class TestFactory : IDbContextFactory<ApplicationDbContext>
+    {
+        private readonly DbContextOptions<ApplicationDbContext> _options;
+
+        public TestFactory(DbContextOptions<ApplicationDbContext> options)
+        {
+            _options = options;
+        }
+
+        public ApplicationDbContext CreateDbContext()
+        {
+            return new ApplicationDbContext(_options);
+        }
+    }
+
+    private static GameWeekService CreateService(out ApplicationDbContext db, out TestFactory factory)
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
-        db = new ApplicationDbContext(options);
-        return new GameWeekService(db);
+        factory = new TestFactory(options);
+        db = factory.CreateDbContext();
+        return new GameWeekService(factory);
     }
 
     [Fact]
     public async Task AddOrUpdateAsync_adds_new_gameweek()
     {
-        var service = CreateService(out var db);
+        var service = CreateService(out var db, out var factory);
         var gw = new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) };
 
         await service.AddOrUpdateAsync(gw);
-
-        Assert.Single(db.GameWeeks);
+        await using var verifyAdd = factory.CreateDbContext();
+        Assert.Single(verifyAdd.GameWeeks);
     }
 
     [Fact]
     public async Task AddOrUpdateAsync_updates_existing()
     {
-        var service = CreateService(out var db);
+        var service = CreateService(out var db, out var factory);
         db.GameWeeks.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) });
         await db.SaveChangesAsync();
 
         var gw = new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today.AddDays(7), EndDate = DateTime.Today.AddDays(13) };
         await service.AddOrUpdateAsync(gw);
 
-        var updated = await db.GameWeeks.FirstAsync();
+        await using var verify = factory.CreateDbContext();
+        var updated = await verify.GameWeeks.FirstAsync();
         Assert.Equal(gw.StartDate, updated.StartDate);
         Assert.Equal(gw.EndDate, updated.EndDate);
     }
@@ -45,20 +62,21 @@ public class GameWeekServiceTests
     [Fact]
     public async Task DeleteAsync_removes_item()
     {
-        var service = CreateService(out var db);
+        var service = CreateService(out var db, out var factory);
         var gw = new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today };
         db.GameWeeks.Add(gw);
         await db.SaveChangesAsync();
 
         await service.DeleteAsync(gw.Id);
 
-        Assert.Empty(db.GameWeeks);
+        await using var verifyDelete = factory.CreateDbContext();
+        Assert.Empty(verifyDelete.GameWeeks);
     }
 
     [Fact]
     public async Task GetNextGameWeekAsync_returns_next_week()
     {
-        var service = CreateService(out var db);
+        var service = CreateService(out var db, out var factory);
         db.GameWeeks.AddRange(
             new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today.AddDays(-14), EndDate = DateTime.Today.AddDays(-8) },
             new GameWeek { Season = "25-26", Number = 2, StartDate = DateTime.Today.AddDays(-7), EndDate = DateTime.Today.AddDays(-1) },
@@ -75,7 +93,7 @@ public class GameWeekServiceTests
     [Fact]
     public async Task AddOrUpdateAsync_updates_when_key_changes()
     {
-        var service = CreateService(out var db);
+        var service = CreateService(out var db, out var factory);
         var gw = new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) };
         db.GameWeeks.Add(gw);
         await db.SaveChangesAsync();
@@ -91,7 +109,8 @@ public class GameWeekServiceTests
 
         await service.AddOrUpdateAsync(updated);
 
-        var dbItem = await db.GameWeeks.SingleAsync();
+        await using var verifyUpdate = factory.CreateDbContext();
+        var dbItem = await verifyUpdate.GameWeeks.SingleAsync();
         Assert.Equal(updated.Season, dbItem.Season);
         Assert.Equal(updated.Number, dbItem.Number);
         Assert.Equal(updated.StartDate, dbItem.StartDate);
