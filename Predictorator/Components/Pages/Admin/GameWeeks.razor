@@ -1,0 +1,129 @@
+@page "/admin/gameweeks"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles="Admin")]
+@inject GameWeekService GameWeekService
+@inject ToastInterop Toast
+@using Predictorator.Models
+
+<h2>Gameweeks</h2>
+@if (_loaded)
+{
+    <MudPaper Class="pa-2" Elevation="1">
+        <MudSelect T="string" Label="Season" Value="_seasonId" ValueChanged="OnSeasonChanged" Dense="true">
+            @foreach (var season in _seasons)
+            {
+                <MudSelectItem T="string" Value="@season.Id">@season.Id</MudSelectItem>
+            }
+        </MudSelect>
+        <MudTextField T="string" Label="New Season" @bind-Value="_newSeasonId" Immediate="true" />
+        <MudButton OnClick="AddSeason" Disabled="string.IsNullOrWhiteSpace(_newSeasonId)">Add Season</MudButton>
+    </MudPaper>
+    @if (_currentSeason != null)
+    {
+        <MudTable Items="_currentSeason.GameWeeks" Hover="true" Dense="true">
+            <HeaderContent>
+                <MudTh>#</MudTh>
+                <MudTh>Start</MudTh>
+                <MudTh>End</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate Context="gw">
+                <MudTd>@gw.Number</MudTd>
+                <MudTd>@gw.StartDate.ToString("dd MMM yyyy")</MudTd>
+                <MudTd>@gw.EndDate.ToString("dd MMM yyyy")</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="() => Edit(gw)" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="() => Delete(gw)" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+    <EditForm Model="_editModel" OnValidSubmit="Save">
+        <MudTextField T="int" Label="Week" @bind-Value="_editModel.Number" Required="true" />
+        <MudDatePicker @bind-Date="_editStart" Required="true" />
+        <MudDatePicker @bind-Date="_editEnd" Required="true" />
+        <MudButton ButtonType="ButtonType.Submit">Save</MudButton>
+    </EditForm>
+}
+else
+{
+    <p>Loading...</p>
+}
+
+@code {
+    private List<Season> _seasons = new();
+    private string? _seasonId;
+    private string? _newSeasonId;
+    private Season? _currentSeason;
+    private GameWeek _editModel = new();
+    private DateTime? _editStart;
+    private DateTime? _editEnd;
+    private bool _loaded;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _seasons = await GameWeekService.GetSeasonsAsync();
+        _seasonId = _seasons.FirstOrDefault()?.Id;
+        await LoadSeason();
+        _loaded = true;
+    }
+
+    private async Task OnSeasonChanged(string? season)
+    {
+        _seasonId = season;
+        await LoadSeason();
+    }
+
+    private async Task LoadSeason()
+    {
+        if (!string.IsNullOrWhiteSpace(_seasonId))
+        {
+            _currentSeason = await GameWeekService.GetSeasonAsync(_seasonId);
+        }
+    }
+
+    private async Task AddSeason()
+    {
+        if (string.IsNullOrWhiteSpace(_newSeasonId)) return;
+        if (_seasons.Any(s => s.Id == _newSeasonId)) return;
+        var season = new Season { Id = _newSeasonId };
+        _seasons.Add(season);
+        _seasonId = _newSeasonId;
+        _newSeasonId = string.Empty;
+        _currentSeason = season;
+        await GameWeekService.AddOrUpdateAsync(new GameWeek { SeasonId = season.Id, Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today });
+        _currentSeason = await GameWeekService.GetSeasonAsync(season.Id);
+    }
+
+    private void Edit(GameWeek gw)
+    {
+        _editModel = new GameWeek
+        {
+            SeasonId = gw.SeasonId,
+            Number = gw.Number,
+            StartDate = gw.StartDate,
+            EndDate = gw.EndDate
+        };
+        _editStart = gw.StartDate;
+        _editEnd = gw.EndDate;
+    }
+
+    private async Task Save()
+    {
+        _editModel.SeasonId = _seasonId!;
+        _editModel.StartDate = _editStart ?? DateTime.Today;
+        _editModel.EndDate = _editEnd ?? _editModel.StartDate;
+        await GameWeekService.AddOrUpdateAsync(_editModel);
+        _currentSeason = await GameWeekService.GetSeasonAsync(_seasonId!);
+        _editModel = new GameWeek();
+        _editStart = null;
+        _editEnd = null;
+    }
+
+    private async Task Delete(GameWeek gw)
+    {
+        await GameWeekService.DeleteAsync(gw);
+        _currentSeason = await GameWeekService.GetSeasonAsync(_seasonId!);
+    }
+}

@@ -1,0 +1,26 @@
+@page "/{season}/gw{week:int}"
+@rendermode InteractiveServer
+@inject GameWeekService GameWeekService
+@using Predictorator.Models
+
+<h2>Gameweek @week (@season)</h2>
+@if (_gameWeek == null)
+{
+    <p>Not found.</p>
+}
+else
+{
+    <p>@_gameWeek.StartDate.ToString("dd MMM yyyy") - @_gameWeek.EndDate.ToString("dd MMM yyyy")</p>
+}
+
+@code {
+    [Parameter] public string season { get; set; } = string.Empty;
+    [Parameter] public int week { get; set; }
+
+    private GameWeek? _gameWeek;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _gameWeek = await GameWeekService.GetGameWeekAsync(season, week);
+    }
+}
