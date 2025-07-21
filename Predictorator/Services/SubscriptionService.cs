@@ -40,10 +40,16 @@ public class SubscriptionService
 
     private async Task<bool> VerifySubscriberAsync<TEntity>(DbSet<TEntity> set, string token) where TEntity : class, ISubscriber
     {
+        _logger.LogInformation("Checking {Entity} with verification token {Token}", typeof(TEntity).Name, token);
         var entity = await set.FirstOrDefaultAsync(s => s.VerificationToken == token);
-        if (entity == null) return false;
+        if (entity == null)
+        {
+            _logger.LogInformation("{Entity} with token {Token} not found", typeof(TEntity).Name, token);
+            return false;
+        }
         entity.IsVerified = true;
         await _db.SaveChangesAsync();
+        _logger.LogInformation("{Entity} verified using token {Token}", typeof(TEntity).Name, token);
 
         var contact = entity switch
         {
@@ -58,20 +64,32 @@ public class SubscriptionService
 
     private async Task<bool> UnsubscribeSubscriberAsync<TEntity>(DbSet<TEntity> set, string token) where TEntity : class, ISubscriber
     {
+        _logger.LogInformation("Attempting unsubscribe for {Entity} with token {Token}", typeof(TEntity).Name, token);
         var entity = await set.FirstOrDefaultAsync(s => s.UnsubscribeToken == token);
-        if (entity == null) return false;
+        if (entity == null)
+        {
+            _logger.LogInformation("{Entity} with token {Token} not found", typeof(TEntity).Name, token);
+            return false;
+        }
         set.Remove(entity);
         await _db.SaveChangesAsync();
+        _logger.LogInformation("{Entity} with token {Token} removed", typeof(TEntity).Name, token);
         return true;
     }
 
     private async Task<bool> RemoveExpiredSubscribersAsync<TEntity>(DbSet<TEntity> set, DateTime cutoff) where TEntity : class, ISubscriber
     {
+        _logger.LogInformation("Removing expired {Entity} records before {Cutoff}", typeof(TEntity).Name, cutoff);
         var expired = await set
             .Where(s => !s.IsVerified && s.CreatedAt < cutoff)
             .ToListAsync();
-        if (!expired.Any()) return false;
+        if (!expired.Any())
+        {
+            _logger.LogInformation("No expired {Entity} records found", typeof(TEntity).Name);
+            return false;
+        }
         set.RemoveRange(expired);
+        _logger.LogInformation("Removed {Count} expired {Entity} records", expired.Count, typeof(TEntity).Name);
         return true;
     }
 
@@ -178,7 +196,7 @@ public class SubscriptionService
         _logger.LogInformation("SMS subscriber {PhoneNumber} stored with id {Id}", phoneNumber, subscriber.Id);
 
         await SendAdminEmailAsync("New subscriber", $"SMS subscriber {phoneNumber} added.");
-        
+
         var verifyLink = $"{baseUrl}/Subscription/Verify?token={subscriber.VerificationToken}";
         var unsubscribeLink = $"{baseUrl}/Subscription/Unsubscribe?token={subscriber.UnsubscribeToken}";
         var message = $"Verify your phone subscription: {verifyLink} To unsubscribe: {unsubscribeLink}";
@@ -188,25 +206,35 @@ public class SubscriptionService
 
     public async Task<bool> VerifyAsync(string token)
     {
-        return await VerifySubscriberAsync(_db.Subscribers, token)
+        _logger.LogInformation("Verifying subscriber with token {Token}", token);
+        var result = await VerifySubscriberAsync(_db.Subscribers, token)
             || await VerifySubscriberAsync(_db.SmsSubscribers, token);
+        _logger.LogInformation("Verification {Result} for token {Token}", result ? "succeeded" : "failed", token);
+        return result;
     }
 
     public async Task<bool> UnsubscribeAsync(string token)
     {
-        return await UnsubscribeSubscriberAsync(_db.Subscribers, token)
+        _logger.LogInformation("Unsubscribe requested for token {Token}", token);
+        var result = await UnsubscribeSubscriberAsync(_db.Subscribers, token)
             || await UnsubscribeSubscriberAsync(_db.SmsSubscribers, token);
+        _logger.LogInformation("Unsubscribe {Result} for token {Token}", result ? "succeeded" : "failed", token);
+        return result;
     }
 
     public async Task RemoveExpiredUnverifiedAsync()
     {
         var cutoff = _dateTime.UtcNow.AddHours(-1);
+        _logger.LogInformation("Checking for expired subscriptions before {Cutoff}", cutoff);
 
         var removed = await RemoveExpiredSubscribersAsync(_db.Subscribers, cutoff);
         removed |= await RemoveExpiredSubscribersAsync(_db.SmsSubscribers, cutoff);
 
         if (removed)
+        {
             await _db.SaveChangesAsync();
+            _logger.LogInformation("Expired subscriptions removed");
+        }
     }
 
     public async Task<bool> UnsubscribeByContactAsync(string contact)
@@ -228,12 +256,17 @@ public class SubscriptionService
         else
         {
             var normalized = NormalizePhone(contact);
+            _logger.LogInformation("Attempting unsubscribe by phone {Phone}", contact);
             var subs = await _db.SmsSubscribers.ToListAsync();
             var subscriber = subs.FirstOrDefault(s => NormalizePhone(s.PhoneNumber) == normalized);
             if (subscriber == null)
+            {
+                _logger.LogInformation("SMS subscriber {Phone} not found", contact);
                 return false;
+            }
             _db.SmsSubscribers.Remove(subscriber);
             await _db.SaveChangesAsync();
+            _logger.LogInformation("SMS subscriber {Phone} removed", contact);
             return true;
         }
     }

@@ -8,6 +8,7 @@ using Resend;
 using Predictorator.Tests.Helpers;
 using Predictorator.Models.Fixtures;
 using Hangfire;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Generic;
 using System.IO;
 using System;
@@ -41,8 +42,10 @@ public class AdminServiceTests
         var range = new DateRangeCalculator(provider);
         var features = new NotificationFeatureService(config);
         var jobs = Substitute.For<IBackgroundJobClient>();
-        var notifications = new NotificationService(db, resend, sms, config, fixtures, range, features, provider, jobs, inliner, renderer);
-        return new AdminService(db, resend, sms, config, inliner, renderer, notifications);
+        var nLogger = NullLogger<NotificationService>.Instance;
+        var notifications = new NotificationService(db, resend, sms, config, fixtures, range, features, provider, jobs, inliner, renderer, nLogger);
+        var aLogger = NullLogger<AdminService>.Instance;
+        return new AdminService(db, resend, sms, config, inliner, renderer, notifications, aLogger);
     }
 
     [Fact]
