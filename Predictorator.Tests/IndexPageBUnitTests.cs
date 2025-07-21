@@ -26,6 +26,7 @@ public class IndexPageBUnitTests
         ctx.Services.AddScoped<UiModeService>();
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
+        ctx.Services.AddSingleton<IGameWeekService>(new FakeGameWeekService());
         var provider = new FakeDateTimeProvider
         {
             Today = new DateTime(2024, 1, 1),
@@ -157,6 +158,7 @@ public class IndexPageBUnitTests
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider));
         var fixtureService = new AutoWeekFixtureService();
         ctx.Services.AddSingleton<IFixtureService>(fixtureService);
+        ctx.Services.AddSingleton<IGameWeekService>(new FakeGameWeekService());
 
         var settings = new Dictionary<string, string?>
         {

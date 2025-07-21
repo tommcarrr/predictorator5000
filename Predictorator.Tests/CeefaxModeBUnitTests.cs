@@ -32,6 +32,7 @@ public class CeefaxModeBUnitTests
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
+        ctx.Services.AddSingleton<IGameWeekService>(new FakeGameWeekService());
         var provider = new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) };
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider));
 
@@ -175,6 +176,7 @@ public class CeefaxModeBUnitTests
         ctx.Services.AddScoped<UiModeService>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
+        ctx.Services.AddSingleton<IGameWeekService>(new FakeGameWeekService());
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) }));
 
         var settings = new Dictionary<string, string?>
@@ -213,6 +215,7 @@ public class CeefaxModeBUnitTests
         ctx.Services.AddScoped<UiModeService>();
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
+        ctx.Services.AddSingleton<IGameWeekService>(new FakeGameWeekService());
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) }));
 
         var settings = new Dictionary<string, string?>
@@ -266,6 +269,7 @@ public class CeefaxModeBUnitTests
             }
         };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
+        ctx.Services.AddSingleton<IGameWeekService>(new FakeGameWeekService());
         var provider = new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) };
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider));
 
