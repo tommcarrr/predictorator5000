@@ -13,6 +13,7 @@ using Predictorator.Endpoints;
 using Resend;
 using Serilog;
 using Serilog.Events;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
@@ -49,6 +50,12 @@ builder.Services.AddHttpClient("fixtures", client =>
 });
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 builder.Services.AddTransient<IFixtureService, FixtureService>();
 builder.Services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
 var excludedIps = new HashSet<string>(
@@ -150,6 +157,7 @@ builder.Services.AddDataProtection()
 var app = builder.Build();
 
 
+app.UseForwardedHeaders();
 app.UseRateLimiter();
 
 // Configure the HTTP request pipeline.
