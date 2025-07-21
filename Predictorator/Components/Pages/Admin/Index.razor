@@ -48,6 +48,11 @@ else
             <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@SendNewFixturesSampleAsync">New Fixtures Sample</MudButton>
             <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@SendStartingSoonSampleAsync">Starting Soon Sample</MudButton>
         </MudStack>
+        <MudStack Row="true" Spacing="2" Class="mt-2" AlignItems="AlignItems.Center">
+            <MudDatePicker @bind-Date="_scheduleDate" Label="Date" Class="mr-2" />
+            <MudTimePicker @bind-Time="_scheduleTime" Label="Time" Class="mr-2" />
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@ScheduleStartingSoonSampleAsync">Schedule Starting Soon Sample</MudButton>
+        </MudStack>
     </EditForm>
 }
 
@@ -62,6 +67,8 @@ else
     }
 
     private List<Item>? _items;
+    private DateTime? _scheduleDate = DateTime.Today;
+    private TimeSpan? _scheduleTime = TimeSpan.FromHours(9);
 
     protected override async Task OnInitializedAsync()
     {
@@ -129,6 +136,30 @@ else
         catch
         {
             await Toast.ShowToast("Failed to send sample notifications.", "error");
+        }
+    }
+
+    private async Task ScheduleStartingSoonSampleAsync()
+    {
+        var selected = _items!.Where(i => i.Selected).Cast<AdminSubscriberDto>().ToList();
+        if (!selected.Any())
+            return;
+
+        if (_scheduleDate == null || _scheduleTime == null)
+            return;
+
+        var uk = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+        var sendLocal = _scheduleDate.Value.Date + _scheduleTime.Value;
+        var sendUtc = TimeZoneInfo.ConvertTimeToUtc(sendLocal, uk);
+
+        try
+        {
+            await AdminService.ScheduleFixturesStartingSoonSampleAsync(selected, sendUtc);
+            await Toast.ShowToast("Sample notification scheduled!", "success");
+        }
+        catch
+        {
+            await Toast.ShowToast("Failed to schedule sample notification.", "error");
         }
     }
 }

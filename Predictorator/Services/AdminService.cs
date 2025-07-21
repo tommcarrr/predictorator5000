@@ -3,6 +3,7 @@ using Predictorator.Data;
 using Microsoft.Extensions.Logging;
 using Predictorator.Models;
 using Resend;
+using Hangfire;
 
 namespace Predictorator.Services;
 
@@ -32,8 +33,20 @@ public class AdminService
     private readonly EmailTemplateRenderer _renderer;
     private readonly NotificationService _notifications;
     private readonly ILogger<AdminService> _logger;
+    private readonly IBackgroundJobClient _jobs;
+    private readonly IDateTimeProvider _time;
 
-    public AdminService(ApplicationDbContext db, IResend resend, ITwilioSmsSender sms, IConfiguration config, EmailCssInliner inliner, EmailTemplateRenderer renderer, NotificationService notifications, ILogger<AdminService> logger)
+    public AdminService(
+        ApplicationDbContext db,
+        IResend resend,
+        ITwilioSmsSender sms,
+        IConfiguration config,
+        EmailCssInliner inliner,
+        EmailTemplateRenderer renderer,
+        NotificationService notifications,
+        ILogger<AdminService> logger,
+        IBackgroundJobClient jobs,
+        IDateTimeProvider time)
     {
         _db = db;
         _resend = resend;
@@ -43,6 +56,8 @@ public class AdminService
         _renderer = renderer;
         _notifications = notifications;
         _logger = logger;
+        _jobs = jobs;
+        _time = time;
     }
 
     public async Task<List<AdminSubscriberDto>> GetSubscribersAsync()
@@ -129,5 +144,14 @@ public class AdminService
     {
         var baseUrl = _config["BASE_URL"] ?? "http://localhost";
         await _notifications.SendSampleAsync(recipients, "Fixtures start in 1 hour!", baseUrl);
+    }
+
+    public Task ScheduleFixturesStartingSoonSampleAsync(IEnumerable<AdminSubscriberDto> recipients, DateTime sendUtc)
+    {
+        var baseUrl = _config["BASE_URL"] ?? "http://localhost";
+        var delay = sendUtc - _time.UtcNow;
+        if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
+        _jobs.Schedule<NotificationService>(s => s.SendSampleAsync(recipients, "Fixtures start in 1 hour!", baseUrl), delay);
+        return Task.CompletedTask;
     }
 }
