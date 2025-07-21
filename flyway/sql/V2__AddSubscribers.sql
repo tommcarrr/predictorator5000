@@ -1,8 +1,8 @@
-CREATE TABLE IF NOT EXISTS "Subscribers" (
-    "Id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "Email" TEXT NOT NULL,
-    "IsVerified" INTEGER NOT NULL,
-    "VerificationToken" TEXT NOT NULL,
-    "UnsubscribeToken" TEXT NOT NULL,
-    "CreatedAt" TEXT NOT NULL
+CREATE TABLE [Subscribers] (
+    [Id] int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    [Email] nvarchar(256) NOT NULL,
+    [IsVerified] bit NOT NULL,
+    [VerificationToken] nvarchar(64) NOT NULL,
+    [UnsubscribeToken] nvarchar(64) NOT NULL,
+    [CreatedAt] datetime2 NOT NULL
 );

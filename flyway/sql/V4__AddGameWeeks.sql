@@ -1,9 +1,9 @@
-CREATE TABLE IF NOT EXISTS "GameWeeks" (
-    "Id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "Season" TEXT NOT NULL,
-    "Number" INTEGER NOT NULL,
-    "StartDate" TEXT NOT NULL,
-    "EndDate" TEXT NOT NULL
+CREATE TABLE [GameWeeks] (
+    [Id] int IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    [Season] nvarchar(20) NOT NULL,
+    [Number] int NOT NULL,
+    [StartDate] datetime2 NOT NULL,
+    [EndDate] datetime2 NOT NULL
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS "IX_GameWeeks_Season_Number" ON "GameWeeks" ("Season", "Number");
+CREATE UNIQUE INDEX [IX_GameWeeks_Season_Number] ON [GameWeeks] ([Season], [Number]);
