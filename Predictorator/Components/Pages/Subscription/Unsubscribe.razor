@@ -4,20 +4,24 @@
 @inject PersistentComponentState State
 @implements IDisposable
 
-<h2>Unsubscribe</h2>
-@if (_result == null)
-{
-    <p>Are you sure you want to unsubscribe?</p>
-    <button class="btn btn-primary" @onclick="HandleUnsubscribe">Unsubscribe</button>
-}
-else if (_result == true)
-{
-    <p>You have been unsubscribed.</p>
-}
-else
-{
-    <p>Invalid unsubscribe link.</p>
-}
+<MudPaper Class="pa-4" Elevation="1">
+    <MudStack Spacing="2">
+        <h2>Unsubscribe</h2>
+        @if (_result == null)
+        {
+            <p>Are you sure you want to unsubscribe?</p>
+            <MudButton OnClick="HandleUnsubscribe" Color="Color.Primary" Variant="Variant.Filled">Unsubscribe</MudButton>
+        }
+        else if (_result == true)
+        {
+            <p>You have been unsubscribed.</p>
+        }
+        else
+        {
+            <p>Invalid unsubscribe link.</p>
+        }
+    </MudStack>
+</MudPaper>
 
 @code {
     [Parameter, SupplyParameterFromQuery]
