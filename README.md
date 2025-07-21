@@ -25,6 +25,10 @@ The global rate limiter can exclude specific IP addresses. Add them under
 `RateLimiting:ExcludedIPs` in configuration or via environment variables such as
 `RateLimiting__ExcludedIPs__0=127.0.0.1`.
 
+Game week data is cached to reduce database load. The duration defaults to two
+hours but can be changed using the `GameWeekCache:CacheDurationHours` setting or
+the `GAMEWEEKCACHE__CACHE_DURATION_HOURS` environment variable.
+
 All variables used by Docker Compose can be placed in a `.env` file. A sample
 is provided at `.env.example`. Copy this file to `.env` and update the values
 as needed before running the containers.

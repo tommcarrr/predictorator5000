@@ -1,6 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
 using Predictorator.Data;
 using Predictorator.Models;
+using Predictorator.Options;
 using Predictorator.Services;
 
 namespace Predictorator.Tests;
@@ -10,6 +14,7 @@ public class GameWeekServiceTests
     private class TestFactory : IDbContextFactory<ApplicationDbContext>
     {
         private readonly DbContextOptions<ApplicationDbContext> _options;
+        public int CreateCount { get; private set; }
 
         public TestFactory(DbContextOptions<ApplicationDbContext> options)
         {
@@ -18,6 +23,7 @@ public class GameWeekServiceTests
 
         public ApplicationDbContext CreateDbContext()
         {
+            CreateCount++;
             return new ApplicationDbContext(_options);
         }
     }
@@ -29,7 +35,13 @@ public class GameWeekServiceTests
             .Options;
         factory = new TestFactory(options);
         db = factory.CreateDbContext();
-        return new GameWeekService(factory);
+        var services = new ServiceCollection();
+        services.AddHybridCache();
+        services.Configure<GameWeekCacheOptions>(_ => { });
+        var provider = services.BuildServiceProvider();
+        var cache = provider.GetRequiredService<HybridCache>();
+        var opts = provider.GetRequiredService<IOptions<GameWeekCacheOptions>>();
+        return new GameWeekService(factory, cache, opts);
     }
 
     [Fact]
@@ -115,5 +127,22 @@ public class GameWeekServiceTests
         Assert.Equal(updated.Number, dbItem.Number);
         Assert.Equal(updated.StartDate, dbItem.StartDate);
         Assert.Equal(updated.EndDate, dbItem.EndDate);
+    }
+
+    [Fact]
+    public async Task GetGameWeeksAsync_uses_cache()
+    {
+        var service = CreateService(out var db, out var factory);
+        db.GameWeeks.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) });
+        await db.SaveChangesAsync();
+
+        var before = factory.CreateCount;
+        _ = await service.GetGameWeeksAsync();
+        var afterFirst = factory.CreateCount;
+        _ = await service.GetGameWeeksAsync();
+        var afterSecond = factory.CreateCount;
+
+        Assert.Equal(before + 1, afterFirst);
+        Assert.Equal(afterFirst, afterSecond);
     }
 }

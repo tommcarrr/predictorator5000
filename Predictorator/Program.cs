@@ -91,6 +91,7 @@ builder.Services.AddRateLimiter(options =>
 });
 builder.Services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 builder.Services.AddHybridCache();
+builder.Services.Configure<GameWeekCacheOptions>(builder.Configuration.GetSection(GameWeekCacheOptions.SectionName));
 builder.Services.AddHttpClient<ResendClient>();
 builder.Services.Configure<ResendClientOptions>(o =>
 {
