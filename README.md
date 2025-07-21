@@ -24,6 +24,8 @@ contain valid links.
 The global rate limiter can exclude specific IP addresses. Add them under
 `RateLimiting:ExcludedIPs` in configuration or via environment variables such as
 `RateLimiting__ExcludedIPs__0=127.0.0.1`.
+Requests to the Hangfire dashboard under `/hangfire` are also exempt from rate
+limiting.
 
 Game week data is cached to reduce database load. The duration defaults to two
 hours but can be changed using the `GameWeekCache:CacheDurationHours` setting or
