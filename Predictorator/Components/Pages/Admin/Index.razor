@@ -5,16 +5,17 @@
 @inject AdminService AdminService
 @inject ToastInterop Toast
 
-<MudPaper Class="pa-2 mb-4">
-    <MudButton Color="Color.Error" OnClick="ClearCaches">Clear Caches</MudButton>
-</MudPaper>
-
 <MudTabs>
     <MudTabPanel Text="Subscribers">
         <Subscribers />
     </MudTabPanel>
     <MudTabPanel Text="Game Weeks">
         <GameWeeks />
+    </MudTabPanel>
+    <MudTabPanel Text="Maintenance">
+        <MudPaper Class="pa-2">
+            <MudButton Color="Color.Error" Variant="Variant.Filled" OnClick="ClearCaches">Clear Caches</MudButton>
+        </MudPaper>
     </MudTabPanel>
 </MudTabs>
 
