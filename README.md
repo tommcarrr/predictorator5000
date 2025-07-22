@@ -67,3 +67,9 @@ the keys are stored in `/var/dp-keys` which is backed by the `dp-keys` volume.
 You can override the location by setting the `DataProtection__KeyPath` environment
 variable.
 
+
+## TODO
+
+- [ ] Get Flyway migrations working in the pipeline
+- [ ] Port to the Predictotronix project (API & WASM)
+- [ ] Use the Premier League API to retrieve gameweeks
