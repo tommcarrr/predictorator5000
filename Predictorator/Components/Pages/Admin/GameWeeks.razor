@@ -7,7 +7,12 @@
 <MudPaper Class="pa-2" Elevation="1">
     <EditForm Model="_model" OnValidSubmit="SaveAsync">
         <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-            <MudTextField @bind-Value="_model.Season" Label="Season" Required="true" />
+            <MudSelect T="string" @bind-Value="_model.Season" Label="Season" Required="true">
+                @foreach (var season in _seasons)
+                {
+                    <MudSelectItem Value="@season">@season</MudSelectItem>
+                }
+            </MudSelect>
             <MudNumericField T="int" @bind-Value="_model.Number" Label="Week" Required="true" />
             <MudDatePicker @bind-Date="_start" Label="Start" Required="true" />
             <MudDatePicker @bind-Date="_end" Label="End" Required="true" />
@@ -48,8 +53,11 @@ else
 }
 
 @code {
+    private static readonly List<string> _seasons = new() { "25-26", "26-27", "27-28" };
+    private const string DefaultSeason = "25-26";
+
     private List<GameWeek>? _items;
-    private GameWeek _model = new();
+    private GameWeek _model = new() { Season = DefaultSeason };
     private DateTime? _start;
     private DateTime? _end;
     private int? _editingId;
@@ -80,9 +88,7 @@ else
         _model.StartDate = _start.Value.Date;
         _model.EndDate = _end.Value.Date;
         await Service.AddOrUpdateAsync(_model);
-        _model = new GameWeek();
-        _start = _end = null;
-        _editingId = null;
+        ResetModel();
         await LoadAsync();
     }
 
@@ -101,14 +107,20 @@ else
 
     private void CancelEdit()
     {
-        _model = new GameWeek();
-        _start = _end = null;
-        _editingId = null;
+        ResetModel();
     }
 
     private async Task DeleteAsync(int id)
     {
         await Service.DeleteAsync(id);
         await LoadAsync();
+        ResetModel();
+    }
+
+    private void ResetModel()
+    {
+        _model = new GameWeek { Season = DefaultSeason };
+        _start = _end = null;
+        _editingId = null;
     }
 }
