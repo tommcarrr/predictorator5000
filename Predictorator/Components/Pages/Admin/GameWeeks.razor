@@ -11,10 +11,10 @@
             <MudNumericField T="int" @bind-Value="_model.Number" Label="Week" Required="true" />
             <MudDatePicker @bind-Date="_start" Label="Start" Required="true" />
             <MudDatePicker @bind-Date="_end" Label="End" Required="true" />
-            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary">Save</MudButton>
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Save</MudButton>
             @if (_editingId != null)
             {
-                <MudButton Color="Color.Default" OnClick="CancelEdit">Cancel</MudButton>
+                <MudButton Color="Color.Default" Variant="Variant.Outlined" OnClick="CancelEdit">Cancel</MudButton>
             }
         </MudStack>
     </EditForm>
@@ -40,8 +40,8 @@ else
             <MudTd>@row.StartDate.ToString("yyyy-MM-dd")</MudTd>
             <MudTd>@row.EndDate.ToString("yyyy-MM-dd")</MudTd>
             <MudTd>
-                <MudButton Size="Size.Small" OnClick="() => Edit(row)">Edit</MudButton>
-                <MudButton Size="Size.Small" Color="Color.Error" OnClick="() => DeleteAsync(row.Id)">Delete</MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="() => Edit(row)">Edit</MudButton>
+                <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" OnClick="() => DeleteAsync(row.Id)">Delete</MudButton>
             </MudTd>
         </RowTemplate>
     </MudTable>

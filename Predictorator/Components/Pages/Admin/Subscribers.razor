@@ -33,9 +33,9 @@ else
                 <MudTd>
                     @if (!row.IsVerified)
                     {
-                        <MudButton Size="Size.Small" Color="Color.Success" OnClick="@(()=>ConfirmAsync(row))">Confirm</MudButton>
+                        <MudButton Size="Size.Small" Color="Color.Success" Variant="Variant.Filled" OnClick="@(()=>ConfirmAsync(row))">Confirm</MudButton>
                     }
-                    <MudButton Size="Size.Small" Color="Color.Error" OnClick="@(()=>DeleteAsync(row))">Delete</MudButton>
+                    <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" OnClick="@(()=>DeleteAsync(row))">Delete</MudButton>
                 </MudTd>
             </RowTemplate>
         </MudTable>
