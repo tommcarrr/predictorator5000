@@ -33,11 +33,12 @@ The application also requires a Rapid API key for fixture data via
 `ApiSettings__RapidApiKey`.
 Set `BASE_URL` to the public address of the site so scheduled notifications
 contain valid links.
-The global rate limiter can exclude specific IP addresses. Add them under
-`RateLimiting:ExcludedIPs` in configuration or via environment variables such as
-`RateLimiting__ExcludedIPs__0=127.0.0.1`.
-Requests to the Hangfire dashboard under `/hangfire` are also exempt from rate
-limiting.
+Each IP address may visit at most 50 unique routes per day. Returning to a cached
+page does not count toward this limit. The threshold can be adjusted with the
+`RouteLimiting:UniqueRouteLimit` setting. Specific IP addresses can be excluded
+via `RateLimiting:ExcludedIPs` or environment variables such as
+`RateLimiting__ExcludedIPs__0=127.0.0.1`. Requests to the Hangfire dashboard
+under `/hangfire` are also exempt from rate limiting.
 
 Game week data is cached to reduce database load. The duration defaults to two
 hours but can be changed using the `GameWeekCache:CacheDurationHours` setting or

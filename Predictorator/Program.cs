@@ -1,4 +1,3 @@
-using System.Threading.RateLimiting;
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Identity;
@@ -12,6 +11,7 @@ using Predictorator.Options;
 using Predictorator.Services;
 using Predictorator.Startup;
 using Predictorator.Endpoints;
+using Predictorator.Middleware;
 using Resend;
 using Serilog;
 using Serilog.Events;
@@ -70,26 +70,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 builder.Services.AddTransient<IFixtureService, FixtureService>();
 builder.Services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
-var excludedIps = new HashSet<string>(
-    builder.Configuration.GetSection("RateLimiting:ExcludedIPs").Get<string[]>() ?? Array.Empty<string>());
-builder.Services.AddRateLimiter(options =>
-{
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-    {
-        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        if (excludedIps.Contains(ip) ||
-            context.Request.Path.StartsWithSegments("/hangfire"))
-            return RateLimitPartition.GetNoLimiter(ip);
-        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
-        {
-            PermitLimit = 100,
-            Window = TimeSpan.FromDays(1),
-            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-            QueueLimit = 0
-        });
-    });
-});
+builder.Services.AddRouteLimiting(builder.Configuration);
 builder.Services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 builder.Services.AddHybridCache();
 builder.Services.AddSingleton<CachePrefixService>();
@@ -186,7 +167,7 @@ var app = builder.Build();
 
 app.UseRequestLocalization(localizationOptions);
 app.UseForwardedHeaders();
-app.UseRateLimiter();
+app.UseRouteLimiting();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

@@ -1,5 +1,4 @@
 using System.Net;
-using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -7,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Predictorator.Options;
 using Predictorator.Data;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
@@ -30,21 +30,7 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
                     options.UseInMemoryDatabase("TestDb"));
                 services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
                 services.AddSingleton<IDateTimeProvider>(new SystemDateTimeProvider());
-                services.AddRateLimiter(options =>
-                {
-                    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-                    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-                    {
-                        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-                        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 1,
-                            Window = TimeSpan.FromMinutes(1),
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                            QueueLimit = 0
-                        });
-                    });
-                });
+                services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
                 services.AddTransient<IFixtureService>(_ => new FakeFixtureService(
                     new FixturesResponse { Response = new List<FixtureData>() }));
 
@@ -64,7 +50,7 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
     {
         var client = _factory.CreateClient();
         var first = await client.GetAsync("/");
-        var second = await client.GetAsync("/");
+        var second = await client.GetAsync("/other");
 
         Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
     }
@@ -72,7 +58,6 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Excluded_ip_is_not_rate_limited()
     {
-        string? observedIp = null;
         var factory = _factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureServices(services =>
@@ -80,40 +65,21 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
                 services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseInMemoryDatabase("TestDbExempt"));
-                services.AddRateLimiter(options =>
-                {
-                    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-                    var excluded = new HashSet<string> { "unknown" };
-                    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-                    {
-                        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-                        observedIp = ip;
-                        if (excluded.Contains(ip))
-                            return RateLimitPartition.GetNoLimiter(ip);
-                        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 1,
-                            Window = TimeSpan.FromMinutes(1),
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                            QueueLimit = 0
-                        });
-                    });
-                });
+                services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
+                services.PostConfigure<RateLimitingOptions>(o => o.ExcludedIPs = new[] { "unknown" });
             });
         });
 
         var client = factory.CreateClient();
         var first = await client.GetAsync("/");
-        var second = await client.GetAsync("/");
+        var second = await client.GetAsync("/about");
 
-        Assert.Equal("unknown", observedIp);
-        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        Assert.NotEqual(HttpStatusCode.TooManyRequests, second.StatusCode);
     }
 
     [Fact]
     public async Task Excluded_forwarded_ip_is_not_rate_limited()
     {
-        string? observedIp = null;
         var factory = _factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureServices(services =>
@@ -121,35 +87,17 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
                 services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseInMemoryDatabase("TestDbForwarded"));
-                services.AddRateLimiter(options =>
-                {
-                    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-                    var excluded = new HashSet<string> { "1.2.3.4" };
-                    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-                    {
-                        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-                        observedIp = ip;
-                        if (excluded.Contains(ip))
-                            return RateLimitPartition.GetNoLimiter(ip);
-                        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 1,
-                            Window = TimeSpan.FromMinutes(1),
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                            QueueLimit = 0
-                        });
-                    });
-                });
+                services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
+                services.PostConfigure<RateLimitingOptions>(o => o.ExcludedIPs = new[] { "1.2.3.4" });
             });
         });
 
         var client = factory.CreateClient();
         client.DefaultRequestHeaders.Add("X-Forwarded-For", "1.2.3.4");
         var first = await client.GetAsync("/");
-        var second = await client.GetAsync("/");
+        var second = await client.GetAsync("/other");
 
-        Assert.Equal("1.2.3.4", observedIp);
-        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        Assert.NotEqual(HttpStatusCode.TooManyRequests, second.StatusCode);
     }
 
     [Fact]
@@ -162,30 +110,14 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
                 services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseInMemoryDatabase("TestDbHangfire"));
-                services.AddRateLimiter(options =>
-                {
-                    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-                    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
-                    {
-                        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-                        if (context.Request.Path.StartsWithSegments("/hangfire"))
-                            return RateLimitPartition.GetNoLimiter(ip);
-                        return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 1,
-                            Window = TimeSpan.FromMinutes(1),
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                            QueueLimit = 0
-                        });
-                    });
-                });
+                services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
             });
         });
 
         var client = factory.CreateClient();
         var first = await client.GetAsync("/hangfire");
-        var second = await client.GetAsync("/hangfire");
+        var second = await client.GetAsync("/other");
 
-        Assert.Equal(HttpStatusCode.NotFound, second.StatusCode);
+        Assert.NotEqual(HttpStatusCode.TooManyRequests, second.StatusCode);
     }
 }
