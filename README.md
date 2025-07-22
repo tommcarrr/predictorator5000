@@ -6,11 +6,19 @@ This repository hosts a Blazor Server application. To run the application locall
 dotnet run --project Predictorator/Predictorator.csproj
 ```
 
+The project targets .NET 9.0. The required SDK version is specified in
+`global.json`. If it isn't installed locally you can run the provided
+`./dotnet-install.sh` script to install the correct version.
+
 Tests can be executed with:
 
 ```bash
 dotnet test Predictorator.sln
 ```
+
+Playwright UI tests are included but disabled by default. Set the
+`RUN_UI_TESTS` environment variable to `true` to enable them. Optionally
+set `BASE_URL` and `UI_TEST_TOKEN` to control the test host and authentication.
 
 The seeded admin account credentials are configured via `AdminUser` settings.
 You can override these values by setting the `ADMIN_EMAIL` and
@@ -19,6 +27,10 @@ logged in as an administrator you can view background jobs via the Hangfire
 dashboard at `/hangfire`.
 SMS notifications use Twilio. Set `Twilio__AccountSid`, `Twilio__AuthToken`, and
 `Twilio__FromNumber` environment variables with your Twilio credentials.
+Email delivery is handled by [Resend](https://resend.com). Configure the
+`Resend__ApiToken` and `Resend__From` settings to enable it.
+The application also requires a Rapid API key for fixture data via
+`ApiSettings__RapidApiKey`.
 Set `BASE_URL` to the public address of the site so scheduled notifications
 contain valid links.
 The global rate limiter can exclude specific IP addresses. Add them under
@@ -54,3 +66,4 @@ Data Protection keys are persisted to `./dp-keys` by default. When running in Do
 the keys are stored in `/var/dp-keys` which is backed by the `dp-keys` volume.
 You can override the location by setting the `DataProtection__KeyPath` environment
 variable.
+
