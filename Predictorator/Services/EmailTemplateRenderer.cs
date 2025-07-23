@@ -4,7 +4,7 @@ namespace Predictorator.Services;
 
 public class EmailTemplateRenderer
 {
-    public string Render(string messageHtml, string baseUrl, string? unsubscribeToken, string? buttonText = null, string? buttonUrl = null)
+    public string Render(string messageHtml, string baseUrl, string? unsubscribeToken, string? buttonText = null, string? buttonUrl = null, string? preheader = null)
     {
         var year = DateTime.UtcNow.Year;
         var buttonSection = string.Empty;
@@ -36,6 +36,10 @@ public class EmailTemplateRenderer
             unsubscribeSection = $"<a href=\"{link}\" style=\"color:#555555; text-decoration:none; font-size:11px;\">Unsubscribe</a>";
         }
 
+        var preheaderText = string.IsNullOrWhiteSpace(preheader)
+            ? "Updates from Predictotronix"
+            : preheader;
+
         return $@"<!DOCTYPE html>
 <html>
 <head>
@@ -47,7 +51,7 @@ public class EmailTemplateRenderer
 </head>
 <body style=""margin:0; padding:0; background-color:#0a0a0a; color:#f0f0f0; font-family:'Courier New', Courier, monospace;"">
   <span class=""preheader"">
-    Your latest predictions are locked and loaded at Predictotronix.
+    {preheaderText}
   </span>
   <table width=""100%"" cellpadding=""0"" cellspacing=""0"" style=""background-color:#0a0a0a; padding:20px 0;"">
     <tr>

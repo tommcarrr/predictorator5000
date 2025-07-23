@@ -137,7 +137,7 @@ public class NotificationService
 
     private EmailMessage CreateEmailMessage(string message, string baseUrl, Subscriber sub)
     {
-        var html = _renderer.Render(message, baseUrl, sub.UnsubscribeToken, "VIEW FIXTURES", baseUrl);
+        var html = _renderer.Render(message, baseUrl, sub.UnsubscribeToken, "VIEW FIXTURES", baseUrl, preheader: message);
         var emailMessage = new EmailMessage
         {
             From = _config["Resend:From"] ?? "Prediction Fairy <no-reply@example.com>",
