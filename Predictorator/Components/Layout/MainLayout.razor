@@ -7,6 +7,7 @@
 @inject IDialogService DialogService
 @inject NotificationFeatureService NotificationFeatures
 @using Predictorator.Components.Pages.Subscription
+@using Predictorator.Components.Privacy
 
 <MudThemeProvider Theme="@CurrentTheme"
                   @bind-IsDarkMode="@IsDarkMode"/>
@@ -90,6 +91,9 @@
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.Large">
             @Body
+            <MudText Typo="Typo.caption" Align="Align.Center" Class="mt-6">
+                <MudLink Href="#" OnClick="OpenPrivacyPolicy">Privacy Policy</MudLink>
+            </MudText>
         </MudContainer>
     </MudMainContent>
 
@@ -260,6 +264,11 @@
     private void OpenSubscribe()
     {
         DialogService.Show<Subscribe>("Subscribe");
+    }
+
+    private void OpenPrivacyPolicy()
+    {
+        DialogService.Show<Privacy.PrivacyPolicyDialog>("Privacy Policy");
     }
 
     private bool? GetCookieBool(string key)
