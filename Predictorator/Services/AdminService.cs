@@ -123,7 +123,7 @@ public class AdminService
                 var sub = await _db.Subscribers.FirstOrDefaultAsync(x => x.Id == s.Id);
                 if (sub != null)
                 {
-                    var html = _renderer.Render("This is a test notification.", baseUrl, sub.UnsubscribeToken, "VIEW FIXTURES", baseUrl);
+                    var html = _renderer.Render("This is a test notification.", baseUrl, sub.UnsubscribeToken, "VIEW FIXTURES", baseUrl, preheader: "This is a test notification.");
                     var message = new EmailMessage
                     {
                         From = _config["Resend:From"] ?? "Predictorator <noreply@example.com>",

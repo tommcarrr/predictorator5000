@@ -27,7 +27,7 @@ public class SubscriptionService
 
     private async Task SendAdminEmailAsync(string subject, string body)
     {
-        var html = _renderer.Render(body, _config["BASE_URL"] ?? string.Empty, null);
+        var html = _renderer.Render(body, _config["BASE_URL"] ?? string.Empty, null, preheader: body);
         var message = new EmailMessage
         {
             From = _config["Resend:From"] ?? "Prediction Fairy <no-reply@example.com>",
@@ -160,7 +160,7 @@ public class SubscriptionService
 
         var verifyLink = $"{baseUrl}/Subscription/Verify?token={subscriber.VerificationToken}";
 
-        var html = _renderer.Render("Please verify your email.", baseUrl, subscriber.UnsubscribeToken, "VERIFY EMAIL", verifyLink);
+        var html = _renderer.Render("Please verify your email.", baseUrl, subscriber.UnsubscribeToken, "VERIFY EMAIL", verifyLink, preheader: "Please verify your email.");
         var message = new EmailMessage
         {
             From = _config["Resend:From"] ?? "Prediction Fairy <no-reply@example.com>",
