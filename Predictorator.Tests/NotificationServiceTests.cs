@@ -70,17 +70,31 @@ public class NotificationServiceTests
     }
 
     [Fact]
-    public async Task CheckFixturesAsync_schedules_new_fixture_job()
+    public async Task CheckFixturesAsync_schedules_new_fixture_job_on_fixture_day()
     {
         var now = new DateTime(2024, 6, 1, 8, 0, 0, DateTimeKind.Utc);
-        var fixture = now.AddDays(2);
-        var service = CreateService(now, fixture, out var db, out var jobs, out _, out _);
+        var fixture = now.AddHours(2);
+        var service = CreateService(now, fixture, out _, out var jobs, out _, out _);
 
         await service.CheckFixturesAsync();
 
         jobs.Received().Create(
             Arg.Is<Job>(j => j.Method.Name == nameof(NotificationService.SendNewFixturesAvailableAsync)),
             Arg.Is<IState>(s => s is ScheduledState));
+    }
+
+    [Fact]
+    public async Task CheckFixturesAsync_does_not_schedule_new_fixture_job_in_advance()
+    {
+        var now = new DateTime(2024, 6, 1, 8, 0, 0, DateTimeKind.Utc);
+        var fixture = now.AddDays(2);
+        var service = CreateService(now, fixture, out _, out var jobs, out _, out _);
+
+        await service.CheckFixturesAsync();
+
+        jobs.DidNotReceive().Create(
+            Arg.Is<Job>(j => j.Method.Name == nameof(NotificationService.SendNewFixturesAvailableAsync)),
+            Arg.Any<IState>());
     }
 
     [Fact]

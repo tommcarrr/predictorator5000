@@ -94,13 +94,16 @@ public class NotificationService
             if (!sent)
             {
                 var futureUk = TimeZoneInfo.ConvertTime(future.Fixture.Date, ukTz);
-                var sendTimeUk = futureUk.Date.AddHours(10);
-                var sendTimeUtc = TimeZoneInfo.ConvertTimeToUtc(sendTimeUk, ukTz);
-                var delay = sendTimeUtc - nowUtc;
-                if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
-                _jobs.Schedule<NotificationService>(
-                    s => s.SendNewFixturesAvailableAsync(key, baseUrl),
-                    delay);
+                if (futureUk.Date == nowUk.Date)
+                {
+                    var sendTimeUk = futureUk.Date.AddHours(10);
+                    var sendTimeUtc = TimeZoneInfo.ConvertTimeToUtc(sendTimeUk, ukTz);
+                    var delay = sendTimeUtc - nowUtc;
+                    if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
+                    _jobs.Schedule<NotificationService>(
+                        s => s.SendNewFixturesAvailableAsync(key, baseUrl),
+                        delay);
+                }
             }
         }
 
