@@ -11,6 +11,7 @@ public class AdminPageLinkTests
     {
         var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Predictorator", "Components", "Pages", "Admin", "Index.razor"));
         var content = File.ReadAllText(path);
-        Assert.Contains("/hangfire", content);
+        Assert.Contains("<MudButton", content);
+        Assert.Contains("Href=\"/hangfire\"", content);
     }
 }
