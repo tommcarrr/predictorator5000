@@ -143,4 +143,14 @@ public class HomePageTests
         await _page.WaitForURLAsync(initialUrl);
         Assert.That(_page.Url, Is.EqualTo(initialUrl));
     }
+
+    [Test]
+    public async Task PrivacyPolicyLink_Should_Display_Dialog()
+    {
+        await NavigateWithRetriesAsync(_page!, BaseUrl);
+        var initialUrl = _page!.Url;
+        await _page.GetByRole(AriaRole.Link, new() { Name = "Privacy Policy" }).ClickAsync();
+        await _page.GetByRole(AriaRole.Dialog).GetByText("Privacy Policy").WaitForAsync();
+        Assert.That(_page.Url, Is.EqualTo(initialUrl));
+    }
 }
