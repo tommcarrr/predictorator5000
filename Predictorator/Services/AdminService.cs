@@ -163,6 +163,26 @@ public class AdminService
         return Task.CompletedTask;
     }
 
+    public Task ScheduleNewFixturesAsync(DateTime sendUtc)
+    {
+        var baseUrl = _config["BASE_URL"] ?? "http://localhost";
+        var key = sendUtc.ToString("yyyy-MM-dd");
+        var delay = sendUtc - _time.UtcNow;
+        if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
+        _jobs.Schedule<NotificationService>(s => s.SendNewFixturesAvailableAsync(key, baseUrl), delay);
+        return Task.CompletedTask;
+    }
+
+    public Task ScheduleFixturesStartingSoonAsync(DateTime sendUtc)
+    {
+        var baseUrl = _config["BASE_URL"] ?? "http://localhost";
+        var key = sendUtc.ToString("O");
+        var delay = sendUtc - _time.UtcNow;
+        if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
+        _jobs.Schedule<NotificationService>(s => s.SendFixturesStartingSoonAsync(key, baseUrl), delay);
+        return Task.CompletedTask;
+    }
+
     public Task ClearCachesAsync()
     {
         _prefix.Clear();

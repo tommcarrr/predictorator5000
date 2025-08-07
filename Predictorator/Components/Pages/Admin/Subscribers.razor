@@ -39,17 +39,37 @@ else
                 </MudTd>
             </RowTemplate>
         </MudTable>
-        <MudStack Row="true" Spacing="2" Class="mt-2">
-            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Send Test</MudButton>
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@SendNewFixturesSampleAsync">New Fixtures Sample</MudButton>
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@SendStartingSoonSampleAsync">Starting Soon Sample</MudButton>
-        </MudStack>
-        <MudStack Row="true" Spacing="2" Class="mt-2" AlignItems="AlignItems.Center">
-            <MudDatePicker @bind-Date="_scheduleDate" Label="Date" Class="mr-2" />
-            <MudTimePicker @bind-Time="_scheduleTime" Label="Time" Class="mr-2" />
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@ScheduleStartingSoonSampleAsync">Schedule Starting Soon Sample</MudButton>
-        </MudStack>
+        <MudPaper Class="pa-2 mt-2">
+            <MudText Typo="Typo.h6">Test Notifications</MudText>
+            <MudStack Row="true" Spacing="2" Class="mt-2">
+                <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Send Test</MudButton>
+            </MudStack>
+        </MudPaper>
+        <MudPaper Class="pa-2 mt-2">
+            <MudText Typo="Typo.h6">Sample Notifications</MudText>
+            <MudStack Row="true" Spacing="2" Class="mt-2">
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@SendNewFixturesSampleAsync">New Fixtures Sample</MudButton>
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@SendStartingSoonSampleAsync">Starting Soon Sample</MudButton>
+            </MudStack>
+        </MudPaper>
+        <MudPaper Class="pa-2 mt-2">
+            <MudText Typo="Typo.h6">Schedule Sample Notification</MudText>
+            <MudStack Row="true" Spacing="2" Class="mt-2" AlignItems="AlignItems.Center">
+                <MudDatePicker @bind-Date="_sampleDate" Label="Date" Class="mr-2" />
+                <MudTimePicker @bind-Time="_sampleTime" Label="Time" Class="mr-2" />
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@ScheduleStartingSoonSampleAsync">Schedule Starting Soon Sample</MudButton>
+            </MudStack>
+        </MudPaper>
     </EditForm>
+    <MudPaper Class="pa-2 mt-4">
+        <MudText Typo="Typo.h6">Schedule Real Notifications</MudText>
+        <MudStack Row="true" Spacing="2" Class="mt-2" AlignItems="AlignItems.Center">
+            <MudDatePicker @bind-Date="_realDate" Label="Date" Class="mr-2" />
+            <MudTimePicker @bind-Time="_realTime" Label="Time" Class="mr-2" />
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@ScheduleNewFixturesAsync">Schedule New Fixtures</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@ScheduleFixturesStartingSoonAsync">Schedule Fixtures Starting Soon</MudButton>
+        </MudStack>
+    </MudPaper>
 }
 
 @code {
@@ -63,8 +83,10 @@ else
     }
 
     private List<Item>? _items;
-    private DateTime? _scheduleDate = DateTime.Today;
-    private TimeSpan? _scheduleTime = TimeSpan.FromHours(9);
+    private DateTime? _sampleDate = DateTime.Today;
+    private TimeSpan? _sampleTime = TimeSpan.FromHours(9);
+    private DateTime? _realDate = DateTime.Today;
+    private TimeSpan? _realTime = TimeSpan.FromHours(9);
 
     protected override async Task OnInitializedAsync()
     {
@@ -144,14 +166,14 @@ else
             return;
         }
 
-        if (_scheduleDate == null || _scheduleTime == null)
+        if (_sampleDate == null || _sampleTime == null)
         {
             await Toast.ShowToast("Please choose a date and time.", "error");
             return;
         }
 
         var uk = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
-        var sendLocal = DateTime.SpecifyKind(_scheduleDate.Value.Date + _scheduleTime.Value, DateTimeKind.Unspecified);
+        var sendLocal = DateTime.SpecifyKind(_sampleDate.Value.Date + _sampleTime.Value, DateTimeKind.Unspecified);
         var sendUtc = TimeZoneInfo.ConvertTimeToUtc(sendLocal, uk);
 
         try
@@ -162,6 +184,52 @@ else
         catch
         {
             await Toast.ShowToast("Failed to schedule sample notification.", "error");
+        }
+    }
+
+    private async Task ScheduleNewFixturesAsync()
+    {
+        if (_realDate == null || _realTime == null)
+        {
+            await Toast.ShowToast("Please choose a date and time.", "error");
+            return;
+        }
+
+        var uk = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+        var sendLocal = DateTime.SpecifyKind(_realDate.Value.Date + _realTime.Value, DateTimeKind.Unspecified);
+        var sendUtc = TimeZoneInfo.ConvertTimeToUtc(sendLocal, uk);
+
+        try
+        {
+            await AdminService.ScheduleNewFixturesAsync(sendUtc);
+            await Toast.ShowToast("New fixtures notification scheduled!", "success");
+        }
+        catch
+        {
+            await Toast.ShowToast("Failed to schedule new fixtures notification.", "error");
+        }
+    }
+
+    private async Task ScheduleFixturesStartingSoonAsync()
+    {
+        if (_realDate == null || _realTime == null)
+        {
+            await Toast.ShowToast("Please choose a date and time.", "error");
+            return;
+        }
+
+        var uk = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+        var sendLocal = DateTime.SpecifyKind(_realDate.Value.Date + _realTime.Value, DateTimeKind.Unspecified);
+        var sendUtc = TimeZoneInfo.ConvertTimeToUtc(sendLocal, uk);
+
+        try
+        {
+            await AdminService.ScheduleFixturesStartingSoonAsync(sendUtc);
+            await Toast.ShowToast("Starting soon notification scheduled!", "success");
+        }
+        catch
+        {
+            await Toast.ShowToast("Failed to schedule starting soon notification.", "error");
         }
     }
 }
