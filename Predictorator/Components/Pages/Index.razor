@@ -9,6 +9,8 @@
 @using Predictorator.Components.Layout
 @using Predictorator.Models
 
+<PageTitle>@PageTitleText</PageTitle>
+
 @if (UiModeService.IsCeefax)
 {
     <MudText Typo="Typo.h3" Class="my-4 pa-2 ceefax-title" Align="Align.Center" Color="Color.Success">Premiership Results Fixtures</MudText>
@@ -111,6 +113,10 @@ else if (_fixtures.Response.Any())
 
     [Parameter] public string? Season { get; set; }
     [Parameter] public int? Week { get; set; }
+
+    private string PageTitleText => !string.IsNullOrEmpty(Season) && Week.HasValue
+        ? $"Predictotronix | {Season} | GW{Week}"
+        : "Predictotronix";
 
     [Parameter, SupplyParameterFromQuery(Name = "fromDate")] public DateTime? FromDate { get; set; }
     [Parameter, SupplyParameterFromQuery(Name = "toDate")] public DateTime? ToDate { get; set; }
