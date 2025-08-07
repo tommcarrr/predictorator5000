@@ -134,4 +134,30 @@ public class AdminServiceTests
             Arg.Is<Job>(j => j.Method.Name == nameof(NotificationService.SendSampleAsync)),
             Arg.Is<IState>(s => s is ScheduledState));
     }
+
+    [Fact]
+    public async Task ScheduleNewFixturesAsync_schedules_job()
+    {
+        var service = CreateService(out _, out _, out _, out var jobs, out var time);
+        var sendAt = time.UtcNow.AddMinutes(30);
+
+        await service.ScheduleNewFixturesAsync(sendAt);
+
+        jobs.Received().Create(
+            Arg.Is<Job>(j => j.Method.Name == nameof(NotificationService.SendNewFixturesAvailableAsync)),
+            Arg.Is<IState>(s => s is ScheduledState));
+    }
+
+    [Fact]
+    public async Task ScheduleFixturesStartingSoonAsync_schedules_job()
+    {
+        var service = CreateService(out _, out _, out _, out var jobs, out var time);
+        var sendAt = time.UtcNow.AddMinutes(30);
+
+        await service.ScheduleFixturesStartingSoonAsync(sendAt);
+
+        jobs.Received().Create(
+            Arg.Is<Job>(j => j.Method.Name == nameof(NotificationService.SendFixturesStartingSoonAsync)),
+            Arg.Is<IState>(s => s is ScheduledState));
+    }
 }
