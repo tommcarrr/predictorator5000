@@ -290,8 +290,8 @@ public class CeefaxModeBUnitTests
         var awayInput = (IHtmlInputElement)inputs[1];
         homeInput.Change("1");
         awayInput.Change("0");
-        var homeValue = homeInput.Value;
-        var awayValue = awayInput.Value;
+        const string homeValue = "1";
+        const string awayValue = "0";
 
         IElement toggle;
         try

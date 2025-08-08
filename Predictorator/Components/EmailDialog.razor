@@ -1,0 +1,46 @@
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" Model="_model">
+            <MudTextField For="@(() => _model.Email)" Label="Email" InputType="InputType.Email" Required="true" />
+            <MudCheckBox T="bool" @bind-Value="_remember" Label="Remember email" Class="mt-4" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Submit" Color="Color.Primary">Submit</MudButton>
+        <MudButton OnClick="Cancel" Color="Color.Secondary">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance DialogInstance { get; set; } = default!;
+    private MudForm? _form;
+    private readonly EmailModel _model = new();
+    private bool _remember;
+
+    [Parameter] public string? InitialEmail { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _model.Email = InitialEmail;
+    }
+
+    private async Task Submit()
+    {
+        if (_form != null)
+        {
+            await _form.Validate();
+            if (!_form.IsValid)
+                return;
+        }
+        DialogInstance.Close(new EmailDialogResult(_model.Email!, _remember));
+    }
+
+    private void Cancel() => DialogInstance.Cancel();
+
+    private class EmailModel
+    {
+        [Required]
+        [EmailAddress]
+        public string? Email { get; set; }
+    }
+}

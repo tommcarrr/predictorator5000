@@ -9,6 +9,7 @@ using Predictorator.Models.Fixtures;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
 using IndexPage = Predictorator.Components.Pages.Index;
+using System.Security.Claims;
 
 namespace Predictorator.Tests;
 
@@ -159,6 +160,143 @@ public class IndexPageBUnitTests
         ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
 
         Assert.Contains("/24-25/gw1", navMan.Uri);
+    }
+
+    [Fact]
+    public async Task EmailButton_Displayed_For_Admin_User()
+    {
+        await using var ctx = CreateContext();
+        var accessor = ctx.Services.GetRequiredService<IHttpContextAccessor>();
+        accessor.HttpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.Name, "admin"),
+                new Claim(ClaimTypes.Role, "Admin")
+            }, "Test"))
+        };
+
+        RenderFragment body = b => { b.OpenComponent<IndexPage>(0); b.CloseComponent(); };
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+
+        var btn = cut.Find("#emailBtn");
+        Assert.NotNull(btn);
+    }
+
+    [Fact]
+    public async Task EmailButton_Hidden_For_Non_Admin()
+    {
+        await using var ctx = CreateContext();
+        ctx.Services.GetRequiredService<IHttpContextAccessor>().HttpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity())
+        };
+
+        RenderFragment body = b => { b.OpenComponent<IndexPage>(0); b.CloseComponent(); };
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+
+        Assert.Empty(cut.FindAll("#emailBtn"));
+    }
+
+    [Fact]
+    public async Task EmailButton_Shows_Error_When_Predictions_Missing()
+    {
+        await using var ctx = CreateContext();
+        var fixtures = new FixturesResponse
+        {
+            Response =
+            [
+                new FixtureData
+                {
+                    Fixture = new Fixture { Id = 1, Date = DateTime.UtcNow, Venue = new Venue { Name = "V" } },
+                    Teams = new Teams
+                    {
+                        Home = new Team { Name = "Home", Logo = string.Empty },
+                        Away = new Team { Name = "Away", Logo = string.Empty }
+                    },
+                    Score = new Score { Fulltime = new ScoreHomeAway() }
+                }
+            ]
+        };
+        ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
+
+        var accessor = ctx.Services.GetRequiredService<IHttpContextAccessor>();
+        accessor.HttpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.Name, "admin"),
+                new Claim(ClaimTypes.Role, "Admin")
+            }, "Test"))
+        };
+
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
+            b.CloseComponent();
+        };
+
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        cut.WaitForAssertion(() => Assert.NotEmpty(cut.FindAll("[data-testid=score-input]")));
+        cut.Find("#emailBtn").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            var snackbar = cut.Find("div.mud-snackbar");
+            Assert.Contains("fill in all score predictions", snackbar.TextContent);
+        });
+    }
+
+    [Fact]
+    public async Task EmailButton_Opens_Dialog_When_Predictions_Complete()
+    {
+        await using var ctx = CreateContext();
+        var fixtures = new FixturesResponse
+        {
+            Response =
+            [
+                new FixtureData
+                {
+                    Fixture = new Fixture { Id = 1, Date = DateTime.UtcNow, Venue = new Venue { Name = "V" } },
+                    Teams = new Teams
+                    {
+                        Home = new Team { Name = "Home", Logo = string.Empty },
+                        Away = new Team { Name = "Away", Logo = string.Empty }
+                    },
+                    Score = new Score { Fulltime = new ScoreHomeAway { Home = 1, Away = 0 } }
+                }
+            ]
+        };
+        ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
+
+        var accessor = ctx.Services.GetRequiredService<IHttpContextAccessor>();
+        accessor.HttpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.Name, "admin"),
+                new Claim(ClaimTypes.Role, "Admin")
+            }, "Test"))
+        };
+
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
+            b.CloseComponent();
+        };
+
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        cut.Find("#emailBtn").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            cut.Find("div.mud-dialog");
+            cut.Find("input[type=email]");
+        });
     }
 
 }
