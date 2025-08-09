@@ -13,9 +13,9 @@ public class LoginEndpointsTests
     public async Task Returns_Ok_when_signin_succeeds()
     {
         var service = Substitute.For<ISignInService>();
-        service.PasswordSignInAsync("user", "pass", false).Returns(SignInResult.Success);
+        service.PasswordSignInAsync("user", "pass").Returns(SignInResult.Success);
 
-        var result = await LoginEndpoints.LoginAsync(new LoginRequest("user", "pass", false), service);
+        var result = await LoginEndpoints.LoginAsync(new LoginRequest("user", "pass"), service);
 
         var typed = Assert.IsAssignableFrom<IStatusCodeHttpResult>(result);
         Assert.Equal(StatusCodes.Status200OK, typed.StatusCode);

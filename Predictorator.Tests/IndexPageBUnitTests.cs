@@ -352,6 +352,62 @@ public class IndexPageBUnitTests
         {
             var input = cut.Find("input[type=email]");
             Assert.True(string.IsNullOrEmpty(input.GetAttribute("value")));
+            var checkbox = cut.Find("input[type=checkbox]");
+            Assert.False(checkbox.HasAttribute("checked"));
+        });
+    }
+
+    [Fact]
+    public async Task EmailDialog_Shows_Remembered_Email_And_Is_Checked()
+    {
+        await using var ctx = CreateContext();
+        var fixtures = new FixturesResponse
+        {
+            Response =
+            [
+                new FixtureData
+                {
+                    Fixture = new Fixture { Id = 1, Date = DateTime.UtcNow, Venue = new Venue { Name = "V" } },
+                    Teams = new Teams
+                    {
+                        Home = new Team { Name = "Home", Logo = string.Empty },
+                        Away = new Team { Name = "Away", Logo = string.Empty }
+                    },
+                    Score = new Score { Fulltime = new ScoreHomeAway { Home = 1, Away = 0 } }
+                }
+            ]
+        };
+        ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
+
+        ctx.JSInterop.Setup<string?>("localStorage.getItem", "predictionsEmail").SetResult("user@example.com");
+
+        var accessor = ctx.Services.GetRequiredService<IHttpContextAccessor>();
+        accessor.HttpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.Name, "admin"),
+                new Claim(ClaimTypes.Role, "Admin")
+            }, "Test"))
+        };
+
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
+            b.CloseComponent();
+        };
+
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        cut.Find("#emailBtn").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            var input = cut.Find("input[type=email]");
+            Assert.Equal("user@example.com", input.GetAttribute("value"));
+            var checkbox = cut.Find("input[type=checkbox]");
+            Assert.True(checkbox.HasAttribute("checked"));
         });
     }
 

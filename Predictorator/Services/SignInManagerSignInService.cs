@@ -11,8 +11,8 @@ public class SignInManagerSignInService : ISignInService
         _signInManager = signInManager;
     }
 
-    public Task<SignInResult> PasswordSignInAsync(string email, string password, bool rememberMe)
+    public Task<SignInResult> PasswordSignInAsync(string email, string password)
     {
-        return _signInManager.PasswordSignInAsync(email, password, rememberMe, lockoutOnFailure: false);
+        return _signInManager.PasswordSignInAsync(email, password, false, lockoutOnFailure: false);
     }
 }

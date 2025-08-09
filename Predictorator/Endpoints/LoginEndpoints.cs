@@ -12,7 +12,7 @@ public static class LoginEndpoints
             return Results.BadRequest("Invalid request");
         }
 
-        var result = await signIn.PasswordSignInAsync(request.Email, request.Password, request.RememberMe);
+        var result = await signIn.PasswordSignInAsync(request.Email, request.Password);
         if (result.Succeeded)
         {
             return Results.Ok();

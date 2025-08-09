@@ -4,5 +4,5 @@ namespace Predictorator.Services;
 
 public interface ISignInService
 {
-    Task<SignInResult> PasswordSignInAsync(string email, string password, bool rememberMe);
+    Task<SignInResult> PasswordSignInAsync(string email, string password);
 }
