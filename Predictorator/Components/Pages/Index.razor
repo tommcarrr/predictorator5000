@@ -265,6 +265,8 @@ else if (_fixtures.Response.Any())
         }
 
         var stored = await Js.InvokeAsync<string?>("localStorage.getItem", EmailStorageKey);
+        if (string.Equals(stored, "null", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(stored))
+            stored = null;
         var parameters = new DialogParameters
         {
             ["InitialEmail"] = stored
