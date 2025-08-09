@@ -22,6 +22,7 @@
     protected override void OnInitialized()
     {
         _model.Email = string.Equals(InitialEmail, "null", StringComparison.OrdinalIgnoreCase) ? null : InitialEmail;
+        _remember = _model.Email is not null;
     }
 
     private async Task Submit()

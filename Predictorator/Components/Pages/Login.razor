@@ -10,7 +10,6 @@
     <MudStack Spacing="2">
         <MudTextField @bind-Value="_input.Email" Label="Email" Required="true" />
         <MudTextField @bind-Value="_input.Password" Label="Password" InputType="InputType.Password" Required="true" />
-        <MudCheckBox T="bool" @bind-Value="_input.RememberMe" Label="Remember me" />
         <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">Log in</MudButton>
         @if (!string.IsNullOrEmpty(_error))
         {
@@ -32,8 +31,6 @@
         [Required]
         [DataType(DataType.Password)]
         public string Password { get; set; } = string.Empty;
-
-        public bool RememberMe { get; set; }
     }
 
     private async Task HandleLogin()
