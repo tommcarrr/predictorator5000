@@ -340,10 +340,10 @@ else if (_fixtures.Response.Any())
         sbPre.AppendLine("My predictions are as follows...");
         sbPre.AppendLine("");
         var sbPost = new StringBuilder();
-        sbPre.AppendLine("");
-        sbPre.AppendLine("Yours sincerely,");
-        sbPre.AppendLine("<insert name>.");
-            
+        sbPost.AppendLine("");
+        sbPost.AppendLine("Yours sincerely,");
+        sbPost.AppendLine("<insert name>.");
+
         return $"{sbPre}{body}{sbPost}";
 
     }
