@@ -1,0 +1,59 @@
+@page "/parse"
+@rendermode InteractiveServer
+@inject IJSRuntime Js
+@using System.Text
+
+<MudStack Spacing="2">
+    <MudText Typo="Typo.h5" Class="my-4" Align="Align.Center">Parse Predictions</MudText>
+    <MudTextField @bind-Value="_name" Label="Name" />
+    <MudTextField @bind-Value="_input" Label="Predictions" Lines="10" />
+    <MudButton OnClick="ParseText" Variant="Variant.Filled" Color="Color.Primary">Parse</MudButton>
+</MudStack>
+
+@if (_predictions.Any())
+{
+    <MudTable Items="_predictions" Dense="true" Class="mt-4">
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Date</MudTh>
+            <MudTh>Home Team</MudTh>
+            <MudTh>Home Prediction</MudTh>
+            <MudTh>Away Prediction</MudTh>
+            <MudTh>Away Team</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@_name</MudTd>
+            <MudTd DataLabel="Date">@context.Date.ToString("dd/MM/yyyy")</MudTd>
+            <MudTd DataLabel="Home Team">@context.HomeTeam</MudTd>
+            <MudTd DataLabel="Home Prediction">@context.HomeScore</MudTd>
+            <MudTd DataLabel="Away Prediction">@context.AwayScore</MudTd>
+            <MudTd DataLabel="Away Team">@context.AwayTeam</MudTd>
+        </RowTemplate>
+    </MudTable>
+    <MudButton OnClick="CopyToClipboard" Variant="Variant.Filled" Color="Color.Secondary" Class="mt-4">Copy to Clipboard</MudButton>
+}
+
+@code {
+    private string _name = string.Empty;
+    private string _input = string.Empty;
+    private List<PredictionEmailParser.ParsedPrediction> _predictions = new();
+
+    private void ParseText()
+    {
+        _name = _name.Trim();
+        _predictions = PredictionEmailParser.Parse(_input).ToList();
+    }
+
+    private async Task CopyToClipboard()
+    {
+        if (_predictions.Count == 0)
+            return;
+        _name = _name.Trim();
+        var sb = new StringBuilder();
+        foreach (var p in _predictions)
+        {
+            sb.AppendLine($"{_name}\t{p.Date:dd/MM/yyyy}\t{p.HomeTeam}\t{p.HomeScore}\t{p.AwayScore}\t{p.AwayTeam}");
+        }
+        await Js.InvokeVoidAsync("navigator.clipboard.writeText", sb.ToString());
+    }
+}
