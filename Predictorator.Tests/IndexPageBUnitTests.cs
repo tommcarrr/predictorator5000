@@ -10,6 +10,7 @@ using Predictorator.Services;
 using Predictorator.Tests.Helpers;
 using IndexPage = Predictorator.Components.Pages.Index;
 using System.Security.Claims;
+using System.Linq;
 
 namespace Predictorator.Tests;
 
@@ -144,6 +145,8 @@ public class IndexPageBUnitTests
         RenderFragment body = b =>
         {
             b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
             b.CloseComponent();
         };
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
@@ -297,6 +300,80 @@ public class IndexPageBUnitTests
             cut.Find("div.mud-dialog");
             cut.Find("input[type=email]");
         });
+    }
+
+    [Fact]
+    public async Task SubmitEmail_Sends_Mailto_And_Remembers_When_Checked()
+    {
+        await using var ctx = CreateContext();
+        var navMan = new RecordingNavigationManager();
+        ctx.Services.AddSingleton<NavigationManager>(navMan);
+
+        var fixtures = new FixturesResponse
+        {
+            Response =
+            [
+                new FixtureData
+                {
+                    Fixture = new Fixture { Id = 1, Date = DateTime.UtcNow, Venue = new Venue { Name = "V" } },
+                    Teams = new Teams
+                    {
+                        Home = new Team { Name = "Home", Logo = string.Empty },
+                        Away = new Team { Name = "Away", Logo = string.Empty }
+                    },
+                    Score = new Score { Fulltime = new ScoreHomeAway { Home = 1, Away = 0 } }
+                }
+            ]
+        };
+        ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
+
+        var accessor = ctx.Services.GetRequiredService<IHttpContextAccessor>();
+        accessor.HttpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.Name, "admin"),
+                new Claim(ClaimTypes.Role, "Admin")
+            }, "Test"))
+        };
+
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
+            b.CloseComponent();
+        };
+
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        cut.WaitForAssertion(() => Assert.NotEmpty(cut.FindAll("[data-testid=score-input]")));
+        cut.Find("#emailBtn").Click();
+
+        cut.WaitForAssertion(() => cut.Find("input[type=email]"));
+        cut.Find("input[type=email]").Change("user@example.com");
+        cut.Find("input[type=checkbox]").Change(true);
+        cut.FindAll("button").First(b => b.TextContent.Contains("Submit")).Click();
+
+        Assert.Contains("mailto:user@example.com", navMan.NavigatedTo);
+
+        var set = ctx.JSInterop.Invocations.Single(i => i.Identifier == "localStorage.setItem");
+        Assert.Equal("predictionsEmail", set.Arguments[0]?.ToString());
+        Assert.Equal("user@example.com", set.Arguments[1]?.ToString());
+    }
+
+    private class RecordingNavigationManager : NavigationManager
+    {
+        public string? NavigatedTo { get; private set; }
+
+        public RecordingNavigationManager()
+        {
+            Initialize("http://localhost/", "http://localhost/");
+        }
+
+        protected override void NavigateToCore(string uri, NavigationOptions options)
+        {
+            NavigatedTo = uri;
+        }
     }
 
 }

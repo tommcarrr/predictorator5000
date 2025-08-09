@@ -1,7 +1,7 @@
 <MudDialog>
     <DialogContent>
         <MudForm @ref="_form" Model="_model">
-            <MudTextField For="@(() => _model.Email)" Label="Email" InputType="InputType.Email" Required="true" />
+            <MudTextField @bind-Value="_model.Email" For="@(() => _model.Email)" Label="Email" InputType="InputType.Email" Required="true" />
             <MudCheckBox T="bool" @bind-Value="_remember" Label="Remember email" Class="mt-4" />
         </MudForm>
     </DialogContent>
