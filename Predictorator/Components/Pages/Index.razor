@@ -327,14 +327,25 @@ else if (_fixtures.Response.Any())
 
         var body = sb.ToString();
         var specials = Config.GetSection("PredictionEmail:SpecialRecipients").Get<string[]>() ?? [];
-        if (specials.Any(s => string.Equals(s, email, StringComparison.OrdinalIgnoreCase)))
-        {
-            const string pre = "[[SPECIAL PRE TEXT]]";
-            const string post = "[[SPECIAL POST TEXT]]";
-            return $"{pre}{Environment.NewLine}{Environment.NewLine}{body}{post}";
-        }
+        if (!specials.Any(s => string.Equals(s, email, StringComparison.OrdinalIgnoreCase))) return body;
+        
+        var sbPre = new StringBuilder();
+        sbPre.Append("Hello Helen Lyttle,");
+        sbPre.Append("");
+        sbPre.Append("I trust you are well.");
+        sbPre.Append("I would like to take this opportunity to put on record my continuing gratitude for your tireless efforts in administering the Premier League Prediction League.");
+        sbPre.Append("Here is a funny joke I heard recently that I thought you might enjoy...");
+        sbPre.Append("<insert joke>.");
+        sbPre.Append("");
+        sbPre.Append("My predictions are as follows...");
+        sbPre.Append("");
+        var sbPost = new StringBuilder();
+        sbPre.Append("");
+        sbPre.Append("Yours sincerely,");
+        sbPre.Append("<insert name>.");
+            
+        return $"{sbPre}{body}{sbPost}";
 
-        return body;
     }
 
     private const string EmailStorageKey = "predictionsEmail";
