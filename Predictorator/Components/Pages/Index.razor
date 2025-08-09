@@ -10,9 +10,12 @@
 @inject IJSRuntime Js
 @inject ISnackbar Snackbar
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Config
 @using Predictorator.Components.Layout
 @using Predictorator.Models
 @using System.Text
+@using System.Linq
+@using Microsoft.Extensions.Configuration
 
 <PageTitle>@PageTitleText</PageTitle>
 
@@ -301,12 +304,12 @@ else if (_fixtures.Response.Any())
     private void SendEmail(string email)
     {
         var subject = $"Predictions {Season} GW{Week}";
-        var body = BuildEmailBody();
+        var body = BuildEmailBody(email);
         var url = $"mailto:{email}?subject={Uri.EscapeDataString(subject)}&body={Uri.EscapeDataString(body)}";
         NavigationManager.NavigateTo(url, true);
     }
 
-    private string BuildEmailBody()
+    private string BuildEmailBody(string email)
     {
         if (_fixtures == null) return string.Empty;
         var sb = new StringBuilder();
@@ -321,7 +324,17 @@ else if (_fixtures.Response.Any())
             }
             sb.AppendLine();
         }
-        return sb.ToString();
+
+        var body = sb.ToString();
+        var specials = Config.GetSection("PredictionEmail:SpecialRecipients").Get<string[]>() ?? [];
+        if (specials.Any(s => string.Equals(s, email, StringComparison.OrdinalIgnoreCase)))
+        {
+            const string pre = "[[SPECIAL PRE TEXT]]";
+            const string post = "[[SPECIAL POST TEXT]]";
+            return $"{pre}{Environment.NewLine}{Environment.NewLine}{body}{post}";
+        }
+
+        return body;
     }
 
     private const string EmailStorageKey = "predictionsEmail";
