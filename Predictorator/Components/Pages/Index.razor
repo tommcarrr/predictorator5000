@@ -333,8 +333,11 @@ else if (_fixtures.Response.Any())
         sbPre.AppendLine("Hello Helen Lyttle,");
         sbPre.AppendLine("");
         sbPre.AppendLine("I trust you are well.");
+        sbPre.AppendLine("");
         sbPre.AppendLine("I would like to take this opportunity to put on record my continuing gratitude for your tireless efforts in administering the Premier League Prediction League.");
+        sbPre.AppendLine("");
         sbPre.AppendLine("Here is a funny joke I heard recently that I thought you might enjoy...");
+        sbPre.AppendLine("");
         sbPre.AppendLine("<insert joke>.");
         sbPre.AppendLine("");
         sbPre.AppendLine("My predictions are as follows...");
@@ -342,6 +345,7 @@ else if (_fixtures.Response.Any())
         var sbPost = new StringBuilder();
         sbPost.AppendLine("");
         sbPost.AppendLine("Yours sincerely,");
+        sbPost.AppendLine("");
         sbPost.AppendLine("<insert name>.");
 
         return $"{sbPre}{body}{sbPost}";
