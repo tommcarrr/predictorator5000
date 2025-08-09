@@ -308,20 +308,17 @@ else if (_fixtures.Response.Any())
     {
         if (_fixtures == null) return string.Empty;
         var sb = new StringBuilder();
-        sb.Append("<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\" style=\"border-collapse: collapse;\">");
         var groups = _fixtures.Response.GroupBy(f => f.Fixture.Date.Date).OrderBy(g => g.Key);
         foreach (var group in groups)
         {
-            sb.Append($"<thead><tr><th colspan=\"3\" style=\"background-color: #f2f2f2; text-align: center; padding: 10px;\">{group.Key:dddd, MMMM d, yyyy}</th></tr>");
-            sb.Append("<tr><th style=\"background-color: #d9d9d9; text-align: left; padding: 5px; min-width: 120px\">Home Team</th><th style=\"background-color: #d9d9d9; text-align: center; padding: 5px;\">Score</th><th style=\"background-color: #d9d9d9; text-align: right; padding: 5px; min-width: 120px\">Away Team</th></tr></thead><tbody>");
+            sb.AppendLine(group.Key.ToString("dddd, MMMM d, yyyy"));
             foreach (var fixture in group.OrderBy(x => x.Fixture.Date).ThenBy(x => x.Teams.Home.Name))
             {
                 var pred = _predictions[fixture.Fixture.Id];
-                sb.Append($"<tr><td style=\"padding: 5px; text-align: left;\">{fixture.Teams.Home.Name}</td><td style=\"padding: 5px; text-align: center;\">{pred.Home} - {pred.Away}</td><td style=\"padding: 5px; text-align: right;\">{fixture.Teams.Away.Name}</td></tr>");
+                sb.AppendLine($"{fixture.Teams.Home.Name} {pred.Home} - {pred.Away} {fixture.Teams.Away.Name}");
             }
-            sb.Append("</tbody>");
+            sb.AppendLine();
         }
-        sb.Append("</table>");
         return sb.ToString();
     }
 
