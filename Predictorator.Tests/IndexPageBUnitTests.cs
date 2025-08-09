@@ -9,7 +9,6 @@ using Predictorator.Models.Fixtures;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
 using IndexPage = Predictorator.Components.Pages.Index;
-using System.Security.Claims;
 using System.Linq;
 
 namespace Predictorator.Tests;
@@ -167,39 +166,13 @@ public class IndexPageBUnitTests
     }
 
     [Fact]
-    public async Task EmailButton_Displayed_For_Admin_User()
+    public async Task EmailButton_Displayed_For_All_Users()
     {
         await using var ctx = CreateContext();
-        var accessor = ctx.Services.GetRequiredService<IHttpContextAccessor>();
-        accessor.HttpContext = new DefaultHttpContext
-        {
-            User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.Name, "admin"),
-                new Claim(ClaimTypes.Role, "Admin")
-            }, "Test"))
-        };
-
         RenderFragment body = b => { b.OpenComponent<IndexPage>(0); b.CloseComponent(); };
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
-
         var btn = cut.Find("#emailBtn");
         Assert.NotNull(btn);
-    }
-
-    [Fact]
-    public async Task EmailButton_Hidden_For_Non_Admin()
-    {
-        await using var ctx = CreateContext();
-        ctx.Services.GetRequiredService<IHttpContextAccessor>().HttpContext = new DefaultHttpContext
-        {
-            User = new ClaimsPrincipal(new ClaimsIdentity())
-        };
-
-        RenderFragment body = b => { b.OpenComponent<IndexPage>(0); b.CloseComponent(); };
-        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
-
-        Assert.Empty(cut.FindAll("#emailBtn"));
     }
 
     [Fact]
@@ -223,16 +196,6 @@ public class IndexPageBUnitTests
             ]
         };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
-
-        var accessor = ctx.Services.GetRequiredService<IHttpContextAccessor>();
-        accessor.HttpContext = new DefaultHttpContext
-        {
-            User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.Name, "admin"),
-                new Claim(ClaimTypes.Role, "Admin")
-            }, "Test"))
-        };
 
         RenderFragment body = b =>
         {
@@ -275,16 +238,6 @@ public class IndexPageBUnitTests
         };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
 
-        var accessor = ctx.Services.GetRequiredService<IHttpContextAccessor>();
-        accessor.HttpContext = new DefaultHttpContext
-        {
-            User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.Name, "admin"),
-                new Claim(ClaimTypes.Role, "Admin")
-            }, "Test"))
-        };
-
         RenderFragment body = b =>
         {
             b.OpenComponent<IndexPage>(0);
@@ -326,16 +279,6 @@ public class IndexPageBUnitTests
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
 
         ctx.JSInterop.Setup<string?>("localStorage.getItem", "predictionsEmail").SetResult("NULL");
-
-        var accessor = ctx.Services.GetRequiredService<IHttpContextAccessor>();
-        accessor.HttpContext = new DefaultHttpContext
-        {
-            User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.Name, "admin"),
-                new Claim(ClaimTypes.Role, "Admin")
-            }, "Test"))
-        };
 
         RenderFragment body = b =>
         {
@@ -381,16 +324,6 @@ public class IndexPageBUnitTests
 
         ctx.JSInterop.Setup<string?>("localStorage.getItem", "predictionsEmail").SetResult("user@example.com");
 
-        var accessor = ctx.Services.GetRequiredService<IHttpContextAccessor>();
-        accessor.HttpContext = new DefaultHttpContext
-        {
-            User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.Name, "admin"),
-                new Claim(ClaimTypes.Role, "Admin")
-            }, "Test"))
-        };
-
         RenderFragment body = b =>
         {
             b.OpenComponent<IndexPage>(0);
@@ -435,16 +368,6 @@ public class IndexPageBUnitTests
             ]
         };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
-
-        var accessor = ctx.Services.GetRequiredService<IHttpContextAccessor>();
-        accessor.HttpContext = new DefaultHttpContext
-        {
-            User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.Name, "admin"),
-                new Claim(ClaimTypes.Role, "Admin")
-            }, "Test"))
-        };
 
         RenderFragment body = b =>
         {
@@ -494,16 +417,6 @@ public class IndexPageBUnitTests
             ]
         };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
-
-        var accessor = ctx.Services.GetRequiredService<IHttpContextAccessor>();
-        accessor.HttpContext = new DefaultHttpContext
-        {
-            User = new ClaimsPrincipal(new ClaimsIdentity(new[]
-            {
-                new Claim(ClaimTypes.Name, "admin"),
-                new Claim(ClaimTypes.Role, "Admin")
-            }, "Test"))
-        };
 
         RenderFragment body = b =>
         {
