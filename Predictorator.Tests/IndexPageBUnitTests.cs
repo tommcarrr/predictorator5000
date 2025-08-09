@@ -469,9 +469,13 @@ public class IndexPageBUnitTests
         Assert.Contains("mailto:vip@example.com", uri);
         var bodyEncoded = uri.Split("&body=")[1];
         var bodyText = Uri.UnescapeDataString(bodyEncoded);
-
-        Assert.StartsWith("[[SPECIAL PRE TEXT]]", bodyText);
-        Assert.EndsWith("[[SPECIAL POST TEXT]]", bodyText.TrimEnd());
+        Assert.StartsWith("Hello Helen Lyttle,", bodyText);
+        var preIndex = bodyText.IndexOf("My predictions are as follows...");
+        var tableIndex = bodyText.IndexOf("Home 1 - 0 Away");
+        var postIndex = bodyText.IndexOf("Yours sincerely,");
+        Assert.True(preIndex < tableIndex);
+        Assert.True(tableIndex < postIndex);
+        Assert.EndsWith("<insert name>.", bodyText.TrimEnd());
     }
 
     private class RecordingNavigationManager : NavigationManager
