@@ -46,7 +46,8 @@ public class IndexPageBUnitTests
             ["Resend:ApiToken"] = "token",
             ["Twilio:AccountSid"] = "sid",
             ["Twilio:AuthToken"] = "token",
-            ["Twilio:FromNumber"] = "+1"
+            ["Twilio:FromNumber"] = "+1",
+            ["PredictionEmail:SpecialRecipients:0"] = "vip@example.com"
         };
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         ctx.Services.AddSingleton<IConfiguration>(config);
@@ -411,6 +412,66 @@ public class IndexPageBUnitTests
         var set = ctx.JSInterop.Invocations.Single(i => i.Identifier == "localStorage.setItem");
         Assert.Equal("predictionsEmail", set.Arguments[0]?.ToString());
         Assert.Equal("user@example.com", set.Arguments[1]?.ToString());
+    }
+
+    [Fact]
+    public async Task SubmitEmail_Adds_Extra_Text_For_Configured_Email()
+    {
+        await using var ctx = CreateContext();
+        var navMan = new RecordingNavigationManager();
+        ctx.Services.AddSingleton<NavigationManager>(navMan);
+
+        var fixtures = new FixturesResponse
+        {
+            Response =
+            [
+                new FixtureData
+                {
+                    Fixture = new Fixture { Id = 1, Date = DateTime.UtcNow, Venue = new Venue { Name = "V" } },
+                    Teams = new Teams
+                    {
+                        Home = new Team { Name = "Home", Logo = string.Empty },
+                        Away = new Team { Name = "Away", Logo = string.Empty }
+                    },
+                    Score = new Score { Fulltime = new ScoreHomeAway { Home = 1, Away = 0 } }
+                }
+            ]
+        };
+        ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
+
+        var accessor = ctx.Services.GetRequiredService<IHttpContextAccessor>();
+        accessor.HttpContext = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.Name, "admin"),
+                new Claim(ClaimTypes.Role, "Admin")
+            }, "Test"))
+        };
+
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
+            b.CloseComponent();
+        };
+
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        cut.WaitForAssertion(() => Assert.NotEmpty(cut.FindAll("[data-testid=score-input]")));
+        cut.Find("#emailBtn").Click();
+
+        cut.WaitForAssertion(() => cut.Find("input[type=email]"));
+        cut.Find("input[type=email]").Change("vip@example.com");
+        cut.FindAll("button").First(b => b.TextContent.Contains("Submit")).Click();
+
+        var uri = navMan.NavigatedTo!;
+        Assert.Contains("mailto:vip@example.com", uri);
+        var bodyEncoded = uri.Split("&body=")[1];
+        var bodyText = Uri.UnescapeDataString(bodyEncoded);
+
+        Assert.StartsWith("[[SPECIAL PRE TEXT]]", bodyText);
+        Assert.EndsWith("[[SPECIAL POST TEXT]]", bodyText.TrimEnd());
     }
 
     private class RecordingNavigationManager : NavigationManager

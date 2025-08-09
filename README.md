@@ -31,6 +31,8 @@ Email delivery is handled by [Resend](https://resend.com). Configure the
 `Resend__ApiToken` and `Resend__From` settings to enable it.
 The application also requires a Rapid API key for fixture data via
 `ApiSettings__RapidApiKey`.
+List any email addresses that should receive extra text in prediction emails under
+`PredictionEmail:SpecialRecipients`.
 Set `BASE_URL` to the public address of the site so scheduled notifications
 contain valid links.
 Each IP address may visit at most 50 unique routes per day. Returning to a cached
