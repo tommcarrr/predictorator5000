@@ -3,8 +3,10 @@
 @inject IJSRuntime Js
 @inject IFixtureService FixtureService
 @inject IDateTimeProvider TimeProvider
+@inject ISnackbar Snackbar
 @using System.Text
 @using Predictorator.Services
+@using MudBlazor
 
 <MudStack Spacing="2">
     <MudText Typo="Typo.h5" Class="my-4" Align="Align.Center">Parse Predictions</MudText>
@@ -43,7 +45,9 @@
     {
         <MudText Class="mt-4 total-points">Total Points: @_predictions.Sum(p => p.Points)</MudText>
     }
-    <MudButton OnClick="CopyToClipboard" Variant="Variant.Filled" Color="Color.Secondary" Class="mt-4">Copy to Clipboard</MudButton>
+    <div class="mt-4">
+        <MudButton OnClick="CopyToClipboard" Variant="Variant.Filled" Color="Color.Secondary">Copy to Clipboard</MudButton>
+    </div>
 }
 
 @code {
@@ -120,11 +124,13 @@
             return;
         _name = _name.Trim();
         var sb = new StringBuilder();
+        sb.AppendLine("Name\tDate\tHome Team\tHome Prediction\tHome Actual\tAway Prediction\tAway Actual\tAway Team\tPoints");
         foreach (var p in _predictions)
         {
-            sb.AppendLine($"{_name}\t{p.Date:dd/MM/yyyy}\t{p.HomeTeam}\t{p.HomeScore}\t{p.AwayScore}\t{p.AwayTeam}");
+            sb.AppendLine($"{_name}\t{p.Date:dd/MM/yyyy}\t{p.HomeTeam}\t{p.HomeScore}\t{p.ActualHomeScore?.ToString() ?? string.Empty}\t{p.AwayScore}\t{p.ActualAwayScore?.ToString() ?? string.Empty}\t{p.AwayTeam}\t{(p.ActualHomeScore.HasValue && p.ActualAwayScore.HasValue ? p.Points.ToString() : string.Empty)}");
         }
         await Js.InvokeVoidAsync("navigator.clipboard.writeText", sb.ToString());
+        Snackbar.Add("Copied to clipboard", Severity.Success);
     }
 
     private class Prediction
