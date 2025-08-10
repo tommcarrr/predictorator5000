@@ -1,7 +1,10 @@
 @page "/parse"
 @rendermode InteractiveServer
 @inject IJSRuntime Js
+@inject IFixtureService FixtureService
+@inject IDateTimeProvider TimeProvider
 @using System.Text
+@using Predictorator.Services
 
 <MudStack Spacing="2">
     <MudText Typo="Typo.h5" Class="my-4" Align="Align.Center">Parse Predictions</MudText>
@@ -18,7 +21,9 @@
             <MudTh>Date</MudTh>
             <MudTh>Home Team</MudTh>
             <MudTh>Home Prediction</MudTh>
+            <MudTh>Home Actual</MudTh>
             <MudTh>Away Prediction</MudTh>
+            <MudTh>Away Actual</MudTh>
             <MudTh>Away Team</MudTh>
         </HeaderContent>
         <RowTemplate>
@@ -26,7 +31,9 @@
             <MudTd DataLabel="Date">@context.Date.ToString("dd/MM/yyyy")</MudTd>
             <MudTd DataLabel="Home Team">@context.HomeTeam</MudTd>
             <MudTd DataLabel="Home Prediction">@context.HomeScore</MudTd>
+            <MudTd DataLabel="Home Actual">@context.ActualHomeScore</MudTd>
             <MudTd DataLabel="Away Prediction">@context.AwayScore</MudTd>
+            <MudTd DataLabel="Away Actual">@context.ActualAwayScore</MudTd>
             <MudTd DataLabel="Away Team">@context.AwayTeam</MudTd>
         </RowTemplate>
     </MudTable>
@@ -36,12 +43,57 @@
 @code {
     private string _name = string.Empty;
     private string _input = string.Empty;
-    private List<PredictionEmailParser.ParsedPrediction> _predictions = new();
+    private List<Prediction> _predictions = new();
 
-    private void ParseText()
+    private async Task ParseText()
     {
         _name = _name.Trim();
-        _predictions = PredictionEmailParser.Parse(_input).ToList();
+        var parsed = PredictionEmailParser.Parse(_input).ToList();
+        _predictions = parsed.Select(p => new Prediction
+        {
+            Date = p.Date,
+            HomeTeam = p.HomeTeam,
+            HomeScore = p.HomeScore,
+            AwayScore = p.AwayScore,
+            AwayTeam = p.AwayTeam
+        }).ToList();
+
+        if (_predictions.Count == 0)
+            return;
+
+        var from = _predictions.Min(p => p.Date);
+        var to = _predictions.Max(p => p.Date);
+
+        var fixtures = await FixtureService.GetFixturesAsync(from, to);
+        var lookup = fixtures.Response.ToDictionary(
+            f => (f.Fixture.Date.Date,
+                   f.Teams.Home.Name.ToLowerInvariant(),
+                   f.Teams.Away.Name.ToLowerInvariant()));
+
+        DateTime? lastFixtureTime = null;
+        foreach (var p in _predictions)
+        {
+            var key = (p.Date.Date, p.HomeTeam.ToLowerInvariant(), p.AwayTeam.ToLowerInvariant());
+            if (lookup.TryGetValue(key, out var fixture))
+            {
+                var fixtureDate = DateTime.SpecifyKind(fixture.Fixture.Date, DateTimeKind.Utc);
+                if (lastFixtureTime == null || fixtureDate > lastFixtureTime)
+                    lastFixtureTime = fixtureDate;
+            }
+        }
+
+        if (lastFixtureTime.HasValue && TimeProvider.UtcNow >= lastFixtureTime.Value.AddHours(3))
+        {
+            foreach (var p in _predictions)
+            {
+                var key = (p.Date.Date, p.HomeTeam.ToLowerInvariant(), p.AwayTeam.ToLowerInvariant());
+                if (lookup.TryGetValue(key, out var fixture))
+                {
+                    p.ActualHomeScore = fixture.Score?.Fulltime.Home;
+                    p.ActualAwayScore = fixture.Score?.Fulltime.Away;
+                }
+            }
+        }
     }
 
     private async Task CopyToClipboard()
@@ -55,5 +107,16 @@
             sb.AppendLine($"{_name}\t{p.Date:dd/MM/yyyy}\t{p.HomeTeam}\t{p.HomeScore}\t{p.AwayScore}\t{p.AwayTeam}");
         }
         await Js.InvokeVoidAsync("navigator.clipboard.writeText", sb.ToString());
+    }
+
+    private class Prediction
+    {
+        public DateTime Date { get; init; }
+        public string HomeTeam { get; init; } = string.Empty;
+        public int HomeScore { get; init; }
+        public int AwayScore { get; init; }
+        public string AwayTeam { get; init; } = string.Empty;
+        public int? ActualHomeScore { get; set; }
+        public int? ActualAwayScore { get; set; }
     }
 }
