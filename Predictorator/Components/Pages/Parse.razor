@@ -25,6 +25,7 @@
             <MudTh>Away Prediction</MudTh>
             <MudTh>Away Actual</MudTh>
             <MudTh>Away Team</MudTh>
+            <MudTh>Points</MudTh>
         </HeaderContent>
         <RowTemplate>
             <MudTd DataLabel="Name">@_name</MudTd>
@@ -35,8 +36,13 @@
             <MudTd DataLabel="Away Prediction">@context.AwayScore</MudTd>
             <MudTd DataLabel="Away Actual">@context.ActualAwayScore</MudTd>
             <MudTd DataLabel="Away Team">@context.AwayTeam</MudTd>
+            <MudTd DataLabel="Points">@((context.ActualHomeScore.HasValue && context.ActualAwayScore.HasValue) ? context.Points : (int?)null)</MudTd>
         </RowTemplate>
     </MudTable>
+    @if (_predictions.Any(p => p.ActualHomeScore.HasValue && p.ActualAwayScore.HasValue))
+    {
+        <MudText Class="mt-4 total-points">Total Points: @_predictions.Sum(p => p.Points)</MudText>
+    }
     <MudButton OnClick="CopyToClipboard" Variant="Variant.Filled" Color="Color.Secondary" Class="mt-4">Copy to Clipboard</MudButton>
 }
 
@@ -91,6 +97,18 @@
                 {
                     p.ActualHomeScore = fixture.Score?.Fulltime.Home;
                     p.ActualAwayScore = fixture.Score?.Fulltime.Away;
+                    if (p.ActualHomeScore.HasValue && p.ActualAwayScore.HasValue)
+                    {
+                        if (p.HomeScore == p.ActualHomeScore && p.AwayScore == p.ActualAwayScore)
+                            p.Points = 3;
+                        else
+                        {
+                            var predictedResult = Math.Sign(p.HomeScore - p.AwayScore);
+                            var actualResult = Math.Sign(p.ActualHomeScore.Value - p.ActualAwayScore.Value);
+                            if (predictedResult == actualResult)
+                                p.Points = 1;
+                        }
+                    }
                 }
             }
         }
@@ -118,5 +136,6 @@
         public string AwayTeam { get; init; } = string.Empty;
         public int? ActualHomeScore { get; set; }
         public int? ActualAwayScore { get; set; }
+        public int Points { get; set; }
     }
 }

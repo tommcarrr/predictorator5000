@@ -54,6 +54,8 @@ public class ParsePageBUnitTests
         {
             Assert.Equal("3", cut.Find("td[data-label='Home Actual']").TextContent);
             Assert.Equal("2", cut.Find("td[data-label='Away Actual']").TextContent);
+            Assert.Equal("0", cut.Find("td[data-label='Points']").TextContent);
+            Assert.Equal("Total Points: 0", cut.Find("p.total-points").TextContent);
         });
     }
 
@@ -91,6 +93,57 @@ public class ParsePageBUnitTests
         {
             Assert.Equal(string.Empty, cut.Find("td[data-label='Home Actual']").TextContent);
             Assert.Equal(string.Empty, cut.Find("td[data-label='Away Actual']").TextContent);
+            Assert.Equal(string.Empty, cut.Find("td[data-label='Points']").TextContent);
+        });
+    }
+
+    [Fact]
+    public async Task CalculatesPointsCorrectly()
+    {
+        var fixtureTime1 = new DateTime(2024, 1, 1, 15, 0, 0, DateTimeKind.Utc);
+        var fixtureTime2 = new DateTime(2024, 1, 1, 17, 0, 0, DateTimeKind.Utc);
+        var fixtures = new FixturesResponse
+        {
+            FromDate = fixtureTime1.Date,
+            ToDate = fixtureTime2.Date,
+            Response =
+            [
+                new FixtureData
+                {
+                    Fixture = new Fixture { Id = 1, Date = fixtureTime1, Venue = new Venue() },
+                    Teams = new Teams
+                    {
+                        Home = new Team { Name = "Team A" },
+                        Away = new Team { Name = "Team B" }
+                    },
+                    Score = new Score { Fulltime = new ScoreHomeAway { Home = 1, Away = 2 } }
+                },
+                new FixtureData
+                {
+                    Fixture = new Fixture { Id = 2, Date = fixtureTime2, Venue = new Venue() },
+                    Teams = new Teams
+                    {
+                        Home = new Team { Name = "Team C" },
+                        Away = new Team { Name = "Team D" }
+                    },
+                    Score = new Score { Fulltime = new ScoreHomeAway { Home = 2, Away = 1 } }
+                }
+            ]
+        };
+
+        const string text = "Monday, January 1, 2024\nTeam A 1 - 2 Team B\nTeam C 1 - 0 Team D";
+        await using var ctx = CreateContext(fixtures, fixtureTime2.AddHours(4));
+        var cut = ctx.Render<Parse>();
+        cut.Find("input").Change("Bob");
+        cut.Find("textarea").Change(text);
+        cut.Find("button").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            var pointCells = cut.FindAll("td[data-label='Points']");
+            Assert.Equal("3", pointCells[0].TextContent);
+            Assert.Equal("1", pointCells[1].TextContent);
+            Assert.Equal("Total Points: 4", cut.Find("p.total-points").TextContent);
         });
     }
 }
