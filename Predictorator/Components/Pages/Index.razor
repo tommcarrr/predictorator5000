@@ -354,4 +354,13 @@ else if (_fixtures.Response.Any())
         public int? Home { get; set; }
         public int? Away { get; set; }
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var delay = Config.GetValue<int?>("ScoreInputFocusDelayMs") ?? 500;
+            await Js.InvokeVoidAsync("app.registerScoreInputs", delay);
+        }
+    }
 }
