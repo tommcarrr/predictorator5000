@@ -89,8 +89,10 @@
     </MudAppBar>
 
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Large">
-            @Body
+        <MudContainer MaxWidth="MaxWidth.Large" Class="d-flex flex-column" Style="min-height:100vh;display:flex;flex-direction:column;">
+            <div class="flex-grow-1" style="flex-grow:1;">
+                @Body
+            </div>
             <MudText Typo="Typo.caption" Align="Align.Center" Class="mt-6">
                 <MudLink OnClick="OpenPrivacyPolicy">Privacy Policy</MudLink>
             </MudText>

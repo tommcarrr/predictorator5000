@@ -5,6 +5,8 @@ using Predictorator.Components.Pages;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
+using System.Linq;
+using MudBlazor;
 
 namespace Predictorator.Tests;
 
@@ -144,6 +146,51 @@ public class ParsePageBUnitTests
             Assert.Equal("3", pointCells[0].TextContent);
             Assert.Equal("1", pointCells[1].TextContent);
             Assert.Equal("Total Points: 4", cut.Find("p.total-points").TextContent);
+        });
+    }
+
+    [Fact]
+    public async Task CopyToClipboard_Copies_All_Columns_And_Shows_Snackbar()
+    {
+        var fixtureTime = new DateTime(2024, 1, 1, 15, 0, 0, DateTimeKind.Utc);
+        var fixtures = new FixturesResponse
+        {
+            FromDate = fixtureTime.Date,
+            ToDate = fixtureTime.Date,
+            Response =
+            [
+                new FixtureData
+                {
+                    Fixture = new Fixture { Id = 1, Date = fixtureTime, Venue = new Venue() },
+                    Teams = new Teams
+                    {
+                        Home = new Team { Name = "Team A" },
+                        Away = new Team { Name = "Team B" }
+                    },
+                    Score = new Score { Fulltime = new ScoreHomeAway { Home = 3, Away = 2 } }
+                }
+            ]
+        };
+
+        const string text = "Monday, January 1, 2024\nTeam A 1 - 2 Team B";
+        await using var ctx = CreateContext(fixtures, fixtureTime.AddHours(4));
+        var provider = ctx.Render<MudSnackbarProvider>();
+        var cut = ctx.Render<Parse>();
+
+        cut.Find("input").Change("Bob");
+        cut.Find("textarea").Change(text);
+        cut.FindAll("button").First(b => b.TextContent == "Parse").Click();
+        cut.FindAll("button").First(b => b.TextContent == "Copy to Clipboard").Click();
+
+        var invocation = ctx.JSInterop.Invocations.Single(i => i.Identifier == "navigator.clipboard.writeText");
+        var lines = invocation.Arguments[0]?.ToString()?.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal("Name\tDate\tHome Team\tHome Prediction\tHome Actual\tAway Prediction\tAway Actual\tAway Team\tPoints", lines![0]);
+        Assert.Equal("Bob\t01/01/2024\tTeam A\t1\t3\t2\t2\tTeam B\t0", lines[1]);
+
+        provider.WaitForAssertion(() =>
+        {
+            var snackbar = provider.Find("div.mud-snackbar");
+            Assert.Contains("Copied to clipboard", snackbar.TextContent);
         });
     }
 }
