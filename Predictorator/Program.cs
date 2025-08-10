@@ -35,14 +35,15 @@ builder.Host.UseSerilog((context, services, configuration) =>
 {
     var logDir = Path.Combine(context.HostingEnvironment.ContentRootPath, "logs");
     Directory.CreateDirectory(logDir);
+    var minLevel = context.HostingEnvironment.IsProduction() ? LogEventLevel.Warning : LogEventLevel.Information;
     configuration
-        .MinimumLevel.Information()
+        .MinimumLevel.Is(minLevel)
         .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
         .Enrich.FromLogContext()
         .ReadFrom.Configuration(context.Configuration)
-        .WriteTo.File(Path.Combine(logDir, "app.log"), rollingInterval: RollingInterval.Day)
+        .WriteTo.File(Path.Combine(logDir, "app.log"), rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
         .WriteTo.Console()
-        .WriteTo.AzureApp();
+        .WriteTo.AzureApp(restrictedToMinimumLevel: minLevel);
 });
 
 var error = StartupValidator.Validate(builder);
