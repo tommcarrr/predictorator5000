@@ -6,6 +6,7 @@ using MudBlazor.Services;
 using Predictorator.Components;
 using Hangfire;
 using Hangfire.Dashboard;
+using Hangfire.SqlServer;
 using Predictorator.Data;
 using Predictorator.Options;
 using Predictorator.Services;
@@ -97,6 +98,7 @@ builder.Services.Configure<AdminUserOptions>(options =>
     options.Email = builder.Configuration["ADMIN_EMAIL"] ?? options.Email;
     options.Password = builder.Configuration["ADMIN_PASSWORD"] ?? options.Password;
 });
+builder.Services.Configure<HangfireOptions>(builder.Configuration.GetSection(HangfireOptions.SectionName));
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
 builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
@@ -159,10 +161,25 @@ builder.Services.AddScoped<ISignInService, SignInManagerSignInService>();
 builder.Services.AddAuthorization();
 builder.Services.AddRazorPages();
 
+var hangfireOptions = builder.Configuration.GetSection(HangfireOptions.SectionName).Get<HangfireOptions>() ?? new HangfireOptions();
 if (!builder.Environment.IsEnvironment("Testing"))
 {
-    builder.Services.AddHangfire(config => config.UseSqlServerStorage(connectionString));
-    builder.Services.AddHangfireServer();
+    builder.Services.AddHangfire(config =>
+        config.UseSqlServerStorage(connectionString, new SqlServerStorageOptions
+        {
+            QueuePollInterval = TimeSpan.FromSeconds(hangfireOptions.QueuePollIntervalSeconds)
+        }));
+
+    if (hangfireOptions.RunServer)
+    {
+        builder.Services.AddHangfireServer(options =>
+        {
+            options.SchedulePollingInterval = TimeSpan.FromSeconds(hangfireOptions.SchedulePollingIntervalSeconds);
+            options.ServerCheckInterval = TimeSpan.FromSeconds(hangfireOptions.ServerCheckIntervalSeconds);
+            options.HeartbeatInterval = TimeSpan.FromSeconds(hangfireOptions.HeartbeatIntervalSeconds);
+            options.WorkerCount = hangfireOptions.WorkerCount;
+        });
+    }
 }
 
 var keyPath = builder.Configuration["DataProtection:KeyPath"];
