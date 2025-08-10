@@ -51,7 +51,7 @@ is provided at `.env.example`. Copy this file to `.env` and update the values
 as needed before running the containers.
 
 Verification links sent to subscribers are valid for one hour. A background job
-runs every 15 minutes to remove unverified subscriptions that have expired.
+runs weekly to calculate unverified subscriptions that have expired.
 
 Ceefax mode provides a retro Teletext-inspired theme. When enabled, dark mode is
 also automatically activated for optimal contrast. If no prior preference is
