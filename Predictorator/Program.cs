@@ -215,9 +215,9 @@ if (!app.Environment.IsEnvironment("Testing"))
             TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time")
         });
     RecurringJob.AddOrUpdate<SubscriptionService>(
-        "cleanup-unverified",
-        service => service.RemoveExpiredUnverifiedAsync(),
-        "*/15 * * * *",
+        "check-unverified-expired",
+        service => service.CountExpiredUnverifiedAsync(),
+        "0 1 * * 1",
         new RecurringJobOptions
         {
             TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time")

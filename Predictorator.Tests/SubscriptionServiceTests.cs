@@ -129,7 +129,7 @@ public class SubscriptionServiceTests
     }
 
     [Fact]
-    public async Task RemoveExpiredUnverifiedAsync_removes_old_records()
+    public async Task CountExpiredUnverifiedAsync_counts_old_records()
     {
         var provider = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow };
         var service = CreateService(out var db, out _, out _, out _, provider);
@@ -137,14 +137,15 @@ public class SubscriptionServiceTests
         db.SmsSubscribers.Add(new SmsSubscriber { PhoneNumber = "+1", CreatedAt = provider.UtcNow.AddHours(-2), VerificationToken = "c", UnsubscribeToken = "d" });
         await db.SaveChangesAsync();
 
-        await service.RemoveExpiredUnverifiedAsync();
+        var count = await service.CountExpiredUnverifiedAsync();
 
-        Assert.Empty(db.Subscribers);
-        Assert.Empty(db.SmsSubscribers);
+        Assert.Equal(2, count);
+        Assert.Single(db.Subscribers);
+        Assert.Single(db.SmsSubscribers);
     }
 
     [Fact]
-    public async Task RemoveExpiredUnverifiedAsync_keeps_recent_or_verified()
+    public async Task CountExpiredUnverifiedAsync_excludes_recent_or_verified()
     {
         var provider = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow };
         var service = CreateService(out var db, out _, out _, out _, provider);
@@ -154,8 +155,9 @@ public class SubscriptionServiceTests
         db.SmsSubscribers.Add(verified);
         await db.SaveChangesAsync();
 
-        await service.RemoveExpiredUnverifiedAsync();
+        var count = await service.CountExpiredUnverifiedAsync();
 
+        Assert.Equal(0, count);
         Assert.Contains(recent, db.Subscribers);
         Assert.Contains(verified, db.SmsSubscribers);
     }

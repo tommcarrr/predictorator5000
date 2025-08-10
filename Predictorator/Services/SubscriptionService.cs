@@ -77,20 +77,12 @@ public class SubscriptionService
         return true;
     }
 
-    private async Task<bool> RemoveExpiredSubscribersAsync<TEntity>(DbSet<TEntity> set, DateTime cutoff) where TEntity : class, ISubscriber
+    private async Task<int> CountExpiredSubscribersAsync<TEntity>(DbSet<TEntity> set, DateTime cutoff) where TEntity : class, ISubscriber
     {
-        _logger.LogInformation("Removing expired {Entity} records before {Cutoff}", typeof(TEntity).Name, cutoff);
-        var expired = await set
-            .Where(s => !s.IsVerified && s.CreatedAt < cutoff)
-            .ToListAsync();
-        if (!expired.Any())
-        {
-            _logger.LogInformation("No expired {Entity} records found", typeof(TEntity).Name);
-            return false;
-        }
-        set.RemoveRange(expired);
-        _logger.LogInformation("Removed {Count} expired {Entity} records", expired.Count, typeof(TEntity).Name);
-        return true;
+        _logger.LogInformation("Counting expired {Entity} records before {Cutoff}", typeof(TEntity).Name, cutoff);
+        var count = await set.CountAsync(s => !s.IsVerified && s.CreatedAt < cutoff);
+        _logger.LogInformation("Found {Count} expired {Entity} records", count, typeof(TEntity).Name);
+        return count;
     }
 
     public SubscriptionService(
@@ -222,19 +214,16 @@ public class SubscriptionService
         return result;
     }
 
-    public async Task RemoveExpiredUnverifiedAsync()
+    public async Task<int> CountExpiredUnverifiedAsync()
     {
         var cutoff = _dateTime.UtcNow.AddHours(-1);
         _logger.LogInformation("Checking for expired subscriptions before {Cutoff}", cutoff);
 
-        var removed = await RemoveExpiredSubscribersAsync(_db.Subscribers, cutoff);
-        removed |= await RemoveExpiredSubscribersAsync(_db.SmsSubscribers, cutoff);
+        var count = await CountExpiredSubscribersAsync(_db.Subscribers, cutoff);
+        count += await CountExpiredSubscribersAsync(_db.SmsSubscribers, cutoff);
 
-        if (removed)
-        {
-            await _db.SaveChangesAsync();
-            _logger.LogInformation("Expired subscriptions removed");
-        }
+        _logger.LogInformation("Total expired subscriptions found: {Count}", count);
+        return count;
     }
 
     public async Task<bool> UnsubscribeByContactAsync(string contact)
