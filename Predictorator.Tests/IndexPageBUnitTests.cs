@@ -10,12 +10,13 @@ using Predictorator.Services;
 using Predictorator.Tests.Helpers;
 using IndexPage = Predictorator.Components.Pages.Index;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Predictorator.Tests;
 
 public class IndexPageBUnitTests
 {
-    private BunitContext CreateContext()
+    private BunitContext CreateContext(Dictionary<string, string?>? configOverrides = null)
     {
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
@@ -48,6 +49,13 @@ public class IndexPageBUnitTests
             ["Twilio:FromNumber"] = "+1",
             ["PredictionEmail:SpecialRecipients:0"] = "vip@example.com"
         };
+        if (configOverrides != null)
+        {
+            foreach (var kvp in configOverrides)
+            {
+                settings[kvp.Key] = kvp.Value;
+            }
+        }
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         ctx.Services.AddSingleton<IConfiguration>(config);
         ctx.Services.AddSingleton<NotificationFeatureService>();
@@ -68,6 +76,48 @@ public class IndexPageBUnitTests
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
         var picker = cut.Find("#dateRangePicker");
         Assert.NotNull(picker);
+    }
+
+    [Fact]
+    public async Task ScoreInputAutoFocus_UsesConfigurableDelay()
+    {
+        const int delay = 750;
+        await using var ctx = CreateContext(new Dictionary<string, string?>
+        {
+            ["ScoreInputFocusDelayMs"] = delay.ToString()
+        });
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
+            b.CloseComponent();
+        };
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        cut.WaitForAssertion(() =>
+        {
+            var inv = ctx.JSInterop.Invocations.Single(i => i.Identifier == "app.registerScoreInputs");
+            Assert.Equal(delay, (int)inv.Arguments[0]!);
+        });
+    }
+
+    [Fact]
+    public async Task ScoreInputAutoFocus_DefaultsTo500Milliseconds()
+    {
+        await using var ctx = CreateContext();
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
+            b.CloseComponent();
+        };
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        cut.WaitForAssertion(() =>
+        {
+            var inv = ctx.JSInterop.Invocations.Single(i => i.Identifier == "app.registerScoreInputs");
+            Assert.Equal(500, (int)inv.Arguments[0]!);
+        });
     }
 
     [Fact]

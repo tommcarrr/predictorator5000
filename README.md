@@ -57,6 +57,10 @@ Ceefax mode provides a retro Teletext-inspired theme. When enabled, dark mode is
 also automatically activated for optimal contrast. If no prior preference is
 stored in the browser, the site defaults to Ceefax mode with dark mode enabled.
 
+Score prediction inputs automatically advance to the next field after a short
+delay. Configure this delay with `ScoreInputFocusDelayMs` (milliseconds); the
+default is 500ms.
+
 To run the application in Docker using the latest Compose Specification:
 
 ```bash

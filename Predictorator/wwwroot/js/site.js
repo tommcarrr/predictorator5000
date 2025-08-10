@@ -101,6 +101,26 @@ window.app = (() => {
             window.toastHelper.invokeMethodAsync('ShowToast', message, severity);
         }
     }
+
+    function registerScoreInputs(delay = 500) {
+        const timers = new Map();
+        document.querySelectorAll('.score-input input').forEach(input => {
+            input.addEventListener('input', () => {
+                const existing = timers.get(input);
+                if (existing) clearTimeout(existing);
+                if (input.value === '') return;
+                const timer = setTimeout(() => {
+                    const all = Array.from(document.querySelectorAll('.score-input input'));
+                    let idx = all.indexOf(input) + 1;
+                    while (idx < all.length && all[idx].disabled) idx++;
+                    if (idx < all.length) {
+                        all[idx].focus();
+                    }
+                }, delay);
+                timers.set(input, timer);
+            });
+        });
+    }
     
     function copyPredictions() {
         const groups = document.querySelectorAll('.fixture-group');
@@ -176,6 +196,7 @@ window.app = (() => {
 
     return {
         copyPredictions,
+        registerScoreInputs,
         registerToastHandler,
         setCeefax,
         login
