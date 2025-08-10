@@ -105,10 +105,15 @@ builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =
     var efLogger = loggerFactory.CreateLogger("EFCore");
     options
         .UseSqlServer(connectionString)
-        .UseLoggerFactory(loggerFactory)
-        .EnableDetailedErrors()
-        .EnableSensitiveDataLogging()
-        .LogTo(message => efLogger.LogError(message), LogLevel.Error);
+        .UseLoggerFactory(loggerFactory);
+
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableDetailedErrors()
+            .EnableSensitiveDataLogging();
+    }
+
+    options.LogTo(message => efLogger.LogError(message), LogLevel.Error);
 });
 builder.Services.AddDbContextFactory<ApplicationDbContext>((serviceProvider, options) =>
 {
@@ -116,10 +121,15 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>((serviceProvider, opt
     var efLogger = loggerFactory.CreateLogger("EFCore");
     options
         .UseSqlServer(connectionString)
-        .UseLoggerFactory(loggerFactory)
-        .EnableDetailedErrors()
-        .EnableSensitiveDataLogging()
-        .LogTo(message => efLogger.LogError(message), LogLevel.Error);
+        .UseLoggerFactory(loggerFactory);
+
+    if (builder.Environment.IsDevelopment())
+    {
+        options.EnableDetailedErrors()
+            .EnableSensitiveDataLogging();
+    }
+
+    options.LogTo(message => efLogger.LogError(message), LogLevel.Error);
 });
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
