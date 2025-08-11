@@ -22,6 +22,7 @@ public class SubscriptionServiceTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         db = new ApplicationDbContext(options);
+        var store = new EfDataStore(db);
         resend = Substitute.For<IResend>();
         sms = Substitute.For<ITwilioSmsSender>();
         jobs = Substitute.For<IBackgroundJobClient>();
@@ -33,7 +34,7 @@ public class SubscriptionServiceTests
         var inliner = new EmailCssInliner(env);
         var renderer = new EmailTemplateRenderer();
         var logger = NullLogger<SubscriptionService>.Instance;
-        return new SubscriptionService(db, resend, config, sms, provider, jobs, inliner, renderer, logger);
+        return new SubscriptionService(store, resend, config, sms, provider, jobs, inliner, renderer, logger);
     }
 
     [Fact]

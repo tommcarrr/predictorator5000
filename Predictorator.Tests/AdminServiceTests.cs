@@ -47,10 +47,11 @@ public class AdminServiceTests
         var nLogger = NullLogger<NotificationService>.Instance;
         var gameWeeks = new FakeGameWeekService();
         gameWeeks.Items.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = provider.UtcNow.Date, EndDate = provider.UtcNow.Date.AddDays(6) });
-        var notifications = new NotificationService(db, resend, sms, config, fixtures, gameWeeks, range, features, provider, jobs, inliner, renderer, nLogger);
+        var store = new EfDataStore(db);
+        var notifications = new NotificationService(store, resend, sms, config, fixtures, gameWeeks, range, features, provider, jobs, inliner, renderer, nLogger);
         var aLogger = NullLogger<AdminService>.Instance;
         var prefix = new CachePrefixService();
-        return new AdminService(db, resend, sms, config, inliner, renderer, notifications, aLogger, jobs, provider, prefix);
+        return new AdminService(store, resend, sms, config, inliner, renderer, notifications, aLogger, jobs, provider, prefix);
     }
 
     [Fact]

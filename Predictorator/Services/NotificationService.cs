@@ -1,15 +1,15 @@
 using Hangfire;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Predictorator.Data;
 using Predictorator.Models;
 using Resend;
+using System.Linq;
 
 namespace Predictorator.Services;
 
 public class NotificationService
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IDataStore _store;
     private readonly IResend _resend;
     private readonly ITwilioSmsSender _sms;
     private readonly IConfiguration _config;
@@ -24,7 +24,7 @@ public class NotificationService
     private readonly ILogger<NotificationService> _logger;
 
     public NotificationService(
-        ApplicationDbContext db,
+        IDataStore store,
         IResend resend,
         ITwilioSmsSender sms,
         IConfiguration config,
@@ -38,7 +38,7 @@ public class NotificationService
         EmailTemplateRenderer renderer,
         ILogger<NotificationService> logger)
     {
-        _db = db;
+        _store = store;
         _resend = resend;
         _sms = sms;
         _config = config;
@@ -89,8 +89,7 @@ public class NotificationService
         if (future != null)
         {
             var key = future.Fixture.Date.Date.ToString("yyyy-MM-dd");
-            var sent = await _db.SentNotifications
-                .AnyAsync(n => n.Type == "NewFixtures" && n.Key == key);
+            var sent = await _store.SentNotificationExistsAsync("NewFixtures", key);
             if (!sent)
             {
                 var futureUk = TimeZoneInfo.ConvertTime(future.Fixture.Date, ukTz);
@@ -112,8 +111,7 @@ public class NotificationService
         if (firstUk.Date == nowUk.Date)
         {
             var key = first.Fixture.Date.ToString("O");
-            var sent = await _db.SentNotifications
-                .AnyAsync(n => n.Type == "FixturesStartingSoon" && n.Key == key);
+            var sent = await _store.SentNotificationExistsAsync("FixturesStartingSoon", key);
             if (!sent)
             {
                 var sendTimeUtc = first.Fixture.Date.AddHours(-2);
@@ -175,14 +173,14 @@ public class NotificationService
         {
             if (r.Type == "Email")
             {
-                var sub = await _db.Subscribers.FirstOrDefaultAsync(s => s.Id == r.Id);
+                var sub = await _store.GetEmailSubscriberByIdAsync(r.Id);
                 if (sub != null)
                     await SendNotificationAsync(message, baseUrl, sub);
             }
             else
             {
                 _logger.LogInformation("Fetching SMS subscriber {Id} for sample", r.Id);
-                var sub = await _db.SmsSubscribers.FirstOrDefaultAsync(s => s.Id == r.Id);
+                var sub = await _store.GetSmsSubscriberByIdAsync(r.Id);
                 if (sub != null)
                 {
                     _logger.LogInformation("Sending sample SMS to {Phone}", sub.PhoneNumber);
@@ -194,22 +192,21 @@ public class NotificationService
 
     private async Task SendToAllAsync(string message, string baseUrl, string type, string key)
     {
-        var emails = await _db.Subscribers.Where(s => s.IsVerified).ToListAsync();
+        var emails = await _store.GetVerifiedEmailSubscribersAsync();
         foreach (var sub in emails)
             await SendNotificationAsync(message, baseUrl, sub);
 
         _logger.LogInformation("Retrieving all verified SMS subscribers");
-        var phones = await _db.SmsSubscribers.Where(s => s.IsVerified).ToListAsync();
+        var phones = await _store.GetVerifiedSmsSubscribersAsync();
         _logger.LogInformation("Sending notification to {Count} SMS subscribers", phones.Count);
         foreach (var sub in phones)
             await SendNotificationAsync(message, baseUrl, sub);
 
-        _db.SentNotifications.Add(new SentNotification
+        await _store.AddSentNotificationAsync(new SentNotification
         {
             Type = type,
             Key = key,
             SentAt = _time.UtcNow
         });
-        await _db.SaveChangesAsync();
     }
 }
