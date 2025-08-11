@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
@@ -7,12 +6,13 @@ using Predictorator.Data;
 using Predictorator.Models;
 using Predictorator.Options;
 using Resend;
+using System.Linq;
 
 namespace Predictorator.Services;
 
 public class SubscriptionService
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IDataStore _store;
     private readonly IResend _resend;
     private readonly IConfiguration _config;
     private readonly ITwilioSmsSender _smsSender;
@@ -38,103 +38,118 @@ public class SubscriptionService
         await _resend.EmailSendAsync(message);
     }
 
-    private async Task<bool> VerifySubscriberAsync<TEntity>(DbSet<TEntity> set, string token) where TEntity : class, ISubscriber
+    private async Task<bool> VerifyEmailSubscriberAsync(string token)
     {
-        _logger.LogInformation("Checking {Entity} with verification token {Token}", typeof(TEntity).Name, token);
-        var entity = await set.FirstOrDefaultAsync(s => s.VerificationToken == token);
-        if (entity == null)
+        _logger.LogInformation("Checking email subscriber with verification token {Token}", token);
+        var sub = await _store.GetEmailSubscriberByVerificationTokenAsync(token);
+        if (sub == null)
         {
-            _logger.LogInformation("{Entity} with token {Token} not found", typeof(TEntity).Name, token);
+            _logger.LogInformation("Email subscriber with token {Token} not found", token);
             return false;
         }
-        entity.IsVerified = true;
-        await _db.SaveChangesAsync();
-        _logger.LogInformation("{Entity} verified using token {Token}", typeof(TEntity).Name, token);
-
-        var contact = entity switch
-        {
-            Subscriber s => s.Email,
-            SmsSubscriber sms => sms.PhoneNumber,
-            _ => ""
-        };
-        await SendAdminEmailAsync("Subscription confirmed", $"{contact} confirmed their subscription.");
-
+        sub.IsVerified = true;
+        await _store.UpdateEmailSubscriberAsync(sub);
+        await SendAdminEmailAsync("Subscription confirmed", $"{sub.Email} confirmed their subscription.");
         return true;
     }
 
-    private async Task<bool> UnsubscribeSubscriberAsync<TEntity>(DbSet<TEntity> set, string token) where TEntity : class, ISubscriber
+    private async Task<bool> VerifySmsSubscriberAsync(string token)
     {
-        _logger.LogInformation("Attempting unsubscribe for {Entity} with token {Token}", typeof(TEntity).Name, token);
-        var entity = await set.FirstOrDefaultAsync(s => s.UnsubscribeToken == token);
-        if (entity == null)
+        _logger.LogInformation("Checking SMS subscriber with verification token {Token}", token);
+        var sub = await _store.GetSmsSubscriberByVerificationTokenAsync(token);
+        if (sub == null)
         {
-            _logger.LogInformation("{Entity} with token {Token} not found", typeof(TEntity).Name, token);
+            _logger.LogInformation("SMS subscriber with token {Token} not found", token);
             return false;
         }
-        set.Remove(entity);
-        await _db.SaveChangesAsync();
-        _logger.LogInformation("{Entity} with token {Token} removed", typeof(TEntity).Name, token);
+        sub.IsVerified = true;
+        await _store.UpdateSmsSubscriberAsync(sub);
+        await SendAdminEmailAsync("Subscription confirmed", $"{sub.PhoneNumber} confirmed their subscription.");
         return true;
     }
 
-    private async Task<int> CountExpiredSubscribersAsync<TEntity>(DbSet<TEntity> set, DateTime cutoff) where TEntity : class, ISubscriber
-    {
-        _logger.LogInformation("Counting expired {Entity} records before {Cutoff}", typeof(TEntity).Name, cutoff);
-        var count = await set.CountAsync(s => !s.IsVerified && s.CreatedAt < cutoff);
-        _logger.LogInformation("Found {Count} expired {Entity} records", count, typeof(TEntity).Name);
-        return count;
-    }
+    private Task<int> CountExpiredEmailSubscribersAsync(DateTime cutoff) =>
+        _store.CountExpiredEmailSubscribersAsync(cutoff);
 
-    public SubscriptionService(
-        ApplicationDbContext db,
-        IResend resend,
-        IConfiguration config,
-        ITwilioSmsSender smsSender,
-        IDateTimeProvider dateTime,
-        IBackgroundJobClient jobs,
-        EmailCssInliner inliner,
-        EmailTemplateRenderer renderer,
-        ILogger<SubscriptionService> logger)
-    {
-        _db = db;
-        _resend = resend;
-        _config = config;
-        _smsSender = smsSender;
-        _dateTime = dateTime;
-        _jobs = jobs;
-        _inliner = inliner;
-        _renderer = renderer;
-        _logger = logger;
-    }
+    private Task<int> CountExpiredSmsSubscribersAsync(DateTime cutoff) =>
+        _store.CountExpiredSmsSubscribersAsync(cutoff);
 
-    public Task SubscribeAsync(string? email, string? phoneNumber, string baseUrl)
+    private async Task<bool> UnsubscribeEmailSubscriberAsync(string token)
     {
-        if (!string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(phoneNumber))
-            throw new ArgumentException("Provide either an email or phone number, not both.");
-
-        if (!string.IsNullOrWhiteSpace(email))
+        _logger.LogInformation("Attempting unsubscribe for email subscriber with token {Token}", token);
+        var sub = await _store.GetEmailSubscriberByUnsubscribeTokenAsync(token);
+        if (sub == null)
         {
-            _logger.LogInformation("Scheduling email subscription for {Email}", email);
-            var job = Job.FromExpression<SubscriptionService>(s => s.AddEmailSubscriberAsync(email, baseUrl));
-            _jobs.Create(job, new EnqueuedState());
-            return Task.CompletedTask;
+            _logger.LogInformation("Email subscriber with token {Token} not found", token);
+            return false;
         }
-
-        if (!string.IsNullOrWhiteSpace(phoneNumber))
-        {
-            _logger.LogInformation("Scheduling SMS subscription for {PhoneNumber}", phoneNumber);
-            var job = Job.FromExpression<SubscriptionService>(s => s.AddSmsSubscriberAsync(phoneNumber, baseUrl));
-            _jobs.Create(job, new EnqueuedState());
-            return Task.CompletedTask;
-        }
-
-        throw new ArgumentException("An email or phone number is required.");
+        await _store.RemoveEmailSubscriberAsync(sub);
+        _logger.LogInformation("Email subscriber with token {Token} removed", token);
+        return true;
     }
 
+    private async Task<bool> UnsubscribeSmsSubscriberAsync(string token)
+    {
+        _logger.LogInformation("Attempting unsubscribe for SMS subscriber with token {Token}", token);
+        var sub = await _store.GetSmsSubscriberByUnsubscribeTokenAsync(token);
+        if (sub == null)
+        {
+            _logger.LogInformation("SMS subscriber with token {Token} not found", token);
+            return false;
+        }
+        await _store.RemoveSmsSubscriberAsync(sub);
+        _logger.LogInformation("SMS subscriber with token {Token} removed", token);
+        return true;
+    }
+public SubscriptionService(
+    IDataStore store,
+    IResend resend,
+    IConfiguration config,
+    ITwilioSmsSender smsSender,
+    IDateTimeProvider dateTime,
+    IBackgroundJobClient jobs,
+    EmailCssInliner inliner,
+    EmailTemplateRenderer renderer,
+    ILogger<SubscriptionService> logger)
+{
+    _store = store;
+    _resend = resend;
+    _config = config;
+    _smsSender = smsSender;
+    _dateTime = dateTime;
+    _jobs = jobs;
+    _inliner = inliner;
+    _renderer = renderer;
+    _logger = logger;
+}
+
+public Task SubscribeAsync(string? email, string? phoneNumber, string baseUrl)
+{
+    if (!string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(phoneNumber))
+        throw new ArgumentException("Provide either an email or phone number, not both.");
+
+    if (!string.IsNullOrWhiteSpace(email))
+    {
+        _logger.LogInformation("Scheduling email subscription for {Email}", email);
+        var job = Job.FromExpression<SubscriptionService>(s => s.AddEmailSubscriberAsync(email, baseUrl));
+        _jobs.Create(job, new EnqueuedState());
+        return Task.CompletedTask;
+    }
+
+    if (!string.IsNullOrWhiteSpace(phoneNumber))
+    {
+        _logger.LogInformation("Scheduling SMS subscription for {PhoneNumber}", phoneNumber);
+        var job = Job.FromExpression<SubscriptionService>(s => s.AddSmsSubscriberAsync(phoneNumber, baseUrl));
+        _jobs.Create(job, new EnqueuedState());
+        return Task.CompletedTask;
+    }
+
+    throw new ArgumentException("An email or phone number is required.");
+}
     [AutomaticRetry(Attempts = 3)]
     public async Task AddEmailSubscriberAsync(string email, string baseUrl)
     {
-        if (await _db.Subscribers.AnyAsync(s => s.Email == email))
+        if (await _store.EmailSubscriberExistsAsync(email))
             return;
 
         var subscriber = new Subscriber
@@ -145,8 +160,7 @@ public class SubscriptionService
             UnsubscribeToken = Guid.NewGuid().ToString("N"),
             CreatedAt = _dateTime.UtcNow
         };
-        _db.Subscribers.Add(subscriber);
-        await _db.SaveChangesAsync();
+        await _store.AddEmailSubscriberAsync(subscriber);
 
         await SendAdminEmailAsync("New subscriber", $"Email subscriber {email} added.");
 
@@ -169,7 +183,7 @@ public class SubscriptionService
     {
         _logger.LogInformation("Attempting to add SMS subscriber {PhoneNumber}", phoneNumber);
 
-        if (await _db.SmsSubscribers.AnyAsync(s => s.PhoneNumber == phoneNumber))
+        if (await _store.SmsSubscriberExistsAsync(phoneNumber))
         {
             _logger.LogInformation("SMS subscriber {PhoneNumber} already exists", phoneNumber);
             return;
@@ -183,8 +197,7 @@ public class SubscriptionService
             UnsubscribeToken = Guid.NewGuid().ToString("N"),
             CreatedAt = _dateTime.UtcNow
         };
-        _db.SmsSubscribers.Add(subscriber);
-        await _db.SaveChangesAsync();
+        await _store.AddSmsSubscriberAsync(subscriber);
         _logger.LogInformation("SMS subscriber {PhoneNumber} stored with id {Id}", phoneNumber, subscriber.Id);
 
         await SendAdminEmailAsync("New subscriber", $"SMS subscriber {phoneNumber} added.");
@@ -199,8 +212,8 @@ public class SubscriptionService
     public async Task<bool> VerifyAsync(string token)
     {
         _logger.LogInformation("Verifying subscriber with token {Token}", token);
-        var result = await VerifySubscriberAsync(_db.Subscribers, token)
-            || await VerifySubscriberAsync(_db.SmsSubscribers, token);
+        var result = await VerifyEmailSubscriberAsync(token)
+            || await VerifySmsSubscriberAsync(token);
         _logger.LogInformation("Verification {Result} for token {Token}", result ? "succeeded" : "failed", token);
         return result;
     }
@@ -208,8 +221,8 @@ public class SubscriptionService
     public async Task<bool> UnsubscribeAsync(string token)
     {
         _logger.LogInformation("Unsubscribe requested for token {Token}", token);
-        var result = await UnsubscribeSubscriberAsync(_db.Subscribers, token)
-            || await UnsubscribeSubscriberAsync(_db.SmsSubscribers, token);
+        var result = await UnsubscribeEmailSubscriberAsync(token)
+            || await UnsubscribeSmsSubscriberAsync(token);
         _logger.LogInformation("Unsubscribe {Result} for token {Token}", result ? "succeeded" : "failed", token);
         return result;
     }
@@ -219,8 +232,8 @@ public class SubscriptionService
         var cutoff = _dateTime.UtcNow.AddHours(-1);
         _logger.LogInformation("Checking for expired subscriptions before {Cutoff}", cutoff);
 
-        var count = await CountExpiredSubscribersAsync(_db.Subscribers, cutoff);
-        count += await CountExpiredSubscribersAsync(_db.SmsSubscribers, cutoff);
+        var count = await CountExpiredEmailSubscribersAsync(cutoff);
+        count += await CountExpiredSmsSubscribersAsync(cutoff);
 
         _logger.LogInformation("Total expired subscriptions found: {Count}", count);
         return count;
@@ -234,27 +247,24 @@ public class SubscriptionService
         if (contact.Contains('@'))
         {
             var normalized = contact.Trim().ToLowerInvariant();
-            var subscriber = await _db.Subscribers
-                .FirstOrDefaultAsync(s => s.Email.ToLower() == normalized);
+            var subscriber = await _store.GetEmailSubscriberByEmailAsync(normalized);
             if (subscriber == null)
                 return false;
-            _db.Subscribers.Remove(subscriber);
-            await _db.SaveChangesAsync();
+            await _store.RemoveEmailSubscriberAsync(subscriber);
             return true;
         }
         else
         {
             var normalized = NormalizePhone(contact);
             _logger.LogInformation("Attempting unsubscribe by phone {Phone}", contact);
-            var subs = await _db.SmsSubscribers.ToListAsync();
+            var subs = await _store.GetSmsSubscribersAsync();
             var subscriber = subs.FirstOrDefault(s => NormalizePhone(s.PhoneNumber) == normalized);
             if (subscriber == null)
             {
                 _logger.LogInformation("SMS subscriber {Phone} not found", contact);
                 return false;
             }
-            _db.SmsSubscribers.Remove(subscriber);
-            await _db.SaveChangesAsync();
+            await _store.RemoveSmsSubscriberAsync(subscriber);
             _logger.LogInformation("SMS subscriber {Phone} removed", contact);
             return true;
         }
@@ -265,4 +275,3 @@ public class SubscriptionService
         return string.Concat(phone.Where(char.IsDigit));
     }
 }
-

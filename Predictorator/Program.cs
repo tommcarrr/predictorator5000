@@ -19,6 +19,7 @@ using Serilog.Events;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Azure.Data.Tables;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,6 +86,17 @@ builder.Services.Configure<ResendClientOptions>(o =>
 builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.Configure<TwilioOptions>(builder.Configuration.GetSection(TwilioOptions.SectionName));
 builder.Services.AddTransient<ITwilioSmsSender, TwilioSmsSender>();
+var tableConn = builder.Configuration.GetConnectionString("TableStorage") 
+    ?? builder.Configuration["TableStorage:ConnectionString"];
+if (!string.IsNullOrWhiteSpace(tableConn))
+{
+    builder.Services.AddSingleton(new TableServiceClient(tableConn));
+    builder.Services.AddScoped<IDataStore, TableDataStore>();
+}
+else
+{
+    builder.Services.AddScoped<IDataStore, EfDataStore>();
+}
 builder.Services.AddTransient<SubscriptionService>();
 builder.Services.AddTransient<NotificationService>();
 builder.Services.AddTransient<AdminService>();

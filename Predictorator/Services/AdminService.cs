@@ -1,10 +1,10 @@
-using Microsoft.EntityFrameworkCore;
 using Predictorator.Data;
 using Microsoft.Extensions.Logging;
 using Predictorator.Models;
 using Resend;
 using Hangfire;
 using System;
+using System.Linq;
 
 namespace Predictorator.Services;
 
@@ -31,7 +31,7 @@ public class AdminSubscriberDto
 
 public class AdminService
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IDataStore _store;
     private readonly IResend _resend;
     private readonly ITwilioSmsSender _sms;
     private readonly IConfiguration _config;
@@ -44,7 +44,7 @@ public class AdminService
     private readonly CachePrefixService _prefix;
 
     public AdminService(
-        ApplicationDbContext db,
+        IDataStore store,
         IResend resend,
         ITwilioSmsSender sms,
         IConfiguration config,
@@ -56,7 +56,7 @@ public class AdminService
         IDateTimeProvider time,
         CachePrefixService prefix)
     {
-        _db = db;
+        _store = store;
         _resend = resend;
         _sms = sms;
         _config = config;
@@ -72,12 +72,12 @@ public class AdminService
     public async Task<List<AdminSubscriberDto>> GetSubscribersAsync()
     {
         _logger.LogInformation("Fetching SMS subscribers");
-        var emails = await _db.Subscribers
+        var emails = (await _store.GetEmailSubscribersAsync())
             .Select(s => new AdminSubscriberDto(s.Id, s.Email, s.IsVerified, "Email"))
-            .ToListAsync();
-        var phones = await _db.SmsSubscribers
+            .ToList();
+        var phones = (await _store.GetSmsSubscribersAsync())
             .Select(s => new AdminSubscriberDto(s.Id, s.PhoneNumber, s.IsVerified, "SMS"))
-            .ToListAsync();
+            .ToList();
         _logger.LogInformation("Fetched {Count} SMS subscribers", phones.Count);
         return emails.Concat(phones).OrderBy(s => s.Contact).ToList();
     }
@@ -86,39 +86,45 @@ public class AdminService
     {
         if (type == "Email")
         {
-            var entity = await _db.Subscribers.FindAsync(id);
-            if (entity != null) entity.IsVerified = true;
+            var entity = await _store.GetEmailSubscriberByIdAsync(id);
+            if (entity != null)
+            {
+                entity.IsVerified = true;
+                await _store.UpdateEmailSubscriberAsync(entity);
+            }
         }
         else
         {
             _logger.LogInformation("Confirming SMS subscriber {Id}", id);
-            var entity = await _db.SmsSubscribers.FindAsync(id);
-            if (entity != null) entity.IsVerified = true;
+            var entity = await _store.GetSmsSubscriberByIdAsync(id);
+            if (entity != null)
+            {
+                entity.IsVerified = true;
+                await _store.UpdateSmsSubscriberAsync(entity);
+            }
         }
-        await _db.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(string type, int id)
     {
         if (type == "Email")
         {
-            var entity = await _db.Subscribers.FindAsync(id);
-            if (entity != null) _db.Subscribers.Remove(entity);
+            var entity = await _store.GetEmailSubscriberByIdAsync(id);
+            if (entity != null) await _store.RemoveEmailSubscriberAsync(entity);
         }
         else
         {
             _logger.LogInformation("Deleting SMS subscriber {Id}", id);
-            var entity = await _db.SmsSubscribers.FindAsync(id);
-            if (entity != null) _db.SmsSubscribers.Remove(entity);
+            var entity = await _store.GetSmsSubscriberByIdAsync(id);
+            if (entity != null) await _store.RemoveSmsSubscriberAsync(entity);
         }
-        await _db.SaveChangesAsync();
     }
 
     public async Task<AdminSubscriberDto?> AddSubscriberAsync(string type, string contact)
     {
         if (type == "Email")
         {
-            if (await _db.Subscribers.AnyAsync(s => s.Email == contact))
+            if (await _store.EmailSubscriberExistsAsync(contact))
                 return null;
             var sub = new Subscriber
             {
@@ -128,13 +134,12 @@ public class AdminService
                 UnsubscribeToken = Guid.NewGuid().ToString("N"),
                 CreatedAt = _time.UtcNow
             };
-            _db.Subscribers.Add(sub);
-            await _db.SaveChangesAsync();
+            await _store.AddEmailSubscriberAsync(sub);
             return new AdminSubscriberDto(sub.Id, sub.Email, sub.IsVerified, "Email");
         }
         else
         {
-            if (await _db.SmsSubscribers.AnyAsync(s => s.PhoneNumber == contact))
+            if (await _store.SmsSubscriberExistsAsync(contact))
                 return null;
             var sub = new SmsSubscriber
             {
@@ -144,8 +149,7 @@ public class AdminService
                 UnsubscribeToken = Guid.NewGuid().ToString("N"),
                 CreatedAt = _time.UtcNow
             };
-            _db.SmsSubscribers.Add(sub);
-            await _db.SaveChangesAsync();
+            await _store.AddSmsSubscriberAsync(sub);
             return new AdminSubscriberDto(sub.Id, sub.PhoneNumber, sub.IsVerified, "SMS");
         }
     }
@@ -157,7 +161,7 @@ public class AdminService
         {
             if (s.Type == "Email")
             {
-                var sub = await _db.Subscribers.FirstOrDefaultAsync(x => x.Id == s.Id);
+                var sub = await _store.GetEmailSubscriberByIdAsync(s.Id);
                 if (sub != null)
                 {
                     var html = _renderer.Render("This is a test notification.", baseUrl, sub.UnsubscribeToken, "VIEW FIXTURES", baseUrl, preheader: "This is a test notification.");

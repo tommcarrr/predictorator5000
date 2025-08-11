@@ -39,6 +39,7 @@ public class SubscribeComponentBUnitTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         var db = new ApplicationDbContext(options);
+        var store = new EfDataStore(db);
         var resend = Substitute.For<IResend>();
         var sms = Substitute.For<ITwilioSmsSender>();
         var jobs = Substitute.For<Hangfire.IBackgroundJobClient>();
@@ -50,7 +51,7 @@ public class SubscribeComponentBUnitTests
         var inliner = new EmailCssInliner(env);
         var renderer = new EmailTemplateRenderer();
         var logger = NullLogger<SubscriptionService>.Instance;
-        ctx.Services.AddSingleton(new SubscriptionService(db, resend, config, sms, time, jobs, inliner, renderer, logger));
+        ctx.Services.AddSingleton(new SubscriptionService(store, resend, config, sms, time, jobs, inliner, renderer, logger));
         return ctx;
     }
 
