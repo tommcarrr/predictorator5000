@@ -54,6 +54,32 @@ public class AdminServiceTests
     }
 
     [Fact]
+    public async Task AddSubscriberAsync_adds_verified_email()
+    {
+        var service = CreateService(out var db, out _, out _, out _, out _);
+        var dto = await service.AddSubscriberAsync("Email", "user@example.com");
+
+        var sub = await db.Subscribers.SingleAsync();
+        Assert.NotNull(dto);
+        Assert.True(sub.IsVerified);
+        Assert.Equal("user@example.com", sub.Email);
+        Assert.Equal(sub.Id, dto!.Id);
+    }
+
+    [Fact]
+    public async Task AddSubscriberAsync_adds_verified_sms()
+    {
+        var service = CreateService(out var db, out _, out _, out _, out _);
+        var dto = await service.AddSubscriberAsync("SMS", "+1");
+
+        var sub = await db.SmsSubscribers.SingleAsync();
+        Assert.NotNull(dto);
+        Assert.True(sub.IsVerified);
+        Assert.Equal("+1", sub.PhoneNumber);
+        Assert.Equal(sub.Id, dto!.Id);
+    }
+
+    [Fact]
     public async Task ConfirmAsync_marks_subscriber_verified()
     {
         var service = CreateService(out var db, out _, out _, out _, out _);

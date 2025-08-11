@@ -9,6 +9,18 @@
 }
 else
 {
+    <MudPaper Class="pa-2 mb-2">
+        <EditForm Model="_newSub" OnValidSubmit="AddSubscriberAsync">
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                <MudTextField @bind-Value="_newSub.Contact" Label="Email or phone" For="@(()=>_newSub.Contact)" />
+                <MudSelect T="string" @bind-Value="_newSub.Type" Label="Type" Required="true">
+                    <MudSelectItem Value="@("Email")">Email</MudSelectItem>
+                    <MudSelectItem Value="@("SMS")">SMS</MudSelectItem>
+                </MudSelect>
+                <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Add</MudButton>
+            </MudStack>
+        </EditForm>
+    </MudPaper>
     <EditForm Model="this" OnValidSubmit="SendTestAsync">
         <MudTable Items="_items" Hover="true" Breakpoint="Breakpoint.None">
             <HeaderContent>
@@ -82,7 +94,14 @@ else
         public bool Selected { get; set; }
     }
 
+    private class NewSubscriberModel
+    {
+        public string Contact { get; set; } = string.Empty;
+        public string Type { get; set; } = "Email";
+    }
+
     private List<Item>? _items;
+    private NewSubscriberModel _newSub = new();
     private DateTime? _sampleDate = DateTime.Today;
     private TimeSpan? _sampleTime = TimeSpan.FromHours(9);
     private DateTime? _realDate = DateTime.Today;
@@ -104,6 +123,21 @@ else
     {
         await AdminService.DeleteAsync(item.Type, item.Id);
         _items!.Remove(item);
+    }
+
+    private async Task AddSubscriberAsync()
+    {
+        var result = await AdminService.AddSubscriberAsync(_newSub.Type, _newSub.Contact);
+        if (result != null)
+        {
+            _items!.Add(new Item(result.Id, result.Contact, result.IsVerified, result.Type));
+            await Toast.ShowToast("Subscriber added!", "success");
+            _newSub = new();
+        }
+        else
+        {
+            await Toast.ShowToast("Subscriber already exists.", "error");
+        }
     }
 
     private async Task SendTestAsync()

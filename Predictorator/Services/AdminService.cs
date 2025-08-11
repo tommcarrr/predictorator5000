@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Predictorator.Models;
 using Resend;
 using Hangfire;
+using System;
 
 namespace Predictorator.Services;
 
@@ -111,6 +112,42 @@ public class AdminService
             if (entity != null) _db.SmsSubscribers.Remove(entity);
         }
         await _db.SaveChangesAsync();
+    }
+
+    public async Task<AdminSubscriberDto?> AddSubscriberAsync(string type, string contact)
+    {
+        if (type == "Email")
+        {
+            if (await _db.Subscribers.AnyAsync(s => s.Email == contact))
+                return null;
+            var sub = new Subscriber
+            {
+                Email = contact,
+                IsVerified = true,
+                VerificationToken = Guid.NewGuid().ToString("N"),
+                UnsubscribeToken = Guid.NewGuid().ToString("N"),
+                CreatedAt = _time.UtcNow
+            };
+            _db.Subscribers.Add(sub);
+            await _db.SaveChangesAsync();
+            return new AdminSubscriberDto(sub.Id, sub.Email, sub.IsVerified, "Email");
+        }
+        else
+        {
+            if (await _db.SmsSubscribers.AnyAsync(s => s.PhoneNumber == contact))
+                return null;
+            var sub = new SmsSubscriber
+            {
+                PhoneNumber = contact,
+                IsVerified = true,
+                VerificationToken = Guid.NewGuid().ToString("N"),
+                UnsubscribeToken = Guid.NewGuid().ToString("N"),
+                CreatedAt = _time.UtcNow
+            };
+            _db.SmsSubscribers.Add(sub);
+            await _db.SaveChangesAsync();
+            return new AdminSubscriberDto(sub.Id, sub.PhoneNumber, sub.IsVerified, "SMS");
+        }
     }
 
     public async Task SendTestAsync(IEnumerable<AdminSubscriberDto> recipients)
