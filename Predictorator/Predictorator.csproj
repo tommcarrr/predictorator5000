@@ -39,4 +39,8 @@
     <PackageReference Include="Twilio" Version="6.8.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Predictorator.Core\Predictorator.Core.csproj" />
+  </ItemGroup>
+
 </Project>
