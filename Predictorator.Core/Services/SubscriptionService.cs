@@ -1,6 +1,3 @@
-using Hangfire;
-using Hangfire.Common;
-using Hangfire.States;
 using Microsoft.Extensions.Logging;
 using Predictorator.Data;
 using Predictorator.Models;
@@ -17,7 +14,6 @@ public class SubscriptionService
     private readonly IConfiguration _config;
     private readonly ITwilioSmsSender _smsSender;
     private readonly IDateTimeProvider _dateTime;
-    private readonly IBackgroundJobClient _jobs;
     private readonly EmailCssInliner _inliner;
     private readonly EmailTemplateRenderer _renderer;
     private readonly ILogger<SubscriptionService> _logger;
@@ -101,52 +97,45 @@ public class SubscriptionService
         _logger.LogInformation("SMS subscriber with token {Token} removed", token);
         return true;
     }
-public SubscriptionService(
-    IDataStore store,
-    IResend resend,
-    IConfiguration config,
-    ITwilioSmsSender smsSender,
-    IDateTimeProvider dateTime,
-    IBackgroundJobClient jobs,
-    EmailCssInliner inliner,
-    EmailTemplateRenderer renderer,
-    ILogger<SubscriptionService> logger)
-{
-    _store = store;
-    _resend = resend;
-    _config = config;
-    _smsSender = smsSender;
-    _dateTime = dateTime;
-    _jobs = jobs;
-    _inliner = inliner;
-    _renderer = renderer;
-    _logger = logger;
-}
-
-public Task SubscribeAsync(string? email, string? phoneNumber, string baseUrl)
-{
-    if (!string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(phoneNumber))
-        throw new ArgumentException("Provide either an email or phone number, not both.");
-
-    if (!string.IsNullOrWhiteSpace(email))
+    public SubscriptionService(
+        IDataStore store,
+        IResend resend,
+        IConfiguration config,
+        ITwilioSmsSender smsSender,
+        IDateTimeProvider dateTime,
+        EmailCssInliner inliner,
+        EmailTemplateRenderer renderer,
+        ILogger<SubscriptionService> logger)
     {
-        _logger.LogInformation("Scheduling email subscription for {Email}", email);
-        var job = Job.FromExpression<SubscriptionService>(s => s.AddEmailSubscriberAsync(email, baseUrl));
-        _jobs.Create(job, new EnqueuedState());
-        return Task.CompletedTask;
+        _store = store;
+        _resend = resend;
+        _config = config;
+        _smsSender = smsSender;
+        _dateTime = dateTime;
+        _inliner = inliner;
+        _renderer = renderer;
+        _logger = logger;
     }
 
-    if (!string.IsNullOrWhiteSpace(phoneNumber))
+    public Task SubscribeAsync(string? email, string? phoneNumber, string baseUrl)
     {
-        _logger.LogInformation("Scheduling SMS subscription for {PhoneNumber}", phoneNumber);
-        var job = Job.FromExpression<SubscriptionService>(s => s.AddSmsSubscriberAsync(phoneNumber, baseUrl));
-        _jobs.Create(job, new EnqueuedState());
-        return Task.CompletedTask;
-    }
+        if (!string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(phoneNumber))
+            throw new ArgumentException("Provide either an email or phone number, not both.");
 
-    throw new ArgumentException("An email or phone number is required.");
-}
-    [AutomaticRetry(Attempts = 3)]
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            _logger.LogInformation("Processing email subscription for {Email}", email);
+            return AddEmailSubscriberAsync(email, baseUrl);
+        }
+
+        if (!string.IsNullOrWhiteSpace(phoneNumber))
+        {
+            _logger.LogInformation("Processing SMS subscription for {PhoneNumber}", phoneNumber);
+            return AddSmsSubscriberAsync(phoneNumber, baseUrl);
+        }
+
+        throw new ArgumentException("An email or phone number is required.");
+    }
     public async Task AddEmailSubscriberAsync(string email, string baseUrl)
     {
         if (await _store.EmailSubscriberExistsAsync(email))
@@ -178,7 +167,6 @@ public Task SubscribeAsync(string? email, string? phoneNumber, string baseUrl)
         await _resend.EmailSendAsync(message);
     }
 
-    [AutomaticRetry(Attempts = 3)]
     public async Task AddSmsSubscriberAsync(string phoneNumber, string baseUrl)
     {
         _logger.LogInformation("Attempting to add SMS subscriber {PhoneNumber}", phoneNumber);
