@@ -3,11 +3,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Predictorator.Options;
-using Predictorator.Data;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
@@ -25,9 +23,6 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
             builder.UseEnvironment("Testing");
             builder.ConfigureServices(services =>
             {
-                services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
-                services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseInMemoryDatabase("TestDb"));
                 services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
                 services.AddSingleton<IDateTimeProvider>(new SystemDateTimeProvider());
                 services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
@@ -62,9 +57,6 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
         {
             builder.ConfigureServices(services =>
             {
-                services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
-                services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseInMemoryDatabase("TestDbExempt"));
                 services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
                 services.PostConfigure<RateLimitingOptions>(o => o.ExcludedIPs = new[] { "unknown" });
             });
@@ -84,9 +76,6 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
         {
             builder.ConfigureServices(services =>
             {
-                services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
-                services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseInMemoryDatabase("TestDbForwarded"));
                 services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
                 services.PostConfigure<RateLimitingOptions>(o => o.ExcludedIPs = new[] { "1.2.3.4" });
             });
@@ -107,9 +96,6 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
         {
             builder.ConfigureServices(services =>
             {
-                services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
-                services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseInMemoryDatabase("TestDbHangfire"));
                 services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
             });
         });

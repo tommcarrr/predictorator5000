@@ -4,30 +4,16 @@ using Predictorator.Options;
 
 namespace Predictorator.Data;
 
-public static class ApplicationDbInitializer
+public static class AdminUserInitializer
 {
     public static async Task SeedAdminUserAsync(IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
-        var logger = scope.ServiceProvider
-            .GetService<ILoggerFactory>()?
-            .CreateLogger("ApplicationDbInitializer");
-        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        try
-        {
-            await context.Database.EnsureCreatedAsync();
-        }
-        catch (Exception ex)
-        {
-            logger?.LogError(ex, "Unable to connect to database");
-            return;
-        }
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
         const string adminRole = "Admin";
-        var options = scope.ServiceProvider
-            .GetRequiredService<IOptions<AdminUserOptions>>().Value;
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<AdminUserOptions>>().Value;
         var adminEmail = options.Email;
         var adminPassword = options.Password;
 
@@ -43,12 +29,8 @@ public static class ApplicationDbInitializer
             var result = await userManager.CreateAsync(user, adminPassword);
             if (!result.Succeeded)
             {
-                user = await userManager.FindByEmailAsync(adminEmail);
-                if (user == null)
-                {
-                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                    throw new InvalidOperationException($"Failed to create admin user: {errors}");
-                }
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                throw new InvalidOperationException($"Failed to create admin user: {errors}");
             }
         }
 

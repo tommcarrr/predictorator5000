@@ -72,7 +72,7 @@ To run the application in Docker using the latest Compose Specification:
 docker compose up --build
 ```
 
-This will start both the web application and a SQL Server container.
+This will start the web application and an Azurite storage emulator.
 
 Data Protection keys are persisted to `./dp-keys` by default. When running in Docker,
 the keys are stored in `/var/dp-keys` which is backed by the `dp-keys` volume.

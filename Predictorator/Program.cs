@@ -1,12 +1,11 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using Predictorator.Components;
 using Hangfire;
 using Hangfire.Dashboard;
-using Hangfire.SqlServer;
+using Hangfire.MemoryStorage;
 using Predictorator.Data;
 using Predictorator.Options;
 using Predictorator.Services;
@@ -107,41 +106,9 @@ builder.Services.Configure<AdminUserOptions>(options =>
 });
 builder.Services.Configure<HangfireOptions>(builder.Configuration.GetSection(HangfireOptions.SectionName));
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
-builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
-{
-    var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-    var efLogger = loggerFactory.CreateLogger("EFCore");
-    options
-        .UseSqlServer(connectionString)
-        .UseLoggerFactory(loggerFactory);
-
-    if (builder.Environment.IsDevelopment())
-    {
-        options.EnableDetailedErrors()
-            .EnableSensitiveDataLogging();
-    }
-
-    options.LogTo(message => efLogger.LogError(message), LogLevel.Error);
-});
-builder.Services.AddDbContextFactory<ApplicationDbContext>((serviceProvider, options) =>
-{
-    var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-    var efLogger = loggerFactory.CreateLogger("EFCore");
-    options
-        .UseSqlServer(connectionString)
-        .UseLoggerFactory(loggerFactory);
-
-    if (builder.Environment.IsDevelopment())
-    {
-        options.EnableDetailedErrors()
-            .EnableSensitiveDataLogging();
-    }
-
-    options.LogTo(message => efLogger.LogError(message), LogLevel.Error);
-});
+builder.Services.AddSingleton<IUserStore<IdentityUser>, InMemoryUserStore>();
+builder.Services.AddSingleton<IRoleStore<IdentityRole>, InMemoryRoleStore>();
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultUI()
     .AddDefaultTokenProviders();
 
@@ -172,10 +139,7 @@ var hangfireOptions = builder.Configuration.GetSection(HangfireOptions.SectionNa
 if (!builder.Environment.IsEnvironment("Testing"))
 {
     builder.Services.AddHangfire(config =>
-        config.UseSqlServerStorage(connectionString, new SqlServerStorageOptions
-        {
-            QueuePollInterval = TimeSpan.FromSeconds(hangfireOptions.QueuePollIntervalSeconds)
-        }));
+        config.UseMemoryStorage());
 
     if (hangfireOptions.RunServer)
     {
@@ -236,7 +200,7 @@ app.MapGet("/logout", async (SignInManager<IdentityUser> sm) =>
 
 if (!app.Environment.IsEnvironment("Testing"))
 {
-    await ApplicationDbInitializer.SeedAdminUserAsync(app.Services);
+    await AdminUserInitializer.SeedAdminUserAsync(app.Services);
     app.UseHangfireDashboard("/hangfire", new DashboardOptions
     {
         Authorization = new[] { new Predictorator.Authorization.HangfireDashboardAuthorizationFilter() }

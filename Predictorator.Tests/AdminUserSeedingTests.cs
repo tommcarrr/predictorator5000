@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Predictorator.Data;
 using Predictorator.Options;
@@ -12,10 +11,10 @@ public class AdminUserSeedingTests
     {
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+        services.AddSingleton<IUserStore<IdentityUser>, InMemoryUserStore>();
+        services.AddSingleton<IRoleStore<IdentityRole>, InMemoryRoleStore>();
         services.AddIdentity<IdentityUser, IdentityRole>(identityOpts ?? (_ => { }))
-            .AddEntityFrameworkStores<ApplicationDbContext>();
+            .AddDefaultTokenProviders();
         services.Configure<AdminUserOptions>(o => { o.Email = email; o.Password = password; });
         return services.BuildServiceProvider();
     }
@@ -33,27 +32,17 @@ public class AdminUserSeedingTests
         }, "admin@example.com", "short");
 
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => ApplicationDbInitializer.SeedAdminUserAsync(provider));
+            () => AdminUserInitializer.SeedAdminUserAsync(provider));
     }
 
     [Fact]
-    public async Task Does_not_throw_when_database_unavailable()
+    public async Task Creates_admin_user()
     {
-        var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer("Server=localhost;Database=invalid;" +
-                                  "User Id=sa;Password=bad;Connect Timeout=1"));
-        services.AddIdentity<IdentityUser, IdentityRole>()
-            .AddEntityFrameworkStores<ApplicationDbContext>();
-        services.Configure<AdminUserOptions>(o =>
-        {
-            o.Email = "admin@example.com";
-            o.Password = "Admin123!";
-        });
-        await using var provider = services.BuildServiceProvider();
-
-        await ApplicationDbInitializer.SeedAdminUserAsync(provider);
+        using var provider = BuildServices(null, "admin@example.com", "Admin123!");
+        await AdminUserInitializer.SeedAdminUserAsync(provider);
+        var userManager = provider.GetRequiredService<UserManager<IdentityUser>>();
+        var user = await userManager.FindByEmailAsync("admin@example.com");
+        Assert.NotNull(user);
     }
 }
 
