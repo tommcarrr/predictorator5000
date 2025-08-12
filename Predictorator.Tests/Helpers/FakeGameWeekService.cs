@@ -1,5 +1,8 @@
 using Predictorator.Models;
 using Predictorator.Services;
+using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace Predictorator.Tests.Helpers;
 
@@ -46,5 +49,61 @@ public class FakeGameWeekService : IGameWeekService
             .OrderBy(g => g.StartDate)
             .FirstOrDefault();
         return Task.FromResult<GameWeek?>(result);
+    }
+
+    public Task<string> ExportCsvAsync()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("Season,Number,StartDate,EndDate");
+        foreach (var g in Items)
+        {
+            sb.AppendLine(string.Join(',', new[]
+            {
+                g.Season,
+                g.Number.ToString(),
+                g.StartDate.ToString("O"),
+                g.EndDate.ToString("O")
+            }));
+        }
+        return Task.FromResult(sb.ToString());
+    }
+
+    public async Task<int> ImportCsvAsync(Stream csv)
+    {
+        using var reader = new StreamReader(csv, Encoding.UTF8, leaveOpen: true);
+        string? line;
+        var added = 0;
+        var first = true;
+        while ((line = await reader.ReadLineAsync()) != null)
+        {
+            if (first)
+            {
+                first = false;
+                continue;
+            }
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            var parts = line.Split(',', StringSplitOptions.None);
+            if (parts.Length < 4) continue;
+
+            var season = parts[0];
+            if (!int.TryParse(parts[1], out var number)) continue;
+            if (!DateTime.TryParse(parts[2], out var start)) continue;
+            if (!DateTime.TryParse(parts[3], out var end)) continue;
+
+            var existing = Items.FirstOrDefault(g => g.Season == season && g.Number == number);
+            if (existing == null)
+            {
+                Items.Add(new GameWeek { Season = season, Number = number, StartDate = start, EndDate = end });
+                added++;
+            }
+            else
+            {
+                existing.StartDate = start;
+                existing.EndDate = end;
+            }
+        }
+
+        return added;
     }
 }

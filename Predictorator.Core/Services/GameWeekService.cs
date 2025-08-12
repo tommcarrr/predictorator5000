@@ -5,6 +5,9 @@ using Predictorator.Data;
 using Predictorator.Models;
 using Predictorator.Options;
 using System;
+using System.Globalization;
+using System.IO;
+using System.Text;
 
 namespace Predictorator.Services;
 
@@ -134,5 +137,84 @@ public class GameWeekService : IGameWeekService
             await _cache.RemoveAsync($"{_prefix.Prefix}next_{entity.StartDate:yyyy-MM-dd}");
             await _cache.RemoveAsync($"{_prefix.Prefix}next_{entity.EndDate:yyyy-MM-dd}");
         }
+    }
+
+    public async Task<string> ExportCsvAsync()
+    {
+        await using var db = _dbFactory.CreateDbContext();
+        var items = await db.GameWeeks
+            .AsNoTracking()
+            .OrderBy(g => g.Season)
+            .ThenBy(g => g.Number)
+            .ToListAsync();
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Season,Number,StartDate,EndDate");
+        foreach (var g in items)
+        {
+            sb.AppendLine(string.Join(',', new[]
+            {
+                g.Season,
+                g.Number.ToString(CultureInfo.InvariantCulture),
+                g.StartDate.ToString("O", CultureInfo.InvariantCulture),
+                g.EndDate.ToString("O", CultureInfo.InvariantCulture)
+            }));
+        }
+
+        return sb.ToString();
+    }
+
+    public async Task<int> ImportCsvAsync(Stream csv)
+    {
+        using var reader = new StreamReader(csv, Encoding.UTF8, leaveOpen: true);
+        string? line;
+        var added = 0;
+        var first = true;
+        await using var db = _dbFactory.CreateDbContext();
+        while ((line = await reader.ReadLineAsync()) != null)
+        {
+            if (first)
+            {
+                first = false;
+                continue;
+            }
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            var parts = line.Split(',', StringSplitOptions.None);
+            if (parts.Length < 4) continue;
+
+            var season = parts[0];
+            if (!int.TryParse(parts[1], out var number)) continue;
+            if (!DateTime.TryParse(parts[2], null, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var start)) continue;
+            if (!DateTime.TryParse(parts[3], null, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var end)) continue;
+
+            var existing = await db.GameWeeks
+                .FirstOrDefaultAsync(g => g.Season == season && g.Number == number);
+            if (existing == null)
+            {
+                db.GameWeeks.Add(new GameWeek
+                {
+                    Season = season,
+                    Number = number,
+                    StartDate = start,
+                    EndDate = end
+                });
+                added++;
+            }
+            else
+            {
+                existing.StartDate = start;
+                existing.EndDate = end;
+            }
+
+            await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_all");
+            await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_{season}");
+            await _cache.RemoveAsync($"{_prefix.Prefix}gameweek_{season}_{number}");
+            await _cache.RemoveAsync($"{_prefix.Prefix}next_{start:yyyy-MM-dd}");
+            await _cache.RemoveAsync($"{_prefix.Prefix}next_{end:yyyy-MM-dd}");
+        }
+
+        await db.SaveChangesAsync();
+        return added;
     }
 }
