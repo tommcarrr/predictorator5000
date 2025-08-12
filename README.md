@@ -26,6 +26,7 @@ You can override these values by setting the `ADMIN_EMAIL` and
 logged in as an administrator you can view background jobs via the Hangfire
 dashboard at `/hangfire`. Administrators can also export and import game weeks as
 CSV files from the admin interface.
+If `ConnectionStrings:DefaultConnection` is not configured the application uses an in-memory database instead of SQL Server. The admin account is recreated on each start and all data is lost when the app stops, which is useful for demos or testing.
 SMS notifications use Twilio. Set `Twilio__AccountSid`, `Twilio__AuthToken`, and
 `Twilio__FromNumber` environment variables with your Twilio credentials.
 Email delivery is handled by [Resend](https://resend.com). Configure the

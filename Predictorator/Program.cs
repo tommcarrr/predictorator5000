@@ -115,39 +115,52 @@ builder.Services.Configure<AdminUserOptions>(options =>
 });
 builder.Services.Configure<HangfireOptions>(builder.Configuration.GetSection(HangfireOptions.SectionName));
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
-builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var useInMemoryDatabase = string.IsNullOrWhiteSpace(connectionString);
+
+if (useInMemoryDatabase)
 {
-    var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-    var efLogger = loggerFactory.CreateLogger("EFCore");
-    options
-        .UseSqlServer(connectionString)
-        .UseLoggerFactory(loggerFactory);
-
-    if (builder.Environment.IsDevelopment())
-    {
-        options.EnableDetailedErrors()
-            .EnableSensitiveDataLogging();
-    }
-
-    options.LogTo(message => efLogger.LogError(message), LogLevel.Error);
-});
-builder.Services.AddDbContextFactory<ApplicationDbContext>((serviceProvider, options) =>
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseInMemoryDatabase("Predictorator"));
+    builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+        options.UseInMemoryDatabase("Predictorator"));
+}
+else
 {
-    var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-    var efLogger = loggerFactory.CreateLogger("EFCore");
-    options
-        .UseSqlServer(connectionString)
-        .UseLoggerFactory(loggerFactory);
-
-    if (builder.Environment.IsDevelopment())
+    builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
     {
-        options.EnableDetailedErrors()
-            .EnableSensitiveDataLogging();
-    }
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        var efLogger = loggerFactory.CreateLogger("EFCore");
+        options
+            .UseSqlServer(connectionString)
+            .UseLoggerFactory(loggerFactory);
 
-    options.LogTo(message => efLogger.LogError(message), LogLevel.Error);
-});
+        if (builder.Environment.IsDevelopment())
+        {
+            options.EnableDetailedErrors()
+                .EnableSensitiveDataLogging();
+        }
+
+        options.LogTo(message => efLogger.LogError(message), LogLevel.Error);
+    });
+    builder.Services.AddDbContextFactory<ApplicationDbContext>((serviceProvider, options) =>
+    {
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+        var efLogger = loggerFactory.CreateLogger("EFCore");
+        options
+            .UseSqlServer(connectionString)
+            .UseLoggerFactory(loggerFactory);
+
+        if (builder.Environment.IsDevelopment())
+        {
+            options.EnableDetailedErrors()
+                .EnableSensitiveDataLogging();
+        }
+
+        options.LogTo(message => efLogger.LogError(message), LogLevel.Error);
+    });
+}
+
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultUI()
@@ -177,10 +190,10 @@ builder.Services.AddAuthorization();
 builder.Services.AddRazorPages();
 
 var hangfireOptions = builder.Configuration.GetSection(HangfireOptions.SectionName).Get<HangfireOptions>() ?? new HangfireOptions();
-if (!builder.Environment.IsEnvironment("Testing"))
+if (!builder.Environment.IsEnvironment("Testing") && !useInMemoryDatabase)
 {
     builder.Services.AddHangfire(config =>
-        config.UseSqlServerStorage(connectionString, new SqlServerStorageOptions
+        config.UseSqlServerStorage(connectionString!, new SqlServerStorageOptions
         {
             QueuePollInterval = TimeSpan.FromSeconds(hangfireOptions.QueuePollIntervalSeconds)
         }));
@@ -245,26 +258,29 @@ app.MapGet("/logout", async (SignInManager<IdentityUser> sm) =>
 if (!app.Environment.IsEnvironment("Testing"))
 {
     await ApplicationDbInitializer.SeedAdminUserAsync(app.Services);
-    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    if (!useInMemoryDatabase)
     {
-        Authorization = new[] { new Predictorator.Authorization.HangfireDashboardAuthorizationFilter() }
-    });
-    RecurringJob.AddOrUpdate<NotificationService>(
-        "fixture-notifications",
-        s => s.CheckFixturesAsync(),
-        "0 1 * * *",
-        new RecurringJobOptions
+        app.UseHangfireDashboard("/hangfire", new DashboardOptions
         {
-            TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time")
+            Authorization = new[] { new Predictorator.Authorization.HangfireDashboardAuthorizationFilter() }
         });
-    RecurringJob.AddOrUpdate<SubscriptionService>(
-        "check-unverified-expired",
-        service => service.CountExpiredUnverifiedAsync(),
-        "0 1 * * 1",
-        new RecurringJobOptions
-        {
-            TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time")
-        });
+        RecurringJob.AddOrUpdate<NotificationService>(
+            "fixture-notifications",
+            s => s.CheckFixturesAsync(),
+            "0 1 * * *",
+            new RecurringJobOptions
+            {
+                TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time")
+            });
+        RecurringJob.AddOrUpdate<SubscriptionService>(
+            "check-unverified-expired",
+            service => service.CountExpiredUnverifiedAsync(),
+            "0 1 * * 1",
+            new RecurringJobOptions
+            {
+                TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time")
+            });
+    }
 }
 
 app.Run();
