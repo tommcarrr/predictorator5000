@@ -1,6 +1,7 @@
 @rendermode InteractiveServer
 @inject AdminService AdminService
 @inject ToastInterop Toast
+@inject IJSRuntime JS
 
 <h2>Subscribers</h2>
 @if (_items == null)
@@ -9,6 +10,14 @@
 }
 else
 {
+    <MudPaper Class="pa-2 mb-2">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@ExportAsync">Export CSV</MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" HtmlTag="label">Import CSV
+                <InputFile OnChange="@ImportAsync" style="display:none" />
+            </MudButton>
+        </MudStack>
+    </MudPaper>
     <MudPaper Class="pa-2 mb-2">
         <EditForm Model="_newSub" OnValidSubmit="AddSubscriberAsync">
             <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
@@ -154,6 +163,36 @@ else
         catch
         {
             await Toast.ShowToast("Failed to send test notifications.", "error");
+        }
+    }
+
+    private async Task ExportAsync()
+    {
+        try
+        {
+            var csv = await AdminService.ExportSubscribersCsvAsync();
+            await JS.InvokeVoidAsync("app.downloadFile", $"subscribers-{DateTime.UtcNow:yyyyMMddHHmmss}.csv", csv);
+        }
+        catch
+        {
+            await Toast.ShowToast("Failed to export subscribers.", "error");
+        }
+    }
+
+    private async Task ImportAsync(InputFileChangeEventArgs e)
+    {
+        if (e.FileCount == 0) return;
+        try
+        {
+            using var stream = e.File.OpenReadStream(long.MaxValue);
+            var added = await AdminService.ImportSubscribersCsvAsync(stream);
+            var data = await AdminService.GetSubscribersAsync();
+            _items = data.Select(d => new Item(d.Id, d.Contact, d.IsVerified, d.Type)).ToList();
+            await Toast.ShowToast($"Imported {added} subscribers.", "success");
+        }
+        catch
+        {
+            await Toast.ShowToast("Failed to import subscribers.", "error");
         }
     }
 

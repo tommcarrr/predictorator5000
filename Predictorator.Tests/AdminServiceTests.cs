@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Generic;
 using System.IO;
 using System;
+using System.Text;
 
 namespace Predictorator.Tests;
 
@@ -186,5 +187,38 @@ public class AdminServiceTests
         jobs.Received().Create(
             Arg.Is<Job>(j => j.Method.Name == nameof(NotificationService.SendFixturesStartingSoonAsync)),
             Arg.Is<IState>(s => s is ScheduledState));
+    }
+
+    [Fact]
+    public async Task ExportSubscribersCsvAsync_exports_all()
+    {
+        var service = CreateService(out var db, out _, out _, out _, out _);
+        db.Subscribers.Add(new Subscriber { Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
+        db.SmsSubscribers.Add(new SmsSubscriber { PhoneNumber = "+1", IsVerified = false, VerificationToken = "v2", UnsubscribeToken = "u2", CreatedAt = DateTime.UtcNow });
+        await db.SaveChangesAsync();
+
+        var csv = await service.ExportSubscribersCsvAsync();
+        var lines = csv.Trim().Split('\n');
+        Assert.Equal(3, lines.Length);
+        Assert.Contains("Email,user@example.com", csv);
+        Assert.Contains("SMS,+1", csv);
+    }
+
+    [Fact]
+    public async Task ImportSubscribersCsvAsync_adds_new_and_skips_existing()
+    {
+        var service = CreateService(out var db, out _, out _, out _, out var provider);
+        db.Subscribers.Add(new Subscriber { Email = "existing@example.com", IsVerified = true, VerificationToken = "v1", UnsubscribeToken = "u1", CreatedAt = provider.UtcNow });
+        await db.SaveChangesAsync();
+        var csv = "Type,Contact,IsVerified,VerificationToken,UnsubscribeToken,CreatedAt\n" +
+                  $"Email,existing@example.com,true,v1,u1,{provider.UtcNow:O}\n" +
+                  $"SMS,+1,true,v2,u2,{provider.UtcNow:O}\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+
+        var added = await service.ImportSubscribersCsvAsync(ms);
+
+        Assert.Equal(1, added);
+        Assert.Single(db.Subscribers);
+        Assert.Single(db.SmsSubscribers);
     }
 }
