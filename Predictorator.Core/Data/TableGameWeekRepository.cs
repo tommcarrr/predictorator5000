@@ -75,9 +75,15 @@ public class TableGameWeekRepository : IGameWeekRepository
 
     public async Task<GameWeek?> GetNextGameWeekAsync(DateTime date)
     {
+        // Azure Table queries require DateTime values to be in UTC, otherwise the
+        // filter will not match any entities. Ensure the supplied date is
+        // explicitly marked as UTC before querying.
+        var utcDate = DateTime.SpecifyKind(date, DateTimeKind.Utc);
+
         var list = new List<GameWeek>();
-        await foreach (var e in _table.QueryAsync<GameWeekEntity>(e => e.EndDate >= date))
+        await foreach (var e in _table.QueryAsync<GameWeekEntity>(e => e.EndDate >= utcDate))
             list.Add(ToGameWeek(e));
+
         return list.OrderBy(g => g.StartDate).FirstOrDefault();
     }
 

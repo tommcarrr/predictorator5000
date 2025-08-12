@@ -136,7 +136,7 @@ else if (_fixtures.Response.Any())
 
         if (string.IsNullOrEmpty(Season) || !Week.HasValue)
         {
-            var next = await GameWeekService.GetNextGameWeekAsync(DateTime.Today);
+            var next = await GameWeekService.GetNextGameWeekAsync(DateTime.UtcNow.Date);
             if (next != null)
             {
                 NavigationManager.NavigateTo($"/{next.Season}/gw{next.Number}", true);
