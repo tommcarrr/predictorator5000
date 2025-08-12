@@ -48,5 +48,20 @@ public class AdminUserSeedingTests
         Assert.NotNull(user);
         Assert.True(await userManager.CheckPasswordAsync(user!, password));
     }
+
+    [Fact]
+    public async Task Seeded_admin_user_has_admin_role()
+    {
+        const string email = "admin@example.com";
+        const string password = "Admin123!";
+        using var provider = BuildServices(null, email, password);
+        await ApplicationDbInitializer.SeedAdminUserAsync(provider);
+
+        using var scope = provider.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var user = await userManager.FindByEmailAsync(email);
+        Assert.NotNull(user);
+        Assert.True(await userManager.IsInRoleAsync(user!, "Admin"));
+    }
 }
 
