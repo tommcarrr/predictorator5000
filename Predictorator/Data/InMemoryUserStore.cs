@@ -113,7 +113,7 @@ public class InMemoryUserStore :
 
     public Task AddToRoleAsync(IdentityUser user, string roleName, CancellationToken cancellationToken)
     {
-        var roles = _userRoles.GetOrAdd(user.Id, _ => new HashSet<string>());
+        var roles = _userRoles.GetOrAdd(user.Id, _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase));
         roles.Add(roleName);
         return Task.CompletedTask;
     }
