@@ -122,7 +122,7 @@ window.app = (() => {
         });
     }
     
-    function copyPredictions() {
+      function copyPredictions() {
         const groups = document.querySelectorAll('.fixture-group');
         if (groups.length === 0) {
             showToast('No predictions available to copy.', 'error');
@@ -176,10 +176,10 @@ window.app = (() => {
                 showToast('Failed to copy predictions to clipboard.', 'error');
             }
         });
-    }
+      }
 
-    async function login(data) {
-        const response = await fetch('/login', {
+      async function login(data) {
+          const response = await fetch('/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -192,16 +192,28 @@ window.app = (() => {
         }
 
         return await response.text();
-    }
+      }
 
-    return {
-        copyPredictions,
-        registerScoreInputs,
-        registerToastHandler,
-        setCeefax,
-        login
-    };
-})();
+      function downloadFile(name, content) {
+          const blob = new Blob([content], { type: 'text/csv' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = name;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+      }
+
+      return {
+          copyPredictions,
+          registerScoreInputs,
+          registerToastHandler,
+          setCeefax,
+          login,
+          downloadFile
+      };
+  })();
 
 document.addEventListener('click', function (e) {
     if (e.target && e.target.parentNode.id === 'copyBtn') {

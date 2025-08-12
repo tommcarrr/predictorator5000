@@ -5,6 +5,9 @@ using Resend;
 using Hangfire;
 using System;
 using System.Linq;
+using System.IO;
+using System.Text;
+using System.Globalization;
 
 namespace Predictorator.Services;
 
@@ -152,6 +155,101 @@ public class AdminService
             await _store.AddSmsSubscriberAsync(sub);
             return new AdminSubscriberDto(sub.Id, sub.PhoneNumber, sub.IsVerified, "SMS");
         }
+    }
+
+    public async Task<string> ExportSubscribersCsvAsync()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("Type,Contact,IsVerified,VerificationToken,UnsubscribeToken,CreatedAt");
+        var emails = await _store.GetEmailSubscribersAsync();
+        foreach (var e in emails)
+        {
+            sb.AppendLine(string.Join(',', new[]
+            {
+                "Email",
+                e.Email,
+                e.IsVerified.ToString(CultureInfo.InvariantCulture),
+                e.VerificationToken,
+                e.UnsubscribeToken,
+                e.CreatedAt.ToString("O", CultureInfo.InvariantCulture)
+            }));
+        }
+
+        var phones = await _store.GetSmsSubscribersAsync();
+        foreach (var p in phones)
+        {
+            sb.AppendLine(string.Join(',', new[]
+            {
+                "SMS",
+                p.PhoneNumber,
+                p.IsVerified.ToString(CultureInfo.InvariantCulture),
+                p.VerificationToken,
+                p.UnsubscribeToken,
+                p.CreatedAt.ToString("O", CultureInfo.InvariantCulture)
+            }));
+        }
+
+        return sb.ToString();
+    }
+
+    public async Task<int> ImportSubscribersCsvAsync(Stream csv)
+    {
+        using var reader = new StreamReader(csv, Encoding.UTF8, leaveOpen: true);
+        string? line;
+        var added = 0;
+        var first = true;
+        while ((line = await reader.ReadLineAsync()) != null)
+        {
+            if (first)
+            {
+                first = false;
+                continue;
+            }
+            if (string.IsNullOrWhiteSpace(line)) continue;
+
+            var parts = line.Split(',', StringSplitOptions.None);
+            if (parts.Length < 6) continue;
+
+            var type = parts[0];
+            var contact = parts[1];
+            var isVerified = bool.TryParse(parts[2], out var v) && v;
+            var verify = parts[3];
+            var unsubscribe = parts[4];
+            var created = DateTime.TryParse(parts[5], null, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var dt)
+                ? dt
+                : _time.UtcNow;
+
+            if (type == "Email")
+            {
+                if (await _store.EmailSubscriberExistsAsync(contact)) continue;
+                var sub = new Subscriber
+                {
+                    Email = contact,
+                    IsVerified = isVerified,
+                    VerificationToken = verify,
+                    UnsubscribeToken = unsubscribe,
+                    CreatedAt = created
+                };
+                await _store.AddEmailSubscriberAsync(sub);
+                added++;
+            }
+            else if (type == "SMS")
+            {
+                if (await _store.SmsSubscriberExistsAsync(contact)) continue;
+                var sub = new SmsSubscriber
+                {
+                    PhoneNumber = contact,
+                    IsVerified = isVerified,
+                    VerificationToken = verify,
+                    UnsubscribeToken = unsubscribe,
+                    CreatedAt = created
+                };
+                await _store.AddSmsSubscriberAsync(sub);
+                added++;
+            }
+        }
+
+        return added;
     }
 
     public async Task SendTestAsync(IEnumerable<AdminSubscriberDto> recipients)
