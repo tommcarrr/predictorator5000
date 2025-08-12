@@ -1,4 +1,4 @@
-name: CD
+name: Deploy Web App
 
 on:
   workflow_dispatch:
