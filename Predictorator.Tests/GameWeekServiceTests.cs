@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -6,6 +5,7 @@ using Predictorator.Data;
 using Predictorator.Models;
 using Predictorator.Options;
 using Predictorator.Services;
+using Predictorator.Tests.Helpers;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -37,13 +37,9 @@ public class GameWeekServiceTests
         public Task DeleteAsync(int id) => _inner.DeleteAsync(id);
     }
 
-    private static GameWeekService CreateService(out ApplicationDbContext db, out CountingRepository repo)
+    private static GameWeekService CreateService(out InMemoryGameWeekRepository inner, out CountingRepository repo)
     {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        db = new ApplicationDbContext(options);
-        var inner = new EfGameWeekRepository(db);
+        inner = new InMemoryGameWeekRepository();
         repo = new CountingRepository(inner);
         var services = new ServiceCollection();
         services.AddHybridCache();
@@ -58,24 +54,23 @@ public class GameWeekServiceTests
     [Fact]
     public async Task AddOrUpdateAsync_adds_new_gameweek()
     {
-        var service = CreateService(out var db, out var repo);
+        var service = CreateService(out var repoInner, out _);
         var gw = new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) };
 
         await service.AddOrUpdateAsync(gw);
-        Assert.Single(db.GameWeeks);
+        Assert.Single(repoInner.Items);
     }
 
     [Fact]
     public async Task AddOrUpdateAsync_updates_existing()
     {
-        var service = CreateService(out var db, out var repo);
-        db.GameWeeks.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) });
-        await db.SaveChangesAsync();
+        var service = CreateService(out var repoInner, out _);
+        repoInner.Items.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6), Id = 1 });
 
-        var gw = new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today.AddDays(7), EndDate = DateTime.Today.AddDays(13) };
+        var gw = new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today.AddDays(7), EndDate = DateTime.Today.AddDays(13), Id = 1 };
         await service.AddOrUpdateAsync(gw);
 
-        var updated = await db.GameWeeks.FirstAsync();
+        var updated = repoInner.Items.Single();
         Assert.Equal(gw.StartDate, updated.StartDate);
         Assert.Equal(gw.EndDate, updated.EndDate);
     }
@@ -83,25 +78,24 @@ public class GameWeekServiceTests
     [Fact]
     public async Task DeleteAsync_removes_item()
     {
-        var service = CreateService(out var db, out var repo);
-        var gw = new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today };
-        db.GameWeeks.Add(gw);
-        await db.SaveChangesAsync();
+        var service = CreateService(out var repoInner, out _);
+        var gw = new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today, Id = 1 };
+        repoInner.Items.Add(gw);
 
         await service.DeleteAsync(gw.Id);
-        Assert.Empty(db.GameWeeks);
+        Assert.Empty(repoInner.Items);
     }
 
     [Fact]
     public async Task GetNextGameWeekAsync_returns_next_week()
     {
-        var service = CreateService(out var db, out var repo);
-        db.GameWeeks.AddRange(
-            new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today.AddDays(-14), EndDate = DateTime.Today.AddDays(-8) },
-            new GameWeek { Season = "25-26", Number = 2, StartDate = DateTime.Today.AddDays(-7), EndDate = DateTime.Today.AddDays(-1) },
-            new GameWeek { Season = "25-26", Number = 3, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) }
-        );
-        await db.SaveChangesAsync();
+        var service = CreateService(out var repoInner, out _);
+        repoInner.Items.AddRange(new[]
+        {
+            new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today.AddDays(-14), EndDate = DateTime.Today.AddDays(-8), Id = 1 },
+            new GameWeek { Season = "25-26", Number = 2, StartDate = DateTime.Today.AddDays(-7), EndDate = DateTime.Today.AddDays(-1), Id = 2 },
+            new GameWeek { Season = "25-26", Number = 3, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6), Id = 3 }
+        });
 
         var result = await service.GetNextGameWeekAsync(DateTime.Today);
 
@@ -112,14 +106,13 @@ public class GameWeekServiceTests
     [Fact]
     public async Task AddOrUpdateAsync_updates_when_key_changes()
     {
-        var service = CreateService(out var db, out var repo);
-        var gw = new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) };
-        db.GameWeeks.Add(gw);
-        await db.SaveChangesAsync();
+        var service = CreateService(out var repoInner, out _);
+        var gw = new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6), Id = 1 };
+        repoInner.Items.Add(gw);
 
         var updated = new GameWeek
         {
-            Id = gw.Id,
+            Id = 1,
             Season = "26-27",
             Number = 2,
             StartDate = DateTime.Today.AddDays(7),
@@ -128,7 +121,7 @@ public class GameWeekServiceTests
 
         await service.AddOrUpdateAsync(updated);
 
-        var dbItem = await db.GameWeeks.SingleAsync();
+        var dbItem = repoInner.Items.Single();
         Assert.Equal(updated.Season, dbItem.Season);
         Assert.Equal(updated.Number, dbItem.Number);
         Assert.Equal(updated.StartDate, dbItem.StartDate);
@@ -138,9 +131,8 @@ public class GameWeekServiceTests
     [Fact]
     public async Task GetGameWeeksAsync_uses_cache()
     {
-        var service = CreateService(out var db, out var repo);
-        db.GameWeeks.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) });
-        await db.SaveChangesAsync();
+        var service = CreateService(out var repoInner, out var repo);
+        repoInner.Items.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6), Id = 1 });
 
         var before = repo.GetGameWeeksCount;
         _ = await service.GetGameWeeksAsync();
@@ -155,13 +147,13 @@ public class GameWeekServiceTests
     [Fact]
     public async Task ExportCsvAsync_exports_all()
     {
-        var service = CreateService(out var db, out _);
+        var service = CreateService(out var repoInner, out _);
         var now = DateTime.UtcNow.Date;
-        db.GameWeeks.AddRange(
-            new GameWeek { Season = "25-26", Number = 1, StartDate = now, EndDate = now.AddDays(6) },
-            new GameWeek { Season = "25-26", Number = 2, StartDate = now.AddDays(7), EndDate = now.AddDays(13) }
-        );
-        await db.SaveChangesAsync();
+        repoInner.Items.AddRange(new[]
+        {
+            new GameWeek { Season = "25-26", Number = 1, StartDate = now, EndDate = now.AddDays(6), Id = 1 },
+            new GameWeek { Season = "25-26", Number = 2, StartDate = now.AddDays(7), EndDate = now.AddDays(13), Id = 2 }
+        });
 
         var csv = await service.ExportCsvAsync();
         var lines = csv.Trim().Split('\n');
@@ -173,10 +165,9 @@ public class GameWeekServiceTests
     [Fact]
     public async Task ImportCsvAsync_adds_and_updates()
     {
-        var service = CreateService(out var db, out var repo);
+        var service = CreateService(out var repoInner, out _);
         var now = DateTime.UtcNow.Date;
-        db.GameWeeks.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = now, EndDate = now.AddDays(6) });
-        await db.SaveChangesAsync();
+        repoInner.Items.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = now, EndDate = now.AddDays(6), Id = 1 });
 
         var csv = "Season,Number,StartDate,EndDate\n" +
                   $"25-26,1,{now.AddDays(1):O},{now.AddDays(7):O}\n" +
@@ -186,7 +177,7 @@ public class GameWeekServiceTests
         var added = await service.ImportCsvAsync(ms);
 
         Assert.Equal(1, added);
-        var all = await db.GameWeeks.ToListAsync();
+        var all = repoInner.Items.ToList();
         Assert.Equal(2, all.Count);
         var gw1 = all.Single(g => g.Number == 1);
         Assert.Equal(now.AddDays(1), gw1.StartDate);

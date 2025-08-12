@@ -1,6 +1,5 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Predictorator.Data;
@@ -8,6 +7,8 @@ using Predictorator.Options;
 using Predictorator.Services;
 using Resend;
 using Microsoft.Extensions.Hosting;
+using Azure.Data.Tables;
+using Microsoft.Extensions.Caching.Hybrid;
 
 var builder = FunctionsApplication.CreateBuilder(args);
 
@@ -38,12 +39,17 @@ builder.Services.AddTransient<SubscriptionService>();
 builder.Services.AddTransient<NotificationService>();
 builder.Services.AddSingleton<EmailCssInliner>();
 builder.Services.AddSingleton<EmailTemplateRenderer>();
+builder.Services.AddHybridCache();
+builder.Services.AddSingleton<CachePrefixService>();
+builder.Services.Configure<GameWeekCacheOptions>(configuration.GetSection(GameWeekCacheOptions.SectionName));
 
-var connString = configuration.GetConnectionString("DefaultConnection");
-if (!string.IsNullOrWhiteSpace(connString))
-{
-    builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connString));
-    builder.Services.AddScoped<IDataStore, EfDataStore>();
-}
+var tableConn = configuration.GetConnectionString("TableStorage")
+    ?? configuration["TableStorage:ConnectionString"]
+    ?? "UseDevelopmentStorage=true";
+var tableService = new TableServiceClient(tableConn);
+builder.Services.AddSingleton(tableService);
+builder.Services.AddScoped<IDataStore, TableDataStore>();
+builder.Services.AddScoped<IGameWeekRepository, TableGameWeekRepository>();
+builder.Services.AddTransient<IGameWeekService, GameWeekService>();
 
 builder.Build().Run();

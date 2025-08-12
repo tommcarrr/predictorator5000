@@ -28,6 +28,10 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
                 services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseInMemoryDatabase("TestDb"));
+                services.RemoveAll<IDataStore>();
+                services.AddSingleton<IDataStore, InMemoryDataStore>();
+                services.RemoveAll<IGameWeekRepository>();
+                services.AddSingleton<IGameWeekRepository, InMemoryGameWeekRepository>();
                 services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
                 services.AddSingleton<IDateTimeProvider>(new SystemDateTimeProvider());
                 services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
@@ -65,6 +69,10 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
                 services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseInMemoryDatabase("TestDbExempt"));
+                services.RemoveAll<IDataStore>();
+                services.AddSingleton<IDataStore, InMemoryDataStore>();
+                services.RemoveAll<IGameWeekRepository>();
+                services.AddSingleton<IGameWeekRepository, InMemoryGameWeekRepository>();
                 services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
                 services.PostConfigure<RateLimitingOptions>(o => o.ExcludedIPs = new[] { "unknown" });
             });
@@ -87,6 +95,10 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
                 services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseInMemoryDatabase("TestDbForwarded"));
+                services.RemoveAll<IDataStore>();
+                services.AddSingleton<IDataStore, InMemoryDataStore>();
+                services.RemoveAll<IGameWeekRepository>();
+                services.AddSingleton<IGameWeekRepository, InMemoryGameWeekRepository>();
                 services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
                 services.PostConfigure<RateLimitingOptions>(o => o.ExcludedIPs = new[] { "1.2.3.4" });
             });
@@ -110,6 +122,10 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
                 services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseInMemoryDatabase("TestDbHangfire"));
+                services.RemoveAll<IDataStore>();
+                services.AddSingleton<IDataStore, InMemoryDataStore>();
+                services.RemoveAll<IGameWeekRepository>();
+                services.AddSingleton<IGameWeekRepository, InMemoryGameWeekRepository>();
                 services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
             });
         });

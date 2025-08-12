@@ -28,6 +28,10 @@ public class HomePageTests : IClassFixture<WebApplicationFactory<Program>>
                 services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
                 services.AddDbContext<ApplicationDbContext>(options =>
                     options.UseInMemoryDatabase("TestDb"));
+                services.RemoveAll<IDataStore>();
+                services.AddSingleton<IDataStore, InMemoryDataStore>();
+                services.RemoveAll<IGameWeekRepository>();
+                services.AddSingleton<IGameWeekRepository, InMemoryGameWeekRepository>();
                 services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
                 services.AddSingleton<IDateTimeProvider>(new SystemDateTimeProvider());
                 services.AddRateLimiter(options =>

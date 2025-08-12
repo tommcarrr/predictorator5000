@@ -87,19 +87,12 @@ builder.Services.AddTransient<IResend, ResendClient>();
 builder.Services.Configure<TwilioOptions>(builder.Configuration.GetSection(TwilioOptions.SectionName));
 builder.Services.AddTransient<ITwilioSmsSender, TwilioSmsSender>();
 var tableConn = builder.Configuration.GetConnectionString("TableStorage")
-    ?? builder.Configuration["TableStorage:ConnectionString"];
-if (!string.IsNullOrWhiteSpace(tableConn))
-{
-    var tableService = new TableServiceClient(tableConn);
-    builder.Services.AddSingleton(tableService);
-    builder.Services.AddScoped<IDataStore, TableDataStore>();
-    builder.Services.AddScoped<IGameWeekRepository, TableGameWeekRepository>();
-}
-else
-{
-    builder.Services.AddScoped<IDataStore, EfDataStore>();
-    builder.Services.AddScoped<IGameWeekRepository, EfGameWeekRepository>();
-}
+    ?? builder.Configuration["TableStorage:ConnectionString"]
+    ?? "UseDevelopmentStorage=true";
+var tableService = new TableServiceClient(tableConn);
+builder.Services.AddSingleton(tableService);
+builder.Services.AddScoped<IDataStore, TableDataStore>();
+builder.Services.AddScoped<IGameWeekRepository, TableGameWeekRepository>();
 builder.Services.AddTransient<SubscriptionService>();
 builder.Services.AddTransient<NotificationService>();
 builder.Services.AddTransient<AdminService>();

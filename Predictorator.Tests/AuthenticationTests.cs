@@ -1,6 +1,10 @@
 using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Predictorator.Data;
+using Predictorator.Tests.Helpers;
 
 namespace Predictorator.Tests;
 
@@ -13,6 +17,13 @@ public class AuthenticationTests : IClassFixture<WebApplicationFactory<Program>>
         _factory = factory.WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment("Testing");
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IDataStore>();
+                services.AddSingleton<IDataStore, InMemoryDataStore>();
+                services.RemoveAll<IGameWeekRepository>();
+                services.AddSingleton<IGameWeekRepository, InMemoryGameWeekRepository>();
+            });
         });
     }
 
