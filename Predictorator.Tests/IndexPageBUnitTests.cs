@@ -29,9 +29,10 @@ public class IndexPageBUnitTests
         var fixtures = new FixturesResponse { Response = [] };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
         var gwService = new FakeGameWeekService();
+        var today = DateTime.UtcNow.Date;
         gwService.Items.AddRange([
-            new Predictorator.Models.GameWeek { Season = "24-25", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) },
-            new Predictorator.Models.GameWeek { Season = "24-25", Number = 2, StartDate = DateTime.Today.AddDays(7), EndDate = DateTime.Today.AddDays(13) }
+            new Predictorator.Models.GameWeek { Season = "24-25", Number = 1, StartDate = today, EndDate = today.AddDays(6) },
+            new Predictorator.Models.GameWeek { Season = "24-25", Number = 2, StartDate = today.AddDays(7), EndDate = today.AddDays(13) }
         ]);
         ctx.Services.AddSingleton<IGameWeekService>(gwService);
         var provider = new FakeDateTimeProvider
@@ -76,6 +77,20 @@ public class IndexPageBUnitTests
         var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
         var picker = cut.Find("#dateRangePicker");
         Assert.NotNull(picker);
+    }
+
+    [Fact]
+    public async Task Redirects_To_Next_GameWeek_When_Not_Specified()
+    {
+        await using var ctx = CreateContext();
+        var navMan = ctx.Services.GetRequiredService<NavigationManager>();
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.CloseComponent();
+        };
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        cut.WaitForAssertion(() => Assert.Contains("/24-25/gw1", navMan.Uri));
     }
 
     [Fact]
