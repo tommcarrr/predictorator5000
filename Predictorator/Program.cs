@@ -105,10 +105,10 @@ builder.Services.Configure<AdminUserOptions>(options =>
     options.Password = builder.Configuration["ADMIN_PASSWORD"] ?? options.Password;
 });
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
-    .AddUserStore<InMemoryUserStore>()
-    .AddRoleStore<InMemoryRoleStore>()
     .AddDefaultUI()
     .AddDefaultTokenProviders();
+builder.Services.AddSingleton<IUserStore<IdentityUser>, InMemoryUserStore>();
+builder.Services.AddSingleton<IRoleStore<IdentityRole>, InMemoryRoleStore>();
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
