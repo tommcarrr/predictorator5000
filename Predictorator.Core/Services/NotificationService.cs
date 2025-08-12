@@ -8,6 +8,7 @@ namespace Predictorator.Services;
 
 public class NotificationService
 {
+    private static readonly TimeZoneInfo UkTimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
     private readonly IDataStore _store;
     private readonly IResend _resend;
     private readonly ITwilioSmsSender _sms;
@@ -79,23 +80,20 @@ public class NotificationService
             return;
 
         var nowUtc = _time.UtcNow;
-        var ukTz = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
-        var nowUk = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, ukTz);
-        var future = response.Response
-            .Where(f => f.Fixture.Date.ToUniversalTime() > nowUtc)
-            .OrderBy(f => f.Fixture.Date)
-            .FirstOrDefault();
+        var nowUk = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, UkTimeZone);
+        var ordered = response.Response.OrderBy(f => f.Fixture.Date).ToList();
+        var future = ordered.FirstOrDefault(f => f.Fixture.Date.ToUniversalTime() > nowUtc);
         if (future != null)
         {
             var key = future.Fixture.Date.Date.ToString("yyyy-MM-dd");
             var sent = await _store.SentNotificationExistsAsync("NewFixtures", key);
             if (!sent)
             {
-                var futureUk = TimeZoneInfo.ConvertTime(future.Fixture.Date, ukTz);
+                var futureUk = TimeZoneInfo.ConvertTime(future.Fixture.Date, UkTimeZone);
                 if (futureUk.Date == nowUk.Date)
                 {
                     var sendTimeUk = futureUk.Date.AddHours(10);
-                    var sendTimeUtc = TimeZoneInfo.ConvertTimeToUtc(sendTimeUk, ukTz);
+                    var sendTimeUtc = TimeZoneInfo.ConvertTimeToUtc(sendTimeUk, UkTimeZone);
                     var delay = sendTimeUtc - nowUtc;
                     if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
                     await _jobs.ScheduleAsync(
@@ -106,8 +104,8 @@ public class NotificationService
             }
         }
 
-        var first = response.Response.OrderBy(f => f.Fixture.Date).First();
-        var firstUk = TimeZoneInfo.ConvertTime(first.Fixture.Date, ukTz);
+        var first = ordered.First();
+        var firstUk = TimeZoneInfo.ConvertTime(first.Fixture.Date, UkTimeZone);
         if (firstUk.Date == nowUk.Date)
         {
             var key = first.Fixture.Date.ToString("O");
@@ -168,7 +166,7 @@ public class NotificationService
 
     public async Task SendSampleAsync(IEnumerable<AdminSubscriberDto> recipients, string message, string baseUrl)
     {
-        foreach (var r in recipients)
+        var tasks = recipients.Select(async r =>
         {
             if (r.Type == "Email")
             {
@@ -186,20 +184,22 @@ public class NotificationService
                     await SendNotificationAsync(message, baseUrl, sub);
                 }
             }
-        }
+        }).ToList();
+
+        await Task.WhenAll(tasks);
     }
 
     private async Task SendToAllAsync(string message, string baseUrl, string type, string key)
     {
         var emails = await _store.GetVerifiedEmailSubscribersAsync();
-        foreach (var sub in emails)
-            await SendNotificationAsync(message, baseUrl, sub);
+        var emailTasks = emails.Select(sub => SendNotificationAsync(message, baseUrl, sub));
 
         _logger.LogInformation("Retrieving all verified SMS subscribers");
         var phones = await _store.GetVerifiedSmsSubscribersAsync();
         _logger.LogInformation("Sending notification to {Count} SMS subscribers", phones.Count);
-        foreach (var sub in phones)
-            await SendNotificationAsync(message, baseUrl, sub);
+        var smsTasks = phones.Select(sub => SendNotificationAsync(message, baseUrl, sub));
+
+        await Task.WhenAll(emailTasks.Concat(smsTasks));
 
         await _store.AddSentNotificationAsync(new SentNotification
         {

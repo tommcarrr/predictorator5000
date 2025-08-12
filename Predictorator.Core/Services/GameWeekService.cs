@@ -6,6 +6,7 @@ using Predictorator.Options;
 using System.Globalization;
 using System.IO;
 using System.Text;
+using System.Threading;
 
 namespace Predictorator.Services;
 
@@ -31,56 +32,36 @@ public class GameWeekService : IGameWeekService
     public Task<List<GameWeek>> GetGameWeeksAsync(string? season = null)
     {
         var cacheKey = $"{_prefix.Prefix}gameweeks_{season ?? "all"}";
-        var options = new HybridCacheEntryOptions
-        {
-            Expiration = _cacheDuration,
-            LocalCacheExpiration = _cacheDuration
-        };
-
-        return _cache.GetOrCreateAsync<(IGameWeekRepository Repo, string? Season), List<GameWeek>>(cacheKey,
+        return GetOrCreateAsync<(IGameWeekRepository Repo, string? Season), List<GameWeek>>(cacheKey,
             (_repo, season),
-            static (state, ct) => new ValueTask<List<GameWeek>>(state.Repo.GetGameWeeksAsync(state.Season)),
-            options).AsTask();
+            static (state, ct) => new ValueTask<List<GameWeek>>(state.Repo.GetGameWeeksAsync(state.Season)));
     }
 
     public Task<GameWeek?> GetGameWeekAsync(string season, int number)
     {
         var cacheKey = $"{_prefix.Prefix}gameweek_{season}_{number}";
-        var options = new HybridCacheEntryOptions
-        {
-            Expiration = _cacheDuration,
-            LocalCacheExpiration = _cacheDuration
-        };
-
-        return _cache.GetOrCreateAsync<(IGameWeekRepository Repo, string Season, int Number), GameWeek?>(cacheKey,
+        return GetOrCreateAsync<(IGameWeekRepository Repo, string Season, int Number), GameWeek?>(cacheKey,
             (_repo, season, number),
-            static (state, ct) => new ValueTask<GameWeek?>(state.Repo.GetGameWeekAsync(state.Season, state.Number)),
-            options).AsTask();
+            static (state, ct) => new ValueTask<GameWeek?>(state.Repo.GetGameWeekAsync(state.Season, state.Number)));
     }
 
     public Task<GameWeek?> GetNextGameWeekAsync(DateTime date)
     {
         var cacheKey = $"{_prefix.Prefix}next_{date:yyyy-MM-dd}";
-        var options = new HybridCacheEntryOptions
-        {
-            Expiration = _cacheDuration,
-            LocalCacheExpiration = _cacheDuration
-        };
-
-        return _cache.GetOrCreateAsync<(IGameWeekRepository Repo, DateTime Date), GameWeek?>(cacheKey,
+        return GetOrCreateAsync<(IGameWeekRepository Repo, DateTime Date), GameWeek?>(cacheKey,
             (_repo, date),
-            static (state, ct) => new ValueTask<GameWeek?>(state.Repo.GetNextGameWeekAsync(state.Date)),
-            options).AsTask();
+            static (state, ct) => new ValueTask<GameWeek?>(state.Repo.GetNextGameWeekAsync(state.Date)));
     }
 
     public async Task AddOrUpdateAsync(GameWeek gameWeek)
     {
         await _repo.AddOrUpdateAsync(gameWeek);
-        await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_all");
-        await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_{gameWeek.Season}");
-        await _cache.RemoveAsync($"{_prefix.Prefix}gameweek_{gameWeek.Season}_{gameWeek.Number}");
-        await _cache.RemoveAsync($"{_prefix.Prefix}next_{gameWeek.StartDate:yyyy-MM-dd}");
-        await _cache.RemoveAsync($"{_prefix.Prefix}next_{gameWeek.EndDate:yyyy-MM-dd}");
+        await RemoveCacheEntriesAsync(
+            $"{_prefix.Prefix}gameweeks_all",
+            $"{_prefix.Prefix}gameweeks_{gameWeek.Season}",
+            $"{_prefix.Prefix}gameweek_{gameWeek.Season}_{gameWeek.Number}",
+            $"{_prefix.Prefix}next_{gameWeek.StartDate:yyyy-MM-dd}",
+            $"{_prefix.Prefix}next_{gameWeek.EndDate:yyyy-MM-dd}");
     }
 
     public async Task DeleteAsync(int id)
@@ -89,12 +70,26 @@ public class GameWeekService : IGameWeekService
         if (entity != null)
         {
             await _repo.DeleteAsync(id);
-            await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_all");
-            await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_{entity.Season}");
-            await _cache.RemoveAsync($"{_prefix.Prefix}gameweek_{entity.Season}_{entity.Number}");
-            await _cache.RemoveAsync($"{_prefix.Prefix}next_{entity.StartDate:yyyy-MM-dd}");
-            await _cache.RemoveAsync($"{_prefix.Prefix}next_{entity.EndDate:yyyy-MM-dd}");
+            await RemoveCacheEntriesAsync(
+                $"{_prefix.Prefix}gameweeks_all",
+                $"{_prefix.Prefix}gameweeks_{entity.Season}",
+                $"{_prefix.Prefix}gameweek_{entity.Season}_{entity.Number}",
+                $"{_prefix.Prefix}next_{entity.StartDate:yyyy-MM-dd}",
+                $"{_prefix.Prefix}next_{entity.EndDate:yyyy-MM-dd}");
         }
+    }
+
+    private Task RemoveCacheEntriesAsync(params string[] keys)
+        => Task.WhenAll(keys.Select(k => _cache.RemoveAsync(k).AsTask()));
+
+    private Task<TResult> GetOrCreateAsync<TState, TResult>(string key, TState state, Func<TState, CancellationToken, ValueTask<TResult>> factory)
+    {
+        var options = new HybridCacheEntryOptions
+        {
+            Expiration = _cacheDuration,
+            LocalCacheExpiration = _cacheDuration
+        };
+        return _cache.GetOrCreateAsync(key, state, factory, options).AsTask();
     }
 
     public async Task<string> ExportCsvAsync()
