@@ -11,6 +11,12 @@ public class InMemoryUserStore :
 {
     private readonly ConcurrentDictionary<string, IdentityUser> _users = new();
     private readonly ConcurrentDictionary<string, HashSet<string>> _userRoles = new();
+    private readonly IRoleStore<IdentityRole> _roleStore;
+
+    public InMemoryUserStore(IRoleStore<IdentityRole> roleStore)
+    {
+        _roleStore = roleStore;
+    }
 
     public Task<IdentityResult> CreateAsync(IdentityUser user, CancellationToken cancellationToken)
     {
@@ -111,11 +117,11 @@ public class InMemoryUserStore :
         return Task.FromResult(user);
     }
 
-    public Task AddToRoleAsync(IdentityUser user, string roleName, CancellationToken cancellationToken)
+    public async Task AddToRoleAsync(IdentityUser user, string roleName, CancellationToken cancellationToken)
     {
         var roles = _userRoles.GetOrAdd(user.Id, _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase));
-        roles.Add(roleName);
-        return Task.CompletedTask;
+        var role = await _roleStore.FindByNameAsync(roleName, cancellationToken);
+        roles.Add(role?.Name ?? roleName);
     }
 
     public Task RemoveFromRoleAsync(IdentityUser user, string roleName, CancellationToken cancellationToken)
