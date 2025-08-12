@@ -92,4 +92,18 @@ public class SubscribeComponentBUnitTests
             Assert.Contains("verification link", cut.Markup, StringComparison.OrdinalIgnoreCase);
         });
     }
+
+    [Fact]
+    public async Task Shows_Disabled_Message_When_Disabled()
+    {
+        await using var ctx = CreateContext(new Dictionary<string, string?>
+        {
+            ["Subscription:Disabled"] = "true",
+            ["Subscription:DisabledMessage"] = "temporarily unavailable"
+        });
+        var cut = ctx.Render<Subscribe>();
+        Assert.Contains("temporarily unavailable", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Email address", cut.Markup);
+        Assert.DoesNotContain("UK mobile number", cut.Markup);
+    }
 }
