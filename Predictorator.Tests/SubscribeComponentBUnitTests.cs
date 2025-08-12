@@ -1,13 +1,11 @@
 using Bunit;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
 using MudBlazor;
 using NSubstitute;
 using Predictorator.Components.Pages.Subscription;
-using Predictorator.Data;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
 using System.IO;
@@ -35,11 +33,7 @@ public class SubscribeComponentBUnitTests
         ctx.Services.AddSingleton<IConfiguration>(config);
         ctx.Services.AddSingleton<NotificationFeatureService>();
 
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        var db = new ApplicationDbContext(options);
-        var store = new EfDataStore(db);
+        var store = new InMemoryDataStore();
         var resend = Substitute.For<IResend>();
         var sms = Substitute.For<ITwilioSmsSender>();
         var time = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
