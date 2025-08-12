@@ -23,9 +23,8 @@ set `BASE_URL` and `UI_TEST_TOKEN` to control the test host and authentication.
 The seeded admin account credentials are configured via `AdminUser` settings.
 You can override these values by setting the `ADMIN_EMAIL` and
 `ADMIN_PASSWORD` environment variables before running the application. Once
-logged in as an administrator you can view background jobs via the Hangfire
-dashboard at `/hangfire`. Administrators can also export and import game weeks as
-CSV files from the admin interface.
+Administrators can export and import game weeks as CSV files from the admin
+interface.
 SMS notifications use Twilio. Set `Twilio__AccountSid`, `Twilio__AuthToken`, and
 `Twilio__FromNumber` environment variables with your Twilio credentials.
 Email delivery is handled by [Resend](https://resend.com). Configure the
@@ -40,8 +39,7 @@ Each IP address may visit at most 50 unique routes per day. Returning to a cache
 page does not count toward this limit. The threshold can be adjusted with the
 `RouteLimiting:UniqueRouteLimit` setting. Specific IP addresses can be excluded
 via `RateLimiting:ExcludedIPs` or environment variables such as
-`RateLimiting__ExcludedIPs__0=127.0.0.1`. Requests to the Hangfire dashboard
-under `/hangfire` are also exempt from rate limiting.
+`RateLimiting__ExcludedIPs__0=127.0.0.1`.
 
 Game week data is cached to reduce database load. The duration defaults to two
 hours but can be changed using the `GameWeekCache:CacheDurationHours` setting or

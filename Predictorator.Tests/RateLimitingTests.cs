@@ -100,24 +100,4 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.NotEqual(HttpStatusCode.TooManyRequests, second.StatusCode);
     }
 
-    [Fact(Skip="Requires table storage connection")]
-    public async Task Hangfire_path_is_not_rate_limited()
-    {
-        var factory = _factory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                services.RemoveAll(typeof(DbContextOptions<ApplicationDbContext>));
-                services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseInMemoryDatabase("TestDbHangfire"));
-                services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
-            });
-        });
-
-        var client = factory.CreateClient();
-        var first = await client.GetAsync("/hangfire");
-        var second = await client.GetAsync("/other");
-
-        Assert.NotEqual(HttpStatusCode.TooManyRequests, second.StatusCode);
-    }
 }

@@ -5,11 +5,7 @@ using Predictorator.Models.Fixtures;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
 using Resend;
-using Hangfire;
 using Microsoft.Extensions.Logging.Abstractions;
-using Hangfire.Common;
-using Hangfire.States;
-using System.Linq.Expressions;
 using System.IO;
 
 namespace Predictorator.Tests;
@@ -17,11 +13,11 @@ namespace Predictorator.Tests;
 public class NotificationServiceTests
 {
     private static NotificationService CreateService(DateTime nowUtc, DateTime fixtureTimeUtc,
-        out InMemoryDataStore store, out IBackgroundJobClient jobs,
+        out InMemoryDataStore store, out IBackgroundJobService jobs,
         out IResend resend, out ITwilioSmsSender sms)
     {
         store = new InMemoryDataStore();
-        jobs = Substitute.For<IBackgroundJobClient>();
+        jobs = Substitute.For<IBackgroundJobService>();
         resend = Substitute.For<IResend>();
         sms = Substitute.For<ITwilioSmsSender>();
 
@@ -73,9 +69,10 @@ public class NotificationServiceTests
 
         await service.CheckFixturesAsync();
 
-        jobs.Received().Create(
-            Arg.Is<Job>(j => j.Method.Name == nameof(NotificationService.SendNewFixturesAvailableAsync)),
-            Arg.Is<IState>(s => s is ScheduledState));
+        await jobs.Received().ScheduleAsync(
+            "SendNewFixturesAvailable",
+            Arg.Any<object>(),
+            Arg.Any<TimeSpan>());
     }
 
     [Fact]
@@ -87,9 +84,10 @@ public class NotificationServiceTests
 
         await service.CheckFixturesAsync();
 
-        jobs.DidNotReceive().Create(
-            Arg.Is<Job>(j => j.Method.Name == nameof(NotificationService.SendNewFixturesAvailableAsync)),
-            Arg.Any<IState>());
+        await jobs.DidNotReceive().ScheduleAsync(
+            "SendNewFixturesAvailable",
+            Arg.Any<object>(),
+            Arg.Any<TimeSpan>());
     }
 
     [Fact]
