@@ -7,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Linq;
 
 namespace Predictorator.Services;
 
@@ -15,7 +16,7 @@ public class GameWeekService : IGameWeekService
     private readonly IGameWeekRepository _repo;
     private readonly HybridCache _cache;
     private readonly CachePrefixService _prefix;
-    private readonly TimeSpan _cacheDuration;
+    private readonly HybridCacheEntryOptions _cacheOptions;
 
     public GameWeekService(
         IGameWeekRepository repo,
@@ -26,7 +27,12 @@ public class GameWeekService : IGameWeekService
         _repo = repo;
         _cache = cache;
         _prefix = prefix;
-        _cacheDuration = TimeSpan.FromHours(options.Value.CacheDurationHours);
+        var duration = TimeSpan.FromHours(options.Value.CacheDurationHours);
+        _cacheOptions = new HybridCacheEntryOptions
+        {
+            Expiration = duration,
+            LocalCacheExpiration = duration
+        };
     }
 
     public Task<List<GameWeek>> GetGameWeeksAsync(string? season = null)
@@ -84,12 +90,7 @@ public class GameWeekService : IGameWeekService
 
     private Task<TResult> GetOrCreateAsync<TState, TResult>(string key, TState state, Func<TState, CancellationToken, ValueTask<TResult>> factory)
     {
-        var options = new HybridCacheEntryOptions
-        {
-            Expiration = _cacheDuration,
-            LocalCacheExpiration = _cacheDuration
-        };
-        return _cache.GetOrCreateAsync(key, state, factory, options).AsTask();
+        return _cache.GetOrCreateAsync(key, state, factory, _cacheOptions).AsTask();
     }
 
     public async Task<string> ExportCsvAsync()
