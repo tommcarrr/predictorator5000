@@ -45,7 +45,6 @@ public class VerifyComponentBUnitTests
         var store = new EfDataStore(db);
         var resend = Substitute.For<IResend>();
         var sms = Substitute.For<ITwilioSmsSender>();
-        var jobs = Substitute.For<Hangfire.IBackgroundJobClient>();
         var time = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
         ctx.Services.AddSingleton<IDateTimeProvider>(time);
         var env = new FakeWebHostEnvironment { WebRootPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()) };
@@ -54,7 +53,7 @@ public class VerifyComponentBUnitTests
         var inliner = new EmailCssInliner(env);
         var renderer = new EmailTemplateRenderer();
         var logger = NullLogger<SubscriptionService>.Instance;
-        ctx.Services.AddSingleton(new SubscriptionService(store, resend, config, sms, time, jobs, inliner, renderer, logger));
+        ctx.Services.AddSingleton(new SubscriptionService(store, resend, config, sms, time, inliner, renderer, logger));
         return ctx;
     }
 
