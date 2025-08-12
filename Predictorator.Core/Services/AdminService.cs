@@ -2,7 +2,6 @@ using Predictorator.Data;
 using Microsoft.Extensions.Logging;
 using Predictorator.Models;
 using Resend;
-using Hangfire;
 using System;
 using System.Linq;
 using System.IO;
@@ -18,7 +17,6 @@ public class AdminSubscriberDto
     public bool IsVerified { get; set; }
     public string Type { get; set; } = string.Empty;
 
-    // Parameterless constructor required for Hangfire deserialization
     public AdminSubscriberDto()
     {
     }
@@ -42,7 +40,7 @@ public class AdminService
     private readonly EmailTemplateRenderer _renderer;
     private readonly NotificationService _notifications;
     private readonly ILogger<AdminService> _logger;
-    private readonly IBackgroundJobClient _jobs;
+    private readonly IBackgroundJobService _jobs;
     private readonly IDateTimeProvider _time;
     private readonly CachePrefixService _prefix;
 
@@ -55,7 +53,7 @@ public class AdminService
         EmailTemplateRenderer renderer,
         NotificationService notifications,
         ILogger<AdminService> logger,
-        IBackgroundJobClient jobs,
+        IBackgroundJobService jobs,
         IDateTimeProvider time,
         CachePrefixService prefix)
     {
@@ -298,8 +296,10 @@ public class AdminService
         var baseUrl = _config["BASE_URL"] ?? "http://localhost";
         var delay = sendUtc - _time.UtcNow;
         if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
-        _jobs.Schedule<NotificationService>(s => s.SendSampleAsync(recipients, "Fixtures start in 2 hours!", baseUrl), delay);
-        return Task.CompletedTask;
+        return _jobs.ScheduleAsync(
+            "SendSample",
+            new { Recipients = recipients, Message = "Fixtures start in 2 hours!", BaseUrl = baseUrl },
+            delay);
     }
 
     public Task ScheduleNewFixturesAsync(DateTime sendUtc)
@@ -308,8 +308,10 @@ public class AdminService
         var key = sendUtc.ToString("yyyy-MM-dd");
         var delay = sendUtc - _time.UtcNow;
         if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
-        _jobs.Schedule<NotificationService>(s => s.SendNewFixturesAvailableAsync(key, baseUrl), delay);
-        return Task.CompletedTask;
+        return _jobs.ScheduleAsync(
+            "SendNewFixturesAvailable",
+            new { Key = key, BaseUrl = baseUrl },
+            delay);
     }
 
     public Task ScheduleFixturesStartingSoonAsync(DateTime sendUtc)
@@ -318,8 +320,10 @@ public class AdminService
         var key = sendUtc.ToString("O");
         var delay = sendUtc - _time.UtcNow;
         if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
-        _jobs.Schedule<NotificationService>(s => s.SendFixturesStartingSoonAsync(key, baseUrl), delay);
-        return Task.CompletedTask;
+        return _jobs.ScheduleAsync(
+            "SendFixturesStartingSoon",
+            new { Key = key, BaseUrl = baseUrl },
+            delay);
     }
 
     public Task ClearCachesAsync()

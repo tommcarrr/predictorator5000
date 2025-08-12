@@ -1,4 +1,3 @@
-using Hangfire;
 using Microsoft.Extensions.Logging;
 using Predictorator.Data;
 using Predictorator.Models;
@@ -18,7 +17,7 @@ public class NotificationService
     private readonly IDateRangeCalculator _range;
     private readonly NotificationFeatureService _features;
     private readonly IDateTimeProvider _time;
-    private readonly IBackgroundJobClient _jobs;
+    private readonly IBackgroundJobService _jobs;
     private readonly EmailCssInliner _inliner;
     private readonly EmailTemplateRenderer _renderer;
     private readonly ILogger<NotificationService> _logger;
@@ -33,7 +32,7 @@ public class NotificationService
         IDateRangeCalculator range,
         NotificationFeatureService features,
         IDateTimeProvider time,
-        IBackgroundJobClient jobs,
+        IBackgroundJobService jobs,
         EmailCssInliner inliner,
         EmailTemplateRenderer renderer,
         ILogger<NotificationService> logger)
@@ -99,8 +98,9 @@ public class NotificationService
                     var sendTimeUtc = TimeZoneInfo.ConvertTimeToUtc(sendTimeUk, ukTz);
                     var delay = sendTimeUtc - nowUtc;
                     if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
-                    _jobs.Schedule<NotificationService>(
-                        s => s.SendNewFixturesAvailableAsync(key, baseUrl),
+                    await _jobs.ScheduleAsync(
+                        "SendNewFixturesAvailable",
+                        new { Key = key, BaseUrl = baseUrl },
                         delay);
                 }
             }
@@ -117,20 +117,19 @@ public class NotificationService
                 var sendTimeUtc = first.Fixture.Date.AddHours(-2);
                 var delay = sendTimeUtc - nowUtc;
                 if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
-                _jobs.Schedule<NotificationService>(
-                    s => s.SendFixturesStartingSoonAsync(key, baseUrl),
+                await _jobs.ScheduleAsync(
+                    "SendFixturesStartingSoon",
+                    new { Key = key, BaseUrl = baseUrl },
                     delay);
             }
         }
     }
 
-    [AutomaticRetry(Attempts = 3)]
     public async Task SendNewFixturesAvailableAsync(string key, string baseUrl)
     {
         await SendToAllAsync("Fixtures start today!", baseUrl, "NewFixtures", key);
     }
 
-    [AutomaticRetry(Attempts = 3)]
     public async Task SendFixturesStartingSoonAsync(string key, string baseUrl)
     {
         await SendToAllAsync("Fixtures start in 2 hours!", baseUrl, "FixturesStartingSoon", key);

@@ -4,9 +4,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using Predictorator.Components;
-using Hangfire;
-using Hangfire.Dashboard;
-using Hangfire.SqlServer;
 using Predictorator.Data;
 using Predictorator.Options;
 using Predictorator.Services;
@@ -99,13 +96,15 @@ builder.Services.AddTransient<IGameWeekService, GameWeekService>();
 builder.Services.AddSingleton<EmailCssInliner>();
 builder.Services.AddSingleton<EmailTemplateRenderer>();
 builder.Services.AddSingleton<NotificationFeatureService>();
+builder.Services.AddSingleton<IBackgroundJobService, TableBackgroundJobService>();
+builder.Services.AddHostedService<BackgroundJobProcessor>();
+builder.Services.AddHostedService<RecurringJobProcessor>();
 builder.Services.Configure<AdminUserOptions>(options =>
 {
     builder.Configuration.GetSection(AdminUserOptions.SectionName).Bind(options);
     options.Email = builder.Configuration["ADMIN_EMAIL"] ?? options.Email;
     options.Password = builder.Configuration["ADMIN_PASSWORD"] ?? options.Password;
 });
-builder.Services.Configure<HangfireOptions>(builder.Configuration.GetSection(HangfireOptions.SectionName));
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
 builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
@@ -168,26 +167,6 @@ builder.Services.AddScoped<ISignInService, SignInManagerSignInService>();
 builder.Services.AddAuthorization();
 builder.Services.AddRazorPages();
 
-var hangfireOptions = builder.Configuration.GetSection(HangfireOptions.SectionName).Get<HangfireOptions>() ?? new HangfireOptions();
-if (!builder.Environment.IsEnvironment("Testing"))
-{
-    builder.Services.AddHangfire(config =>
-        config.UseSqlServerStorage(connectionString, new SqlServerStorageOptions
-        {
-            QueuePollInterval = TimeSpan.FromSeconds(hangfireOptions.QueuePollIntervalSeconds)
-        }));
-
-    if (hangfireOptions.RunServer)
-    {
-        builder.Services.AddHangfireServer(options =>
-        {
-            options.SchedulePollingInterval = TimeSpan.FromSeconds(hangfireOptions.SchedulePollingIntervalSeconds);
-            options.ServerCheckInterval = TimeSpan.FromSeconds(hangfireOptions.ServerCheckIntervalSeconds);
-            options.HeartbeatInterval = TimeSpan.FromSeconds(hangfireOptions.HeartbeatIntervalSeconds);
-            options.WorkerCount = hangfireOptions.WorkerCount;
-        });
-    }
-}
 
 var keyPath = builder.Configuration["DataProtection:KeyPath"];
 if (string.IsNullOrWhiteSpace(keyPath))
@@ -237,26 +216,6 @@ app.MapGet("/logout", async (SignInManager<IdentityUser> sm) =>
 if (!app.Environment.IsEnvironment("Testing"))
 {
     await ApplicationDbInitializer.SeedAdminUserAsync(app.Services);
-    app.UseHangfireDashboard("/hangfire", new DashboardOptions
-    {
-        Authorization = new[] { new Predictorator.Authorization.HangfireDashboardAuthorizationFilter() }
-    });
-    RecurringJob.AddOrUpdate<NotificationService>(
-        "fixture-notifications",
-        s => s.CheckFixturesAsync(),
-        "0 1 * * *",
-        new RecurringJobOptions
-        {
-            TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time")
-        });
-    RecurringJob.AddOrUpdate<SubscriptionService>(
-        "check-unverified-expired",
-        service => service.CountExpiredUnverifiedAsync(),
-        "0 1 * * 1",
-        new RecurringJobOptions
-        {
-            TimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time")
-        });
 }
 
 app.Run();

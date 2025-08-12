@@ -5,9 +5,6 @@ using Predictorator.Services;
 using Resend;
 using Predictorator.Tests.Helpers;
 using Predictorator.Models.Fixtures;
-using Hangfire;
-using Hangfire.Common;
-using Hangfire.States;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Generic;
 using System.IO;
@@ -18,7 +15,7 @@ namespace Predictorator.Tests;
 
 public class AdminServiceTests
 {
-    private static AdminService CreateService(out InMemoryDataStore store, out IResend resend, out ITwilioSmsSender sms, out IBackgroundJobClient jobs, out FakeDateTimeProvider provider)
+    private static AdminService CreateService(out InMemoryDataStore store, out IResend resend, out ITwilioSmsSender sms, out IBackgroundJobService jobs, out FakeDateTimeProvider provider)
     {
         store = new InMemoryDataStore();
         resend = Substitute.For<IResend>();
@@ -39,7 +36,7 @@ public class AdminServiceTests
         var fixtures = new FakeFixtureService(new FixturesResponse());
         var range = new DateRangeCalculator(provider);
         var features = new NotificationFeatureService(config);
-        jobs = Substitute.For<IBackgroundJobClient>();
+        jobs = Substitute.For<IBackgroundJobService>();
         var nLogger = NullLogger<NotificationService>.Instance;
         var gameWeeks = new FakeGameWeekService();
         gameWeeks.Items.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = provider.UtcNow.Date, EndDate = provider.UtcNow.Date.AddDays(6) });
@@ -148,9 +145,10 @@ public class AdminServiceTests
 
         await service.ScheduleFixturesStartingSoonSampleAsync(recipients, sendAt);
 
-        jobs.Received().Create(
-            Arg.Is<Job>(j => j.Method.Name == nameof(NotificationService.SendSampleAsync)),
-            Arg.Is<IState>(s => s is ScheduledState));
+        await jobs.Received().ScheduleAsync(
+            "SendSample",
+            Arg.Any<object>(),
+            Arg.Any<TimeSpan>());
     }
 
     [Fact]
@@ -161,9 +159,10 @@ public class AdminServiceTests
 
         await service.ScheduleNewFixturesAsync(sendAt);
 
-        jobs.Received().Create(
-            Arg.Is<Job>(j => j.Method.Name == nameof(NotificationService.SendNewFixturesAvailableAsync)),
-            Arg.Is<IState>(s => s is ScheduledState));
+        await jobs.Received().ScheduleAsync(
+            "SendNewFixturesAvailable",
+            Arg.Any<object>(),
+            Arg.Any<TimeSpan>());
     }
 
     [Fact]
@@ -174,9 +173,10 @@ public class AdminServiceTests
 
         await service.ScheduleFixturesStartingSoonAsync(sendAt);
 
-        jobs.Received().Create(
-            Arg.Is<Job>(j => j.Method.Name == nameof(NotificationService.SendFixturesStartingSoonAsync)),
-            Arg.Is<IState>(s => s is ScheduledState));
+        await jobs.Received().ScheduleAsync(
+            "SendFixturesStartingSoon",
+            Arg.Any<object>(),
+            Arg.Any<TimeSpan>());
     }
 
     [Fact]

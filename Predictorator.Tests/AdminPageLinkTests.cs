@@ -7,11 +7,10 @@ namespace Predictorator.Tests;
 public class AdminPageLinkTests
 {
     [Fact]
-    public void AdminPage_Should_Contain_Hangfire_Link()
+    public void AdminPage_Should_Not_Contain_BackgroundJob_Link()
     {
         var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Predictorator", "Components", "Pages", "Admin", "Index.razor"));
         var content = File.ReadAllText(path);
-        Assert.Contains("<MudButton", content);
-        Assert.Contains("Href=\"/hangfire\"", content);
+        Assert.DoesNotContain("/hangfire", content);
     }
 }
