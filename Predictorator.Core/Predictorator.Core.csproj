@@ -7,9 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.7" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.7" PrivateAssets="all" />
     <PackageReference Include="Azure.Data.Tables" Version="12.9.1" />
     <PackageReference Include="PreMailer.Net" Version="2.2.0" />
     <PackageReference Include="Resend" Version="0.1.4" />

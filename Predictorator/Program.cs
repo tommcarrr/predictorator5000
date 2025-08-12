@@ -1,7 +1,6 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using Predictorator.Components;
 using Predictorator.Data;
@@ -105,42 +104,9 @@ builder.Services.Configure<AdminUserOptions>(options =>
     options.Email = builder.Configuration["ADMIN_EMAIL"] ?? options.Email;
     options.Password = builder.Configuration["ADMIN_PASSWORD"] ?? options.Password;
 });
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
-builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
-{
-    var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-    var efLogger = loggerFactory.CreateLogger("EFCore");
-    options
-        .UseSqlServer(connectionString)
-        .UseLoggerFactory(loggerFactory);
-
-    if (builder.Environment.IsDevelopment())
-    {
-        options.EnableDetailedErrors()
-            .EnableSensitiveDataLogging();
-    }
-
-    options.LogTo(message => efLogger.LogError(message), LogLevel.Error);
-});
-builder.Services.AddDbContextFactory<ApplicationDbContext>((serviceProvider, options) =>
-{
-    var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-    var efLogger = loggerFactory.CreateLogger("EFCore");
-    options
-        .UseSqlServer(connectionString)
-        .UseLoggerFactory(loggerFactory);
-
-    if (builder.Environment.IsDevelopment())
-    {
-        options.EnableDetailedErrors()
-            .EnableSensitiveDataLogging();
-    }
-
-    options.LogTo(message => efLogger.LogError(message), LogLevel.Error);
-});
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddUserStore<InMemoryUserStore>()
+    .AddRoleStore<InMemoryRoleStore>()
     .AddDefaultUI()
     .AddDefaultTokenProviders();
 
