@@ -1,6 +1,8 @@
 using Azure;
 using Azure.Data.Tables;
 using Predictorator.Models;
+using System.Linq.Expressions;
+using System.Security.Cryptography;
 
 namespace Predictorator.Data;
 
@@ -40,213 +42,194 @@ public class TableDataStore : IDataStore
         CreatedAt = e.CreatedAt
     };
 
-    private async Task<int> GetNextIdAsync(TableClient table)
-    {
-        var max = 0;
-        await foreach (var e in table.QueryAsync<TableEntity>(select: new[] { "Id" }))
-        {
-            if (e.TryGetValue("Id", out object? obj) && obj is int id && id > max)
-                max = id;
-        }
-        return max + 1;
-    }
+    private static int GenerateId() => RandomNumberGenerator.GetInt32(1, int.MaxValue);
 
-    // Email subscribers
-    public async Task<bool> EmailSubscriberExistsAsync(string email)
+    private async Task<bool> ExistsAsync<TEntity>(TableClient table, Expression<Func<TEntity, bool>> filter)
+        where TEntity : class, ITableEntity, new()
     {
-        await foreach (var _ in _emailSubscribers.QueryAsync<SubscriberEntity>(e => e.Email == email))
+        await foreach (var _ in table.QueryAsync(filter))
             return true;
         return false;
     }
 
-    public async Task AddEmailSubscriberAsync(Subscriber subscriber)
+    private async Task<TModel?> SingleOrDefaultAsync<TEntity, TModel>(TableClient table, Expression<Func<TEntity, bool>> filter, Func<TEntity, TModel> map)
+        where TEntity : class, ITableEntity, new()
     {
-        subscriber.Id = await GetNextIdAsync(_emailSubscribers);
-        var entity = new SubscriberEntity
-        {
-            PartitionKey = "E",
-            RowKey = subscriber.Id.ToString(),
-            Id = subscriber.Id,
-            Email = subscriber.Email,
-            IsVerified = subscriber.IsVerified,
-            VerificationToken = subscriber.VerificationToken,
-            UnsubscribeToken = subscriber.UnsubscribeToken,
-            CreatedAt = subscriber.CreatedAt
-        };
-        await _emailSubscribers.AddEntityAsync(entity);
+        await foreach (var e in table.QueryAsync(filter))
+            return map(e);
+        return default;
     }
 
-    public async Task<Subscriber?> GetEmailSubscriberByVerificationTokenAsync(string token)
-    {
-        await foreach (var e in _emailSubscribers.QueryAsync<SubscriberEntity>(e => e.VerificationToken == token))
-            return ToSubscriber(e);
-        return null;
-    }
-
-    public async Task<Subscriber?> GetEmailSubscriberByUnsubscribeTokenAsync(string token)
-    {
-        await foreach (var e in _emailSubscribers.QueryAsync<SubscriberEntity>(e => e.UnsubscribeToken == token))
-            return ToSubscriber(e);
-        return null;
-    }
-
-    public async Task<int> CountExpiredEmailSubscribersAsync(DateTime cutoff)
+    private async Task<int> CountAsync<TEntity>(TableClient table, Expression<Func<TEntity, bool>> filter)
+        where TEntity : class, ITableEntity, new()
     {
         var count = 0;
-        await foreach (var _ in _emailSubscribers.QueryAsync<SubscriberEntity>(e => !e.IsVerified && e.CreatedAt < cutoff))
+        await foreach (var _ in table.QueryAsync(filter))
             count++;
         return count;
     }
 
-    public async Task<Subscriber?> GetEmailSubscriberByEmailAsync(string normalizedEmail)
+    private async Task<List<TModel>> ListAsync<TEntity, TModel>(TableClient table, Expression<Func<TEntity, bool>>? filter, Func<TEntity, TModel> map)
+        where TEntity : class, ITableEntity, new()
     {
-        await foreach (var e in _emailSubscribers.QueryAsync<SubscriberEntity>(e => e.Email.ToLower() == normalizedEmail))
-            return ToSubscriber(e);
-        return null;
-    }
-
-    public async Task<List<Subscriber>> GetEmailSubscribersAsync()
-    {
-        var list = new List<Subscriber>();
-        await foreach (var e in _emailSubscribers.QueryAsync<SubscriberEntity>())
-            list.Add(ToSubscriber(e));
+        var list = new List<TModel>();
+        var query = filter is null ? table.QueryAsync<TEntity>() : table.QueryAsync(filter);
+        await foreach (var e in query)
+            list.Add(map(e));
         return list;
     }
 
-    public async Task<List<Subscriber>> GetVerifiedEmailSubscribersAsync()
+    private async Task<TEntity?> GetEntityByIdAsync<TEntity>(TableClient table, string partitionKey, int id)
+        where TEntity : class, ITableEntity, new()
     {
-        var list = new List<Subscriber>();
-        await foreach (var e in _emailSubscribers.QueryAsync<SubscriberEntity>(e => e.IsVerified))
-            list.Add(ToSubscriber(e));
-        return list;
+        try
+        {
+            var e = await table.GetEntityAsync<TEntity>(partitionKey, id.ToString());
+            return e.Value;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404)
+        {
+            return null;
+        }
     }
+
+    private async Task AddSubscriberAsync<TModel, TEntity>(TableClient table, TModel subscriber, string partitionKey, Func<TModel, TEntity> map)
+        where TModel : ISubscriber
+        where TEntity : SubscriberEntityBase, new()
+    {
+        var entity = map(subscriber);
+        while (true)
+        {
+            var id = GenerateId();
+            entity.Id = id;
+            entity.PartitionKey = partitionKey;
+            entity.RowKey = id.ToString();
+            try
+            {
+                await table.AddEntityAsync(entity);
+                subscriber.Id = id;
+                return;
+            }
+            catch (RequestFailedException ex) when (ex.Status == 409)
+            {
+                // collision, retry
+            }
+        }
+    }
+
+    private Task UpdateSubscriberAsync<TModel, TEntity>(TableClient table, TModel subscriber, string partitionKey, Func<TModel, TEntity> map)
+        where TModel : ISubscriber
+        where TEntity : SubscriberEntityBase, new()
+    {
+        var entity = map(subscriber);
+        entity.PartitionKey = partitionKey;
+        entity.RowKey = subscriber.Id.ToString();
+        return table.UpsertEntityAsync(entity, TableUpdateMode.Replace);
+    }
+
+    private Task RemoveSubscriberAsync(TableClient table, string partitionKey, int id)
+        => table.DeleteEntityAsync(partitionKey, id.ToString());
+
+    // Email subscribers
+    public Task<bool> EmailSubscriberExistsAsync(string email) =>
+        ExistsAsync<SubscriberEntity>(_emailSubscribers, e => e.Email == email);
+
+    public Task AddEmailSubscriberAsync(Subscriber subscriber) =>
+        AddSubscriberAsync(_emailSubscribers, subscriber, "E", s => new SubscriberEntity
+        {
+            Email = s.Email,
+            IsVerified = s.IsVerified,
+            VerificationToken = s.VerificationToken,
+            UnsubscribeToken = s.UnsubscribeToken,
+            CreatedAt = s.CreatedAt
+        });
+
+    public Task<Subscriber?> GetEmailSubscriberByVerificationTokenAsync(string token) =>
+        SingleOrDefaultAsync<SubscriberEntity, Subscriber>(_emailSubscribers, e => e.VerificationToken == token, ToSubscriber);
+
+    public Task<Subscriber?> GetEmailSubscriberByUnsubscribeTokenAsync(string token) =>
+        SingleOrDefaultAsync<SubscriberEntity, Subscriber>(_emailSubscribers, e => e.UnsubscribeToken == token, ToSubscriber);
+
+    public Task<int> CountExpiredEmailSubscribersAsync(DateTime cutoff) =>
+        CountAsync<SubscriberEntity>(_emailSubscribers, e => !e.IsVerified && e.CreatedAt < cutoff);
+
+    public Task<Subscriber?> GetEmailSubscriberByEmailAsync(string normalizedEmail) =>
+        SingleOrDefaultAsync<SubscriberEntity, Subscriber>(_emailSubscribers, e => e.Email.ToLower() == normalizedEmail, ToSubscriber);
+
+    public Task<List<Subscriber>> GetEmailSubscribersAsync() =>
+        ListAsync<SubscriberEntity, Subscriber>(_emailSubscribers, null, ToSubscriber);
+
+    public Task<List<Subscriber>> GetVerifiedEmailSubscribersAsync() =>
+        ListAsync<SubscriberEntity, Subscriber>(_emailSubscribers, e => e.IsVerified, ToSubscriber);
 
     public async Task<Subscriber?> GetEmailSubscriberByIdAsync(int id)
     {
-        try
-        {
-            var e = await _emailSubscribers.GetEntityAsync<SubscriberEntity>("E", id.ToString());
-            return ToSubscriber(e.Value);
-        }
-        catch (RequestFailedException ex) when (ex.Status == 404)
-        {
-            return null;
-        }
+        var entity = await GetEntityByIdAsync<SubscriberEntity>(_emailSubscribers, "E", id);
+        return entity == null ? null : ToSubscriber(entity);
     }
 
-    public async Task UpdateEmailSubscriberAsync(Subscriber subscriber)
-    {
-        var entity = new SubscriberEntity
+    public Task UpdateEmailSubscriberAsync(Subscriber subscriber) =>
+        UpdateSubscriberAsync(_emailSubscribers, subscriber, "E", s => new SubscriberEntity
         {
-            PartitionKey = "E",
-            RowKey = subscriber.Id.ToString(),
-            Id = subscriber.Id,
-            Email = subscriber.Email,
-            IsVerified = subscriber.IsVerified,
-            VerificationToken = subscriber.VerificationToken,
-            UnsubscribeToken = subscriber.UnsubscribeToken,
-            CreatedAt = subscriber.CreatedAt
-        };
-        await _emailSubscribers.UpsertEntityAsync(entity, TableUpdateMode.Replace);
-    }
+            Id = s.Id,
+            Email = s.Email,
+            IsVerified = s.IsVerified,
+            VerificationToken = s.VerificationToken,
+            UnsubscribeToken = s.UnsubscribeToken,
+            CreatedAt = s.CreatedAt
+        });
 
     public Task RemoveEmailSubscriberAsync(Subscriber subscriber) =>
-        _emailSubscribers.DeleteEntityAsync("E", subscriber.Id.ToString());
+        RemoveSubscriberAsync(_emailSubscribers, "E", subscriber.Id);
 
     // SMS subscribers
-    public async Task<bool> SmsSubscriberExistsAsync(string phoneNumber)
-    {
-        await foreach (var _ in _smsSubscribers.QueryAsync<SmsSubscriberEntity>(e => e.PhoneNumber == phoneNumber))
-            return true;
-        return false;
-    }
+    public Task<bool> SmsSubscriberExistsAsync(string phoneNumber) =>
+        ExistsAsync<SmsSubscriberEntity>(_smsSubscribers, e => e.PhoneNumber == phoneNumber);
 
-    public async Task AddSmsSubscriberAsync(SmsSubscriber subscriber)
-    {
-        subscriber.Id = await GetNextIdAsync(_smsSubscribers);
-        var entity = new SmsSubscriberEntity
+    public Task AddSmsSubscriberAsync(SmsSubscriber subscriber) =>
+        AddSubscriberAsync(_smsSubscribers, subscriber, "S", s => new SmsSubscriberEntity
         {
-            PartitionKey = "S",
-            RowKey = subscriber.Id.ToString(),
-            Id = subscriber.Id,
-            PhoneNumber = subscriber.PhoneNumber,
-            IsVerified = subscriber.IsVerified,
-            VerificationToken = subscriber.VerificationToken,
-            UnsubscribeToken = subscriber.UnsubscribeToken,
-            CreatedAt = subscriber.CreatedAt
-        };
-        await _smsSubscribers.AddEntityAsync(entity);
-    }
+            PhoneNumber = s.PhoneNumber,
+            IsVerified = s.IsVerified,
+            VerificationToken = s.VerificationToken,
+            UnsubscribeToken = s.UnsubscribeToken,
+            CreatedAt = s.CreatedAt
+        });
 
-    public async Task<SmsSubscriber?> GetSmsSubscriberByVerificationTokenAsync(string token)
-    {
-        await foreach (var e in _smsSubscribers.QueryAsync<SmsSubscriberEntity>(e => e.VerificationToken == token))
-            return ToSmsSubscriber(e);
-        return null;
-    }
+    public Task<SmsSubscriber?> GetSmsSubscriberByVerificationTokenAsync(string token) =>
+        SingleOrDefaultAsync<SmsSubscriberEntity, SmsSubscriber>(_smsSubscribers, e => e.VerificationToken == token, ToSmsSubscriber);
 
-    public async Task<SmsSubscriber?> GetSmsSubscriberByUnsubscribeTokenAsync(string token)
-    {
-        await foreach (var e in _smsSubscribers.QueryAsync<SmsSubscriberEntity>(e => e.UnsubscribeToken == token))
-            return ToSmsSubscriber(e);
-        return null;
-    }
+    public Task<SmsSubscriber?> GetSmsSubscriberByUnsubscribeTokenAsync(string token) =>
+        SingleOrDefaultAsync<SmsSubscriberEntity, SmsSubscriber>(_smsSubscribers, e => e.UnsubscribeToken == token, ToSmsSubscriber);
 
-    public async Task<int> CountExpiredSmsSubscribersAsync(DateTime cutoff)
-    {
-        var count = 0;
-        await foreach (var _ in _smsSubscribers.QueryAsync<SmsSubscriberEntity>(e => !e.IsVerified && e.CreatedAt < cutoff))
-            count++;
-        return count;
-    }
+    public Task<int> CountExpiredSmsSubscribersAsync(DateTime cutoff) =>
+        CountAsync<SmsSubscriberEntity>(_smsSubscribers, e => !e.IsVerified && e.CreatedAt < cutoff);
 
-    public async Task<List<SmsSubscriber>> GetSmsSubscribersAsync()
-    {
-        var list = new List<SmsSubscriber>();
-        await foreach (var e in _smsSubscribers.QueryAsync<SmsSubscriberEntity>())
-            list.Add(ToSmsSubscriber(e));
-        return list;
-    }
+    public Task<List<SmsSubscriber>> GetSmsSubscribersAsync() =>
+        ListAsync<SmsSubscriberEntity, SmsSubscriber>(_smsSubscribers, null, ToSmsSubscriber);
 
-    public async Task<List<SmsSubscriber>> GetVerifiedSmsSubscribersAsync()
-    {
-        var list = new List<SmsSubscriber>();
-        await foreach (var e in _smsSubscribers.QueryAsync<SmsSubscriberEntity>(e => e.IsVerified))
-            list.Add(ToSmsSubscriber(e));
-        return list;
-    }
+    public Task<List<SmsSubscriber>> GetVerifiedSmsSubscribersAsync() =>
+        ListAsync<SmsSubscriberEntity, SmsSubscriber>(_smsSubscribers, e => e.IsVerified, ToSmsSubscriber);
 
     public async Task<SmsSubscriber?> GetSmsSubscriberByIdAsync(int id)
     {
-        try
-        {
-            var e = await _smsSubscribers.GetEntityAsync<SmsSubscriberEntity>("S", id.ToString());
-            return ToSmsSubscriber(e.Value);
-        }
-        catch (RequestFailedException ex) when (ex.Status == 404)
-        {
-            return null;
-        }
+        var entity = await GetEntityByIdAsync<SmsSubscriberEntity>(_smsSubscribers, "S", id);
+        return entity == null ? null : ToSmsSubscriber(entity);
     }
 
-    public async Task UpdateSmsSubscriberAsync(SmsSubscriber subscriber)
-    {
-        var entity = new SmsSubscriberEntity
+    public Task UpdateSmsSubscriberAsync(SmsSubscriber subscriber) =>
+        UpdateSubscriberAsync(_smsSubscribers, subscriber, "S", s => new SmsSubscriberEntity
         {
-            PartitionKey = "S",
-            RowKey = subscriber.Id.ToString(),
-            Id = subscriber.Id,
-            PhoneNumber = subscriber.PhoneNumber,
-            IsVerified = subscriber.IsVerified,
-            VerificationToken = subscriber.VerificationToken,
-            UnsubscribeToken = subscriber.UnsubscribeToken,
-            CreatedAt = subscriber.CreatedAt
-        };
-        await _smsSubscribers.UpsertEntityAsync(entity, TableUpdateMode.Replace);
-    }
+            Id = s.Id,
+            PhoneNumber = s.PhoneNumber,
+            IsVerified = s.IsVerified,
+            VerificationToken = s.VerificationToken,
+            UnsubscribeToken = s.UnsubscribeToken,
+            CreatedAt = s.CreatedAt
+        });
 
     public Task RemoveSmsSubscriberAsync(SmsSubscriber subscriber) =>
-        _smsSubscribers.DeleteEntityAsync("S", subscriber.Id.ToString());
+        RemoveSubscriberAsync(_smsSubscribers, "S", subscriber.Id);
 
     // Sent notifications
     public async Task<bool> SentNotificationExistsAsync(string type, string key)
@@ -273,12 +256,11 @@ public class TableDataStore : IDataStore
         await _sentNotifications.UpsertEntityAsync(entity);
     }
 
-    private class SubscriberEntity : ITableEntity
+    private abstract class SubscriberEntityBase : ITableEntity
     {
-        public string PartitionKey { get; set; } = "E";
+        public string PartitionKey { get; set; } = string.Empty;
         public string RowKey { get; set; } = string.Empty;
         public int Id { get; set; }
-        public string Email { get; set; } = string.Empty;
         public bool IsVerified { get; set; }
         public string VerificationToken { get; set; } = string.Empty;
         public string UnsubscribeToken { get; set; } = string.Empty;
@@ -287,18 +269,14 @@ public class TableDataStore : IDataStore
         public ETag ETag { get; set; }
     }
 
-    private class SmsSubscriberEntity : ITableEntity
+    private class SubscriberEntity : SubscriberEntityBase
     {
-        public string PartitionKey { get; set; } = "S";
-        public string RowKey { get; set; } = string.Empty;
-        public int Id { get; set; }
+        public string Email { get; set; } = string.Empty;
+    }
+
+    private class SmsSubscriberEntity : SubscriberEntityBase
+    {
         public string PhoneNumber { get; set; } = string.Empty;
-        public bool IsVerified { get; set; }
-        public string VerificationToken { get; set; } = string.Empty;
-        public string UnsubscribeToken { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-        public DateTimeOffset? Timestamp { get; set; }
-        public ETag ETag { get; set; }
     }
 
     private class SentNotificationEntity : ITableEntity
