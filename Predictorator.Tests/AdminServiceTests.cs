@@ -209,4 +209,27 @@ public class AdminServiceTests
         Assert.Single(store.EmailSubscribers);
         Assert.Single(store.SmsSubscribers);
     }
+
+    [Fact]
+    public async Task GetJobsAsync_returns_jobs()
+    {
+        var service = CreateService(out _, out _, out _, out var jobs, out _);
+        var list = new List<BackgroundJob> { new() { RowKey = "1", JobType = "Test", RunAt = DateTimeOffset.UtcNow } };
+        jobs.GetJobsAsync().Returns(list);
+
+        var result = await service.GetJobsAsync();
+
+        Assert.Single(result);
+        Assert.Equal("Test", result[0].JobType);
+    }
+
+    [Fact]
+    public async Task DeleteJobAsync_calls_service()
+    {
+        var service = CreateService(out _, out _, out _, out var jobs, out _);
+
+        await service.DeleteJobAsync("abc");
+
+        await jobs.Received().DeleteAsync("abc");
+    }
 }
