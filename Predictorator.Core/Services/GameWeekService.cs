@@ -1,10 +1,8 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 using Predictorator.Data;
 using Predictorator.Models;
 using Predictorator.Options;
-using System;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -13,18 +11,18 @@ namespace Predictorator.Services;
 
 public class GameWeekService : IGameWeekService
 {
-    private readonly IDbContextFactory<ApplicationDbContext> _dbFactory;
+    private readonly IGameWeekRepository _repo;
     private readonly HybridCache _cache;
     private readonly CachePrefixService _prefix;
     private readonly TimeSpan _cacheDuration;
 
     public GameWeekService(
-        IDbContextFactory<ApplicationDbContext> dbFactory,
+        IGameWeekRepository repo,
         HybridCache cache,
         CachePrefixService prefix,
         IOptions<GameWeekCacheOptions> options)
     {
-        _dbFactory = dbFactory;
+        _repo = repo;
         _cache = cache;
         _prefix = prefix;
         _cacheDuration = TimeSpan.FromHours(options.Value.CacheDurationHours);
@@ -39,14 +37,10 @@ public class GameWeekService : IGameWeekService
             LocalCacheExpiration = _cacheDuration
         };
 
-        return _cache.GetOrCreateAsync(cacheKey, async ct =>
-        {
-            using var db = _dbFactory.CreateDbContext();
-            var query = db.GameWeeks.AsNoTracking().AsQueryable();
-            if (!string.IsNullOrEmpty(season))
-                query = query.Where(g => g.Season == season);
-            return await query.OrderBy(g => g.Season).ThenBy(g => g.Number).ToListAsync(ct);
-        }, options).AsTask();
+        return _cache.GetOrCreateAsync<(IGameWeekRepository Repo, string? Season), List<GameWeek>>(cacheKey,
+            (_repo, season),
+            static (state, ct) => new ValueTask<List<GameWeek>>(state.Repo.GetGameWeeksAsync(state.Season)),
+            options).AsTask();
     }
 
     public Task<GameWeek?> GetGameWeekAsync(string season, int number)
@@ -58,13 +52,10 @@ public class GameWeekService : IGameWeekService
             LocalCacheExpiration = _cacheDuration
         };
 
-        return _cache.GetOrCreateAsync(cacheKey, async ct =>
-        {
-            using var db = _dbFactory.CreateDbContext();
-            return await db.GameWeeks
-                .AsNoTracking()
-                .FirstOrDefaultAsync(g => g.Season == season && g.Number == number, ct);
-        }, options).AsTask();
+        return _cache.GetOrCreateAsync<(IGameWeekRepository Repo, string Season, int Number), GameWeek?>(cacheKey,
+            (_repo, season, number),
+            static (state, ct) => new ValueTask<GameWeek?>(state.Repo.GetGameWeekAsync(state.Season, state.Number)),
+            options).AsTask();
     }
 
     public Task<GameWeek?> GetNextGameWeekAsync(DateTime date)
@@ -76,46 +67,15 @@ public class GameWeekService : IGameWeekService
             LocalCacheExpiration = _cacheDuration
         };
 
-        return _cache.GetOrCreateAsync(cacheKey, async ct =>
-        {
-            using var db = _dbFactory.CreateDbContext();
-            return await db.GameWeeks
-                .Where(g => g.EndDate >= date)
-                .OrderBy(g => g.StartDate)
-                .FirstOrDefaultAsync(ct);
-        }, options).AsTask();
+        return _cache.GetOrCreateAsync<(IGameWeekRepository Repo, DateTime Date), GameWeek?>(cacheKey,
+            (_repo, date),
+            static (state, ct) => new ValueTask<GameWeek?>(state.Repo.GetNextGameWeekAsync(state.Date)),
+            options).AsTask();
     }
 
     public async Task AddOrUpdateAsync(GameWeek gameWeek)
     {
-        await using var db = _dbFactory.CreateDbContext();
-        GameWeek? existing = null;
-
-        if (gameWeek.Id != 0)
-        {
-            existing = await db.GameWeeks.FindAsync(gameWeek.Id);
-        }
-
-        if (existing == null)
-        {
-            existing = await db.GameWeeks
-                .FirstOrDefaultAsync(g => g.Season == gameWeek.Season && g.Number == gameWeek.Number);
-        }
-
-        if (existing == null)
-        {
-            db.GameWeeks.Add(gameWeek);
-        }
-        else
-        {
-            existing.Season = gameWeek.Season;
-            existing.Number = gameWeek.Number;
-            existing.StartDate = gameWeek.StartDate;
-            existing.EndDate = gameWeek.EndDate;
-        }
-
-        await db.SaveChangesAsync();
-
+        await _repo.AddOrUpdateAsync(gameWeek);
         await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_all");
         await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_{gameWeek.Season}");
         await _cache.RemoveAsync($"{_prefix.Prefix}gameweek_{gameWeek.Season}_{gameWeek.Number}");
@@ -125,12 +85,10 @@ public class GameWeekService : IGameWeekService
 
     public async Task DeleteAsync(int id)
     {
-        await using var db = _dbFactory.CreateDbContext();
-        var entity = await db.GameWeeks.FindAsync(id);
+        var entity = await _repo.GetByIdAsync(id);
         if (entity != null)
         {
-            db.GameWeeks.Remove(entity);
-            await db.SaveChangesAsync();
+            await _repo.DeleteAsync(id);
             await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_all");
             await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_{entity.Season}");
             await _cache.RemoveAsync($"{_prefix.Prefix}gameweek_{entity.Season}_{entity.Number}");
@@ -141,13 +99,7 @@ public class GameWeekService : IGameWeekService
 
     public async Task<string> ExportCsvAsync()
     {
-        await using var db = _dbFactory.CreateDbContext();
-        var items = await db.GameWeeks
-            .AsNoTracking()
-            .OrderBy(g => g.Season)
-            .ThenBy(g => g.Number)
-            .ToListAsync();
-
+        var items = await _repo.GetGameWeeksAsync();
         var sb = new StringBuilder();
         sb.AppendLine("Season,Number,StartDate,EndDate");
         foreach (var g in items)
@@ -160,7 +112,6 @@ public class GameWeekService : IGameWeekService
                 g.EndDate.ToString("O", CultureInfo.InvariantCulture)
             }));
         }
-
         return sb.ToString();
     }
 
@@ -170,7 +121,6 @@ public class GameWeekService : IGameWeekService
         string? line;
         var added = 0;
         var first = true;
-        await using var db = _dbFactory.CreateDbContext();
         while ((line = await reader.ReadLineAsync()) != null)
         {
             if (first)
@@ -188,33 +138,21 @@ public class GameWeekService : IGameWeekService
             if (!DateTime.TryParse(parts[2], null, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var start)) continue;
             if (!DateTime.TryParse(parts[3], null, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var end)) continue;
 
-            var existing = await db.GameWeeks
-                .FirstOrDefaultAsync(g => g.Season == season && g.Number == number);
+            var existing = await _repo.GetGameWeekAsync(season, number);
             if (existing == null)
             {
-                db.GameWeeks.Add(new GameWeek
-                {
-                    Season = season,
-                    Number = number,
-                    StartDate = start,
-                    EndDate = end
-                });
                 added++;
             }
-            else
+            var gw = new GameWeek
             {
-                existing.StartDate = start;
-                existing.EndDate = end;
-            }
-
-            await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_all");
-            await _cache.RemoveAsync($"{_prefix.Prefix}gameweeks_{season}");
-            await _cache.RemoveAsync($"{_prefix.Prefix}gameweek_{season}_{number}");
-            await _cache.RemoveAsync($"{_prefix.Prefix}next_{start:yyyy-MM-dd}");
-            await _cache.RemoveAsync($"{_prefix.Prefix}next_{end:yyyy-MM-dd}");
+                Id = existing?.Id ?? 0,
+                Season = season,
+                Number = number,
+                StartDate = start,
+                EndDate = end
+            };
+            await AddOrUpdateAsync(gw);
         }
-
-        await db.SaveChangesAsync();
         return added;
     }
 }
