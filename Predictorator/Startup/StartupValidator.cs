@@ -10,10 +10,6 @@ public static class StartupValidator
         if (string.IsNullOrWhiteSpace(builder.Configuration["ApiSettings:RapidApiKey"]))
             return StartupExitCode.MissingRapidApiKey;
 
-        var connection = builder.Configuration.GetConnectionString("DefaultConnection");
-        if (string.IsNullOrWhiteSpace(connection))
-            return StartupExitCode.MissingConnectionString;
-
         return null;
     }
 }
