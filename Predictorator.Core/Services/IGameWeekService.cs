@@ -1,3 +1,4 @@
+using System.IO;
 using Predictorator.Models;
 
 namespace Predictorator.Services;
@@ -9,4 +10,6 @@ public interface IGameWeekService
     Task<GameWeek?> GetNextGameWeekAsync(DateTime date);
     Task AddOrUpdateAsync(GameWeek gameWeek);
     Task DeleteAsync(int id);
+    Task<string> ExportCsvAsync();
+    Task<int> ImportCsvAsync(Stream csv);
 }

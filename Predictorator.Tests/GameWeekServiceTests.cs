@@ -6,6 +6,9 @@ using Predictorator.Data;
 using Predictorator.Models;
 using Predictorator.Options;
 using Predictorator.Services;
+using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace Predictorator.Tests;
 
@@ -145,5 +148,46 @@ public class GameWeekServiceTests
 
         Assert.Equal(before + 1, afterFirst);
         Assert.Equal(afterFirst, afterSecond);
+    }
+
+    [Fact]
+    public async Task ExportCsvAsync_exports_all()
+    {
+        var service = CreateService(out var db, out _);
+        var now = DateTime.UtcNow.Date;
+        db.GameWeeks.AddRange(
+            new GameWeek { Season = "25-26", Number = 1, StartDate = now, EndDate = now.AddDays(6) },
+            new GameWeek { Season = "25-26", Number = 2, StartDate = now.AddDays(7), EndDate = now.AddDays(13) }
+        );
+        await db.SaveChangesAsync();
+
+        var csv = await service.ExportCsvAsync();
+        var lines = csv.Trim().Split('\n');
+        Assert.Equal(3, lines.Length);
+        Assert.Contains("25-26,1", lines[1]);
+        Assert.Contains("25-26,2", lines[2]);
+    }
+
+    [Fact]
+    public async Task ImportCsvAsync_adds_and_updates()
+    {
+        var service = CreateService(out var db, out var factory);
+        var now = DateTime.UtcNow.Date;
+        db.GameWeeks.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = now, EndDate = now.AddDays(6) });
+        await db.SaveChangesAsync();
+
+        var csv = "Season,Number,StartDate,EndDate\n" +
+                  $"25-26,1,{now.AddDays(1):O},{now.AddDays(7):O}\n" +
+                  $"25-26,2,{now.AddDays(8):O},{now.AddDays(14):O}\n";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(csv));
+
+        var added = await service.ImportCsvAsync(ms);
+
+        Assert.Equal(1, added);
+        await using var verify = factory.CreateDbContext();
+        var all = await verify.GameWeeks.ToListAsync();
+        Assert.Equal(2, all.Count);
+        var gw1 = all.Single(g => g.Number == 1);
+        Assert.Equal(now.AddDays(1), gw1.StartDate);
     }
 }
