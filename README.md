@@ -52,6 +52,23 @@ as needed before running the containers.
 Verification links sent to subscribers are valid for one hour. A background job
 runs weekly to calculate unverified subscriptions that have expired.
 
+### Background job processing
+
+By default the web app processes queued background jobs. To offload this work
+to the Azure Functions project set `UseFunctionAppForJobs` to `true` in
+configuration. When enabled, the web app will still schedule jobs but the
+functions app is responsible for executing them. The admin Jobs view reads
+from the same table storage queue that the function app uses, so it continues
+to list pending jobs regardless of where they are processed.
+
+Timer schedules for the functions can be overridden in configuration using the
+following keys (values shown are defaults):
+
+- `ProcessBackgroundJobsSchedule` = `0 */5 10-21 * * *`
+- `FixtureNotificationsSchedule` = `0 0 1 * * *`
+- `ClearExpiredSubscriptionsSchedule` = `0 0 * * * *`
+- `CheckUnverifiedExpiredSchedule` = `0 0 1 * * 1`
+
 To temporarily disable new subscriptions, set `Subscription:Disabled` to `true`.
 The notice shown in the subscribe dialog can be customized with
 `Subscription:DisabledMessage`.

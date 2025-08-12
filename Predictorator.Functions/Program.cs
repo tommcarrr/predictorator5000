@@ -37,6 +37,7 @@ builder.Services.Configure<TwilioOptions>(configuration.GetSection(TwilioOptions
 builder.Services.AddTransient<ITwilioSmsSender, TwilioSmsSender>();
 builder.Services.AddTransient<SubscriptionService>();
 builder.Services.AddTransient<NotificationService>();
+builder.Services.AddSingleton<IBackgroundJobService, TableBackgroundJobService>();
 builder.Services.AddSingleton<EmailCssInliner>();
 builder.Services.AddSingleton<EmailTemplateRenderer>();
 builder.Services.AddHybridCache();
