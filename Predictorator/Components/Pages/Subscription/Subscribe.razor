@@ -6,7 +6,11 @@
 
 <MudPaper Class="pa-4" Elevation="1">
     <h2>Subscribe to Notifications</h2>
-    @if (_emailSubmitted)
+    @if (Features.SubscriptionDisabled)
+    {
+        <p>@Features.SubscriptionDisabledMessage</p>
+    }
+    else if (_emailSubmitted)
     {
         <p>A verification link has been sent to your email address. It will be valid for one hour.</p>
     }

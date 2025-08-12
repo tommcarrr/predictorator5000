@@ -53,6 +53,10 @@ as needed before running the containers.
 Verification links sent to subscribers are valid for one hour. A background job
 runs weekly to calculate unverified subscriptions that have expired.
 
+To temporarily disable new subscriptions, set `Subscription:Disabled` to `true`.
+The notice shown in the subscribe dialog can be customized with
+`Subscription:DisabledMessage`.
+
 Ceefax mode provides a retro Teletext-inspired theme. When enabled, dark mode is
 also automatically activated for optimal contrast. If no prior preference is
 stored in the browser, the site defaults to Ceefax mode with dark mode enabled.

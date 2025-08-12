@@ -16,5 +16,11 @@ public class NotificationFeatureService
         !string.IsNullOrWhiteSpace(_config["Twilio:AuthToken"]) &&
         !string.IsNullOrWhiteSpace(_config["Twilio:FromNumber"]);
 
+    public bool SubscriptionDisabled => _config.GetValue<bool>("Subscription:Disabled");
+
+    public string SubscriptionDisabledMessage =>
+        _config["Subscription:DisabledMessage"] ??
+        "This functionality is temporarily unavailable due to maintenance. Please check back soon.";
+
     public bool AnyEnabled => EmailEnabled || SmsEnabled;
 }
