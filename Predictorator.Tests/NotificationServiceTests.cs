@@ -1,7 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
-using Predictorator.Data;
 using Predictorator.Models;
 using Predictorator.Models.Fixtures;
 using Predictorator.Services;
@@ -19,14 +17,10 @@ namespace Predictorator.Tests;
 public class NotificationServiceTests
 {
     private static NotificationService CreateService(DateTime nowUtc, DateTime fixtureTimeUtc,
-        out ApplicationDbContext db, out IBackgroundJobClient jobs,
+        out InMemoryDataStore store, out IBackgroundJobClient jobs,
         out IResend resend, out ITwilioSmsSender sms)
     {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        db = new ApplicationDbContext(options);
-        var store = new EfDataStore(db);
+        store = new InMemoryDataStore();
         jobs = Substitute.For<IBackgroundJobClient>();
         resend = Substitute.For<IResend>();
         sms = Substitute.For<ITwilioSmsSender>();
@@ -102,15 +96,14 @@ public class NotificationServiceTests
     public async Task SendNewFixturesAvailableAsync_sends_and_records()
     {
         var now = DateTime.UtcNow;
-        var service = CreateService(now, now.AddDays(1), out var db, out _, out var resend, out var sms);
-        db.Subscribers.Add(new Subscriber { Email = "u@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = now });
-        db.SmsSubscribers.Add(new SmsSubscriber { PhoneNumber = "+1", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = now });
-        await db.SaveChangesAsync();
+        var service = CreateService(now, now.AddDays(1), out var store, out _, out var resend, out var sms);
+        store.EmailSubscribers.Add(new Subscriber { Email = "u@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = now });
+        store.SmsSubscribers.Add(new SmsSubscriber { PhoneNumber = "+1", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = now });
 
         await service.SendNewFixturesAvailableAsync("key", "http://localhost");
 
         await resend.Received().EmailSendAsync(Arg.Is<EmailMessage>(m => m.HtmlBody != null && m.HtmlBody.Contains("Unsubscribe") && m.HtmlBody.Contains("style=")));
         await sms.Received().SendSmsAsync("+1", Arg.Is<string>(msg => msg.Contains("Unsubscribe:")));
-        Assert.Equal(1, db.SentNotifications.Count());
+        Assert.Single(store.SentNotifications);
     }
 }

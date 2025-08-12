@@ -1,7 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
-using Predictorator.Data;
 using Predictorator.Models;
 using Predictorator.Services;
 using Resend;
@@ -20,12 +18,9 @@ namespace Predictorator.Tests;
 
 public class AdminServiceTests
 {
-    private static AdminService CreateService(out ApplicationDbContext db, out IResend resend, out ITwilioSmsSender sms, out IBackgroundJobClient jobs, out FakeDateTimeProvider provider)
+    private static AdminService CreateService(out InMemoryDataStore store, out IResend resend, out ITwilioSmsSender sms, out IBackgroundJobClient jobs, out FakeDateTimeProvider provider)
     {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        db = new ApplicationDbContext(options);
+        store = new InMemoryDataStore();
         resend = Substitute.For<IResend>();
         sms = Substitute.For<ITwilioSmsSender>();
         var config = new ConfigurationBuilder()
@@ -48,7 +43,6 @@ public class AdminServiceTests
         var nLogger = NullLogger<NotificationService>.Instance;
         var gameWeeks = new FakeGameWeekService();
         gameWeeks.Items.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = provider.UtcNow.Date, EndDate = provider.UtcNow.Date.AddDays(6) });
-        var store = new EfDataStore(db);
         var notifications = new NotificationService(store, resend, sms, config, fixtures, gameWeeks, range, features, provider, jobs, inliner, renderer, nLogger);
         var aLogger = NullLogger<AdminService>.Instance;
         var prefix = new CachePrefixService();
@@ -58,10 +52,10 @@ public class AdminServiceTests
     [Fact]
     public async Task AddSubscriberAsync_adds_verified_email()
     {
-        var service = CreateService(out var db, out _, out _, out _, out _);
+        var service = CreateService(out var store, out _, out _, out _, out _);
         var dto = await service.AddSubscriberAsync("Email", "user@example.com");
 
-        var sub = await db.Subscribers.SingleAsync();
+        var sub = store.EmailSubscribers.Single();
         Assert.NotNull(dto);
         Assert.True(sub.IsVerified);
         Assert.Equal("user@example.com", sub.Email);
@@ -71,10 +65,10 @@ public class AdminServiceTests
     [Fact]
     public async Task AddSubscriberAsync_adds_verified_sms()
     {
-        var service = CreateService(out var db, out _, out _, out _, out _);
+        var service = CreateService(out var store, out _, out _, out _, out _);
         var dto = await service.AddSubscriberAsync("SMS", "+1");
 
-        var sub = await db.SmsSubscribers.SingleAsync();
+        var sub = store.SmsSubscribers.Single();
         Assert.NotNull(dto);
         Assert.True(sub.IsVerified);
         Assert.Equal("+1", sub.PhoneNumber);
@@ -84,10 +78,9 @@ public class AdminServiceTests
     [Fact]
     public async Task ConfirmAsync_marks_subscriber_verified()
     {
-        var service = CreateService(out var db, out _, out _, out _, out _);
+        var service = CreateService(out var store, out _, out _, out _, out _);
         var subscriber = new Subscriber { Email = "a", IsVerified = false, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow };
-        db.Subscribers.Add(subscriber);
-        await db.SaveChangesAsync();
+        await store.AddEmailSubscriberAsync(subscriber);
 
         await service.ConfirmAsync("Email", subscriber.Id);
 
@@ -97,23 +90,21 @@ public class AdminServiceTests
     [Fact]
     public async Task DeleteAsync_removes_sms_subscriber()
     {
-        var service = CreateService(out var db, out _, out _, out _, out _);
+        var service = CreateService(out var store, out _, out _, out _, out _);
         var smsSub = new SmsSubscriber { PhoneNumber = "+1", VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow };
-        db.SmsSubscribers.Add(smsSub);
-        await db.SaveChangesAsync();
+        await store.AddSmsSubscriberAsync(smsSub);
 
         await service.DeleteAsync("SMS", smsSub.Id);
 
-        Assert.Empty(db.SmsSubscribers);
+        Assert.Empty(store.SmsSubscribers);
     }
 
     [Fact]
     public async Task SendNewFixturesSampleAsync_sends_email_and_sms()
     {
-        var service = CreateService(out var db, out var resend, out var sms, out _, out _);
-        db.Subscribers.Add(new Subscriber { Id = 1, Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
-        db.SmsSubscribers.Add(new SmsSubscriber { Id = 2, PhoneNumber = "+1", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
-        await db.SaveChangesAsync();
+        var service = CreateService(out var store, out var resend, out var sms, out _, out _);
+        store.EmailSubscribers.Add(new Subscriber { Id = 1, Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
+        store.SmsSubscribers.Add(new SmsSubscriber { Id = 2, PhoneNumber = "+1", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
         var recipients = new List<AdminSubscriberDto>
         {
             new(1, "user@example.com", true, "Email"),
@@ -129,10 +120,9 @@ public class AdminServiceTests
     [Fact]
     public async Task SendFixturesStartingSoonSampleAsync_sends_email_and_sms()
     {
-        var service = CreateService(out var db, out var resend, out var sms, out _, out _);
-        db.Subscribers.Add(new Subscriber { Id = 1, Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
-        db.SmsSubscribers.Add(new SmsSubscriber { Id = 2, PhoneNumber = "+1", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
-        await db.SaveChangesAsync();
+        var service = CreateService(out var store, out var resend, out var sms, out _, out _);
+        store.EmailSubscribers.Add(new Subscriber { Id = 1, Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
+        store.SmsSubscribers.Add(new SmsSubscriber { Id = 2, PhoneNumber = "+1", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
         var recipients = new List<AdminSubscriberDto>
         {
             new(1, "user@example.com", true, "Email"),
@@ -148,7 +138,7 @@ public class AdminServiceTests
     [Fact]
     public async Task ScheduleFixturesStartingSoonSampleAsync_schedules_job()
     {
-        var service = CreateService(out var db, out _, out _, out var jobs, out var time);
+        var service = CreateService(out var store, out _, out _, out var jobs, out var time);
         var recipients = new List<AdminSubscriberDto>
         {
             new(1, "a@example.com", true, "Email")
@@ -192,10 +182,9 @@ public class AdminServiceTests
     [Fact]
     public async Task ExportSubscribersCsvAsync_exports_all()
     {
-        var service = CreateService(out var db, out _, out _, out _, out _);
-        db.Subscribers.Add(new Subscriber { Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
-        db.SmsSubscribers.Add(new SmsSubscriber { PhoneNumber = "+1", IsVerified = false, VerificationToken = "v2", UnsubscribeToken = "u2", CreatedAt = DateTime.UtcNow });
-        await db.SaveChangesAsync();
+        var service = CreateService(out var store, out _, out _, out _, out _);
+        store.EmailSubscribers.Add(new Subscriber { Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
+        store.SmsSubscribers.Add(new SmsSubscriber { PhoneNumber = "+1", IsVerified = false, VerificationToken = "v2", UnsubscribeToken = "u2", CreatedAt = DateTime.UtcNow });
 
         var csv = await service.ExportSubscribersCsvAsync();
         var lines = csv.Trim().Split('\n');
@@ -207,9 +196,8 @@ public class AdminServiceTests
     [Fact]
     public async Task ImportSubscribersCsvAsync_adds_new_and_skips_existing()
     {
-        var service = CreateService(out var db, out _, out _, out _, out var provider);
-        db.Subscribers.Add(new Subscriber { Email = "existing@example.com", IsVerified = true, VerificationToken = "v1", UnsubscribeToken = "u1", CreatedAt = provider.UtcNow });
-        await db.SaveChangesAsync();
+        var service = CreateService(out var store, out _, out _, out _, out var provider);
+        store.EmailSubscribers.Add(new Subscriber { Email = "existing@example.com", IsVerified = true, VerificationToken = "v1", UnsubscribeToken = "u1", CreatedAt = provider.UtcNow });
         var csv = "Type,Contact,IsVerified,VerificationToken,UnsubscribeToken,CreatedAt\n" +
                   $"Email,existing@example.com,true,v1,u1,{provider.UtcNow:O}\n" +
                   $"SMS,+1,true,v2,u2,{provider.UtcNow:O}\n";
@@ -218,7 +206,7 @@ public class AdminServiceTests
         var added = await service.ImportSubscribersCsvAsync(ms);
 
         Assert.Equal(1, added);
-        Assert.Single(db.Subscribers);
-        Assert.Single(db.SmsSubscribers);
+        Assert.Single(store.EmailSubscribers);
+        Assert.Single(store.SmsSubscribers);
     }
 }

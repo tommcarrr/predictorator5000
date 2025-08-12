@@ -1,6 +1,5 @@
 using Bunit;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MudBlazor.Services;
@@ -8,7 +7,6 @@ using MudBlazor;
 using Microsoft.AspNetCore.Components;
 using NSubstitute;
 using Predictorator.Components.Pages.Subscription;
-using Predictorator.Data;
 using Predictorator.Models;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
@@ -37,12 +35,8 @@ public class UnsubscribeComponentBUnitTests
         ctx.Services.AddSingleton<IConfiguration>(config);
         ctx.Services.AddSingleton<NotificationFeatureService>();
 
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        var db = new ApplicationDbContext(options);
-        ctx.Services.AddSingleton(db);
-        var store = new EfDataStore(db);
+        var store = new InMemoryDataStore();
+        ctx.Services.AddSingleton(store);
         var resend = Substitute.For<IResend>();
         var sms = Substitute.For<ITwilioSmsSender>();
         var time = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
@@ -61,9 +55,8 @@ public class UnsubscribeComponentBUnitTests
     public async Task Requires_confirmation_before_unsubscribing()
     {
         await using var ctx = CreateContext();
-        var db = ctx.Services.GetRequiredService<ApplicationDbContext>();
-        db.Subscribers.Add(new Subscriber { Email = "a", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
-        await db.SaveChangesAsync();
+        var store = ctx.Services.GetRequiredService<InMemoryDataStore>();
+        await store.AddEmailSubscriberAsync(new Subscriber { Email = "a", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
 
         var navMan = ctx.Services.GetRequiredService<NavigationManager>();
         var uri = navMan.GetUriWithQueryParameter("token", "u");
@@ -71,11 +64,11 @@ public class UnsubscribeComponentBUnitTests
         var cut = ctx.Render<Unsubscribe>();
 
         // Subscriber should still exist before confirmation
-        Assert.Single(db.Subscribers);
+        Assert.Single(store.EmailSubscribers);
         Assert.Contains("unsubscribe", cut.Markup, StringComparison.OrdinalIgnoreCase);
 
         cut.Find("button").Click();
 
-        cut.WaitForAssertion(() => Assert.Empty(db.Subscribers));
+        cut.WaitForAssertion(() => Assert.Empty(store.EmailSubscribers));
     }
 }
