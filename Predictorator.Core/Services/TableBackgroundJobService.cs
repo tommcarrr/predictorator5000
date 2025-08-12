@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Azure.Data.Tables;
 using Predictorator.Models;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Predictorator.Services;
 
@@ -25,6 +27,17 @@ public class TableBackgroundJobService : IBackgroundJobService
             RunAt = _time.UtcNow.Add(delay)
         };
         return _table.AddEntityAsync(job);
+    }
+
+    public Task<IReadOnlyList<BackgroundJob>> GetJobsAsync()
+    {
+        var jobs = _table.Query<BackgroundJob>().ToList();
+        return Task.FromResult<IReadOnlyList<BackgroundJob>>(jobs);
+    }
+
+    public Task DeleteAsync(string id)
+    {
+        return _table.DeleteEntityAsync("jobs", id);
     }
 }
 

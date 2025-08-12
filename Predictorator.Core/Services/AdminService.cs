@@ -326,6 +326,17 @@ public class AdminService
             delay);
     }
 
+    public async Task<List<BackgroundJob>> GetJobsAsync()
+    {
+        var jobs = await _jobs.GetJobsAsync();
+        return jobs.ToList();
+    }
+
+    public Task DeleteJobAsync(string id)
+    {
+        return _jobs.DeleteAsync(id);
+    }
+
     public Task ClearCachesAsync()
     {
         _prefix.Clear();

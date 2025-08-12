@@ -1,0 +1,44 @@
+@rendermode InteractiveServer
+@inject AdminService AdminService
+@inject ToastInterop Toast
+@using Predictorator.Models
+
+<h2>Queued Jobs</h2>
+@if (_jobs == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <MudTable Items="_jobs" Hover="true" Breakpoint="Breakpoint.None">
+        <HeaderContent>
+            <MudTh>Type</MudTh>
+            <MudTh>Run At (UTC)</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate Context="row">
+            <MudTd>@row.JobType</MudTd>
+            <MudTd>@row.RunAt.ToString("u")</MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" OnClick="@(() => DeleteAsync(row))">Delete</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<BackgroundJob>? _jobs;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var data = await AdminService.GetJobsAsync();
+        _jobs = data.ToList();
+    }
+
+    private async Task DeleteAsync(BackgroundJob job)
+    {
+        await AdminService.DeleteJobAsync(job.RowKey);
+        _jobs!.Remove(job);
+        await Toast.ShowToast("Job deleted!", "success");
+    }
+}
