@@ -9,6 +9,13 @@ services:
     volumes:
       - mssql-data:/var/opt/mssql
 
+  storage:
+    image: mcr.microsoft.com/azure-storage/azurite
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+
   web:
     build:
       context: .
@@ -32,6 +39,27 @@ services:
       - "8080:8080"
     volumes:
       - dp-keys:/var/dp-keys
+
+  functions:
+    build:
+      context: .
+      dockerfile: Predictorator.Functions/Dockerfile
+    environment:
+      AzureWebJobsStorage: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNoGFg77+VL6t2bSeHon90==;BlobEndpoint=http://storage:10000/devstoreaccount1;QueueEndpoint=http://storage:10001/devstoreaccount1;TableEndpoint=http://storage:10002/devstoreaccount1;
+      ConnectionStrings__DefaultConnection: Server=db;Database=Predictorator;User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=False
+      ApiSettings__RapidApiKey: ${RAPID_API_KEY}
+      Resend__ApiToken: ${RESEND_API_TOKEN}
+      Resend__From: ${RESEND_FROM}
+      Twilio__AccountSid: ${TWILIO_ACCOUNT_SID}
+      Twilio__AuthToken: ${TWILIO_AUTH_TOKEN}
+      Twilio__FromNumber: ${TWILIO_FROM_NUMBER}
+      BASE_URL: ${BASE_URL}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+    depends_on:
+      - db
+      - storage
+    ports:
+      - "7071:80"
 
 volumes:
   mssql-data:
