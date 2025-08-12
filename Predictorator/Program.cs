@@ -96,8 +96,12 @@ builder.Services.AddSingleton<EmailCssInliner>();
 builder.Services.AddSingleton<EmailTemplateRenderer>();
 builder.Services.AddSingleton<NotificationFeatureService>();
 builder.Services.AddSingleton<IBackgroundJobService, TableBackgroundJobService>();
-builder.Services.AddHostedService<BackgroundJobProcessor>();
-builder.Services.AddHostedService<RecurringJobProcessor>();
+var useFunctionJobs = builder.Configuration.GetValue<bool>("UseFunctionAppForJobs");
+if (!useFunctionJobs)
+{
+    builder.Services.AddHostedService<BackgroundJobProcessor>();
+    builder.Services.AddHostedService<RecurringJobProcessor>();
+}
 builder.Services.Configure<AdminUserOptions>(options =>
 {
     builder.Configuration.GetSection(AdminUserOptions.SectionName).Bind(options);

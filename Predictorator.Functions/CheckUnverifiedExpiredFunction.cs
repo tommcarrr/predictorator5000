@@ -17,7 +17,8 @@ public class CheckUnverifiedExpiredFunction
     }
 
     [Function("CheckUnverifiedExpired")]
-    public async Task Run([TimerTrigger("0 1 * * 1")] TimerInfo timer)
+    public async Task Run([TimerTrigger("%CheckUnverifiedExpiredSchedule%")]
+        TimerInfo timer)
     {
         var count = await _service.CountExpiredUnverifiedAsync();
         _logger.LogInformation("Expired unverified subscriptions: {Count}", count);

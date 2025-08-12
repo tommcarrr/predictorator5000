@@ -227,6 +227,33 @@ public class SubscriptionService
         return count;
     }
 
+    public async Task<int> ClearExpiredUnverifiedAsync()
+    {
+        var cutoff = _dateTime.UtcNow.AddHours(-1);
+        _logger.LogInformation("Removing expired subscriptions before {Cutoff}", cutoff);
+
+        var removed = 0;
+
+        var emails = await _store.GetEmailSubscribersAsync();
+        var expiredEmails = emails.Where(s => !s.IsVerified && s.CreatedAt < cutoff).ToList();
+        foreach (var e in expiredEmails)
+        {
+            await _store.RemoveEmailSubscriberAsync(e);
+            removed++;
+        }
+
+        var phones = await _store.GetSmsSubscribersAsync();
+        var expiredPhones = phones.Where(s => !s.IsVerified && s.CreatedAt < cutoff).ToList();
+        foreach (var p in expiredPhones)
+        {
+            await _store.RemoveSmsSubscriberAsync(p);
+            removed++;
+        }
+
+        _logger.LogInformation("Removed {Count} expired subscriptions", removed);
+        return removed;
+    }
+
     public async Task<bool> UnsubscribeByContactAsync(string contact)
     {
         if (string.IsNullOrWhiteSpace(contact))

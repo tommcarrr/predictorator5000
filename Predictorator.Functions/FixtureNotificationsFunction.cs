@@ -14,7 +14,8 @@ public class FixtureNotificationsFunction
     }
 
     [Function("FixtureNotifications")]
-    public async Task Run([TimerTrigger("0 1 * * *")] TimerInfo timer)
+    public async Task Run([TimerTrigger("%FixtureNotificationsSchedule%")]
+        TimerInfo timer)
     {
         await _service.CheckFixturesAsync();
     }

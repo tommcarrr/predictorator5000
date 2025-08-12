@@ -145,6 +145,38 @@ public class SubscriptionServiceTests
     }
 
     [Fact]
+    public async Task ClearExpiredUnverifiedAsync_removes_old_records()
+    {
+        var provider = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow };
+        var service = CreateService(out var store, out _, out _, provider);
+        await store.AddEmailSubscriberAsync(new Subscriber { Email = "old@example.com", CreatedAt = provider.UtcNow.AddHours(-2), VerificationToken = "a", UnsubscribeToken = "b" });
+        await store.AddSmsSubscriberAsync(new SmsSubscriber { PhoneNumber = "+1", CreatedAt = provider.UtcNow.AddHours(-3), VerificationToken = "c", UnsubscribeToken = "d" });
+
+        var count = await service.ClearExpiredUnverifiedAsync();
+
+        Assert.Equal(2, count);
+        Assert.Empty(store.EmailSubscribers);
+        Assert.Empty(store.SmsSubscribers);
+    }
+
+    [Fact]
+    public async Task ClearExpiredUnverifiedAsync_ignores_recent_or_verified()
+    {
+        var provider = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow };
+        var service = CreateService(out var store, out _, out _, provider);
+        var recent = new Subscriber { Email = "new@example.com", CreatedAt = provider.UtcNow.AddMinutes(-30), VerificationToken = "a", UnsubscribeToken = "b" };
+        var verified = new SmsSubscriber { PhoneNumber = "+1", CreatedAt = provider.UtcNow.AddHours(-2), IsVerified = true, VerificationToken = "c", UnsubscribeToken = "d" };
+        await store.AddEmailSubscriberAsync(recent);
+        await store.AddSmsSubscriberAsync(verified);
+
+        var count = await service.ClearExpiredUnverifiedAsync();
+
+        Assert.Equal(0, count);
+        Assert.Contains(recent, store.EmailSubscribers);
+        Assert.Contains(verified, store.SmsSubscribers);
+    }
+
+    [Fact]
     public async Task UnsubscribeByContactAsync_email_case_insensitive()
     {
         var service = CreateService(out var store, out _, out _);
