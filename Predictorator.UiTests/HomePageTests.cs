@@ -46,14 +46,7 @@ public class HomePageTests
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
 
-        var headers = new Dictionary<string, string>();
-        var token = Environment.GetEnvironmentVariable("UI_TEST_TOKEN");
-        if (!string.IsNullOrEmpty(token))
-        {
-            headers["X-Test-Token"] = token;
-        }
-
-        var context = await _browser.NewContextAsync(new() { ExtraHTTPHeaders = headers });
+        var context = await _browser.NewContextAsync();
         _page = await context.NewPageAsync();
         _page.SetDefaultTimeout(90000);
     }
@@ -78,22 +71,6 @@ public class HomePageTests
     }
 
     [Test]
-    public async Task Index_Should_Display_Fixture_Row_When_Using_Mock_Data()
-    {
-        await NavigateWithRetriesAsync(_page!, BaseUrl);
-        await _page!.Locator("[data-testid=fixture-row]").First.WaitForAsync(new() { State = WaitForSelectorState.Visible });
-        var rows = await _page!.QuerySelectorAllAsync("[data-testid=fixture-row]");
-        if (Environment.GetEnvironmentVariable("UI_TEST_TOKEN") != null)
-        {
-            Assert.IsNotEmpty(rows);
-        }
-        else
-        {
-            Assert.Pass("No test token provided; skipping row check.");
-        }
-    }
-
-    [Test]
     public async Task SubscribePage_Should_Display_Form()
     {
         await NavigateWithRetriesAsync(_page!, $"{BaseUrl}/Subscription/Subscribe");
@@ -112,33 +89,13 @@ public class HomePageTests
     }
 
     [Test]
-    public async Task FillRandomButton_Should_Populate_Scores_When_Using_Mock_Data()
-    {
-        await NavigateWithRetriesAsync(_page!, BaseUrl);
-        if (Environment.GetEnvironmentVariable("UI_TEST_TOKEN") == null)
-        {
-            Assert.Pass("No test token provided; skipping random score test.");
-        }
-
-        await _page!.Locator("#fillRandomBtn").ClickAsync();
-        var value = await _page!.Locator("[data-testid=score-input]").First.InputValueAsync();
-        Assert.IsNotEmpty(value);
-    }
-
-    [Test]
     public async Task WeekNavigationButtons_Should_Change_Url()
     {
         await NavigateWithRetriesAsync(_page!, BaseUrl);
-        if (Environment.GetEnvironmentVariable("UI_TEST_TOKEN") == null)
-        {
-            Assert.Pass("No test token provided; skipping week navigation test.");
-        }
-
         var initialUrl = _page!.Url;
         await _page.Locator("#nextWeekBtn").ClickAsync();
         await _page.WaitForURLAsync("**weekOffset=1**");
         StringAssert.Contains("weekOffset=1", _page.Url);
-
         await _page.Locator("#prevWeekBtn").ClickAsync();
         await _page.WaitForURLAsync(initialUrl);
         Assert.That(_page.Url, Is.EqualTo(initialUrl));

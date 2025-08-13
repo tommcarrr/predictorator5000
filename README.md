@@ -18,7 +18,7 @@ dotnet test Predictorator.sln
 
 Playwright UI tests are included but disabled by default. Set the
 `RUN_UI_TESTS` environment variable to `true` to enable them. Optionally
-set `BASE_URL` and `UI_TEST_TOKEN` to control the test host and authentication.
+set `BASE_URL` to control the test host.
 
 The seeded admin account credentials are configured via `AdminUser` settings.
 You can override these values by setting the `ADMIN_EMAIL` and

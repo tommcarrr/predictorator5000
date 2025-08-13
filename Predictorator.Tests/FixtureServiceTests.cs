@@ -1,7 +1,4 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Hybrid;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using Predictorator.Models.Fixtures;
@@ -24,11 +21,7 @@ public class FixtureServiceTests
         services.AddHybridCache();
         var cache = services.BuildServiceProvider().GetRequiredService<HybridCache>();
         var prefix = new CachePrefixService();
-        var accessor = Substitute.For<IHttpContextAccessor>();
-        var config = Substitute.For<IConfiguration>();
-        var env = Substitute.For<IHostEnvironment>();
-        env.ContentRootPath.Returns(Directory.GetCurrentDirectory());
-        var service = new FixtureService(httpClientFactory, cache, prefix, accessor, config, env);
+        var service = new FixtureService(httpClientFactory, cache, prefix);
 
         var result1 = await service.GetFixturesAsync(DateTime.Today, DateTime.Today);
         var result2 = await service.GetFixturesAsync(DateTime.Today, DateTime.Today);

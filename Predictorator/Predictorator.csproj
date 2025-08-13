@@ -11,9 +11,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Update="MockData/fixtures.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="..\.dockerignore">
       <Link>.dockerignore</Link>
     </Content>
