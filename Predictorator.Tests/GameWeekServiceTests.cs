@@ -156,7 +156,7 @@ public class GameWeekServiceTests
     }
 
     [Fact]
-    public async Task ImportCsvAsync_adds_and_updates()
+    public async Task ImportCsvAsync_adds_only_new_gameweeks()
     {
         var service = CreateService(out var inner, out var repo);
         var now = DateTime.UtcNow.Date;
@@ -172,6 +172,7 @@ public class GameWeekServiceTests
         Assert.Equal(1, added);
         Assert.Equal(2, inner.Items.Count);
         var gw1 = inner.Items.Single(g => g.Number == 1);
-        Assert.Equal(now.AddDays(1), gw1.StartDate);
+        Assert.Equal(now, gw1.StartDate);
+        Assert.Equal(now.AddDays(6), gw1.EndDate);
     }
 }

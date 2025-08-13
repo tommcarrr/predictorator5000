@@ -135,19 +135,21 @@ public class GameWeekService : IGameWeekService
             if (!DateTime.TryParse(parts[3], null, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var end)) continue;
 
             var existing = await _repo.GetGameWeekAsync(season, number);
-            if (existing == null)
+            if (existing != null)
             {
-                added++;
+                continue;
             }
+
             var gw = new GameWeek
             {
-                Id = existing?.Id ?? 0,
                 Season = season,
                 Number = number,
                 StartDate = start,
                 EndDate = end
             };
+
             await AddOrUpdateAsync(gw);
+            added++;
         }
         return added;
     }

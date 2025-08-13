@@ -92,16 +92,13 @@ public class FakeGameWeekService : IGameWeekService
             if (!DateTime.TryParse(parts[3], out var end)) continue;
 
             var existing = Items.FirstOrDefault(g => g.Season == season && g.Number == number);
-            if (existing == null)
+            if (existing != null)
             {
-                Items.Add(new GameWeek { Season = season, Number = number, StartDate = start, EndDate = end });
-                added++;
+                continue;
             }
-            else
-            {
-                existing.StartDate = start;
-                existing.EndDate = end;
-            }
+
+            Items.Add(new GameWeek { Season = season, Number = number, StartDate = start, EndDate = end });
+            added++;
         }
 
         return added;
