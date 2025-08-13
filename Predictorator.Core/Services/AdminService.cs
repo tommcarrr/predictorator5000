@@ -1,7 +1,6 @@
 using Predictorator.Core.Data;
 using Microsoft.Extensions.Logging;
 using Predictorator.Core.Models;
-using Resend;
 using System;
 using System.Linq;
 using System.IO;
@@ -34,43 +33,37 @@ public class AdminService
 {
     private readonly IEmailSubscriberRepository _emails;
     private readonly ISmsSubscriberRepository _smsSubscribers;
-    private readonly IResend _resend;
-    private readonly ITwilioSmsSender _sms;
     private readonly IConfiguration _config;
-    private readonly EmailCssInliner _inliner;
-    private readonly EmailTemplateRenderer _renderer;
     private readonly NotificationService _notifications;
     private readonly ILogger<AdminService> _logger;
     private readonly IBackgroundJobService _jobs;
     private readonly IDateTimeProvider _time;
     private readonly CachePrefixService _prefix;
+    private readonly INotificationSender<Subscriber> _emailSender;
+    private readonly INotificationSender<SmsSubscriber> _smsSender;
 
     public AdminService(
         IEmailSubscriberRepository emails,
         ISmsSubscriberRepository smsSubscribers,
-        IResend resend,
-        ITwilioSmsSender sms,
         IConfiguration config,
-        EmailCssInliner inliner,
-        EmailTemplateRenderer renderer,
         NotificationService notifications,
         ILogger<AdminService> logger,
         IBackgroundJobService jobs,
         IDateTimeProvider time,
-        CachePrefixService prefix)
+        CachePrefixService prefix,
+        INotificationSender<Subscriber> emailSender,
+        INotificationSender<SmsSubscriber> smsSender)
     {
         _emails = emails;
         _smsSubscribers = smsSubscribers;
-        _resend = resend;
-        _sms = sms;
         _config = config;
-        _inliner = inliner;
-        _renderer = renderer;
         _notifications = notifications;
         _logger = logger;
         _jobs = jobs;
         _time = time;
         _prefix = prefix;
+        _emailSender = emailSender;
+        _smsSender = smsSender;
     }
 
     public async Task<List<AdminSubscriberDto>> GetSubscribersAsync()
@@ -263,21 +256,17 @@ public class AdminService
                 var sub = await _emails.GetEmailSubscriberByIdAsync(s.Id);
                 if (sub != null)
                 {
-                    var html = _renderer.Render("This is a test notification.", baseUrl, sub.UnsubscribeToken, "VIEW FIXTURES", baseUrl, preheader: "This is a test notification.");
-                    var message = new EmailMessage
-                    {
-                        From = _config["Resend:From"] ?? "Predictorator <noreply@example.com>",
-                        Subject = "Test Notification",
-                        HtmlBody = _inliner.InlineCss(html)
-                    };
-                    message.To.Add(s.Contact);
-                    await _resend.EmailSendAsync(message);
+                    await _emailSender.SendAsync("This is a test notification.", baseUrl, sub);
                 }
             }
             else
             {
                 _logger.LogInformation("Sending test SMS to {Phone}", s.Contact);
-                await _sms.SendSmsAsync(s.Contact, "Test notification");
+                var sub = await _smsSubscribers.GetSmsSubscriberByIdAsync(s.Id);
+                if (sub != null)
+                {
+                    await _smsSender.SendAsync("Test notification", baseUrl, sub);
+                }
             }
         }
     }

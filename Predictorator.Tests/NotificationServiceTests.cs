@@ -4,7 +4,6 @@ using Predictorator.Core.Models;
 using Predictorator.Core.Models.Fixtures;
 using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
-using Resend;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Predictorator.Tests;
@@ -13,12 +12,12 @@ public class NotificationServiceTests
 {
     private static NotificationService CreateService(DateTime nowUtc, DateTime fixtureTimeUtc,
         out InMemoryDataStore store, out IBackgroundJobService jobs,
-        out IResend resend, out ITwilioSmsSender sms)
+        out INotificationSender<Subscriber> emailSender, out INotificationSender<SmsSubscriber> smsSender)
     {
         store = new InMemoryDataStore();
         jobs = Substitute.For<IBackgroundJobService>();
-        resend = Substitute.For<IResend>();
-        sms = Substitute.For<ITwilioSmsSender>();
+        emailSender = Substitute.For<INotificationSender<Subscriber>>();
+        smsSender = Substitute.For<INotificationSender<SmsSubscriber>>();
 
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -52,8 +51,9 @@ public class NotificationServiceTests
         var renderer = new EmailTemplateRenderer();
         var gameWeeks = new FakeGameWeekService();
         gameWeeks.Items.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = nowUtc.Date, EndDate = nowUtc.Date.AddDays(6) });
-        var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<NotificationService>.Instance;
-        return new NotificationService(store, store, store, resend, sms, config, fixtures, gameWeeks, calculator, features, provider, jobs, inliner, renderer, logger);
+        var logger = NullLogger<NotificationService>.Instance;
+        // senders are substitutes so renderer/inliner unused but kept for completeness
+        return new NotificationService(store, store, store, config, fixtures, gameWeeks, calculator, features, provider, jobs, emailSender, smsSender, logger);
     }
 
     [Fact]
@@ -90,14 +90,14 @@ public class NotificationServiceTests
     public async Task SendNewFixturesAvailableAsync_sends_and_records()
     {
         var now = DateTime.UtcNow;
-        var service = CreateService(now, now.AddDays(1), out var store, out _, out var resend, out var sms);
+        var service = CreateService(now, now.AddDays(1), out var store, out _, out var emailSender, out var smsSender);
         store.EmailSubscribers.Add(new Subscriber { Email = "u@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = now });
         store.SmsSubscribers.Add(new SmsSubscriber { PhoneNumber = "+1", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = now });
 
         await service.SendNewFixturesAvailableAsync("key", "http://localhost");
 
-        await resend.Received().EmailSendAsync(Arg.Is<EmailMessage>(m => m.HtmlBody != null && m.HtmlBody.Contains("Unsubscribe") && m.HtmlBody.Contains("style=")));
-        await sms.Received().SendSmsAsync("+1", Arg.Is<string>(msg => msg.Contains("Unsubscribe:")));
+        await emailSender.Received().SendAsync("Fixtures start today!", "http://localhost", Arg.Any<Subscriber>());
+        await smsSender.Received().SendAsync("Fixtures start today!", "http://localhost", Arg.Any<SmsSubscriber>());
         Assert.Single(store.SentNotifications);
     }
 }

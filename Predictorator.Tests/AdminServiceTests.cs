@@ -2,7 +2,6 @@ using Microsoft.Extensions.Configuration;
 using NSubstitute;
 using Predictorator.Core.Models;
 using Predictorator.Core.Services;
-using Resend;
 using Predictorator.Tests.Helpers;
 using Predictorator.Core.Models.Fixtures;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -14,11 +13,11 @@ namespace Predictorator.Tests;
 
 public class AdminServiceTests
 {
-    private static AdminService CreateService(out InMemoryDataStore store, out IResend resend, out ITwilioSmsSender sms, out IBackgroundJobService jobs, out FakeDateTimeProvider provider)
+    private static AdminService CreateService(out InMemoryDataStore store, out INotificationSender<Subscriber> emailSender, out INotificationSender<SmsSubscriber> smsSender, out IBackgroundJobService jobs, out FakeDateTimeProvider provider)
     {
         store = new InMemoryDataStore();
-        resend = Substitute.For<IResend>();
-        sms = Substitute.For<ITwilioSmsSender>();
+        emailSender = Substitute.For<INotificationSender<Subscriber>>();
+        smsSender = Substitute.For<INotificationSender<SmsSubscriber>>();
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -26,8 +25,6 @@ public class AdminServiceTests
                 ["BASE_URL"] = "http://localhost"
             })
             .Build();
-        var inliner = new EmailCssInliner();
-        var renderer = new EmailTemplateRenderer();
         provider = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow };
         var fixtures = new FakeFixtureService(new FixturesResponse());
         var range = new DateRangeCalculator(provider);
@@ -36,10 +33,10 @@ public class AdminServiceTests
         var nLogger = NullLogger<NotificationService>.Instance;
         var gameWeeks = new FakeGameWeekService();
         gameWeeks.Items.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = provider.UtcNow.Date, EndDate = provider.UtcNow.Date.AddDays(6) });
-        var notifications = new NotificationService(store, store, store, resend, sms, config, fixtures, gameWeeks, range, features, provider, jobs, inliner, renderer, nLogger);
+        var notifications = new NotificationService(store, store, store, config, fixtures, gameWeeks, range, features, provider, jobs, emailSender, smsSender, nLogger);
         var aLogger = NullLogger<AdminService>.Instance;
         var prefix = new CachePrefixService();
-        return new AdminService(store, store, resend, sms, config, inliner, renderer, notifications, aLogger, jobs, provider, prefix);
+        return new AdminService(store, store, config, notifications, aLogger, jobs, provider, prefix, emailSender, smsSender);
     }
 
     [Fact]
@@ -95,7 +92,7 @@ public class AdminServiceTests
     [Fact]
     public async Task SendNewFixturesSampleAsync_sends_email_and_sms()
     {
-        var service = CreateService(out var store, out var resend, out var sms, out _, out _);
+        var service = CreateService(out var store, out var emailSender, out var smsSender, out _, out _);
         store.EmailSubscribers.Add(new Subscriber { Id = 1, Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
         store.SmsSubscribers.Add(new SmsSubscriber { Id = 2, PhoneNumber = "+1", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
         var recipients = new List<AdminSubscriberDto>
@@ -106,14 +103,14 @@ public class AdminServiceTests
 
         await service.SendNewFixturesSampleAsync(recipients);
 
-        await resend.Received().EmailSendAsync(Arg.Is<EmailMessage>(m => m.HtmlBody != null && m.HtmlBody.Contains("style=")));
-        await sms.Received().SendSmsAsync("+1", Arg.Any<string>());
+        await emailSender.Received().SendAsync("Fixtures start today!", Arg.Any<string>(), Arg.Any<Subscriber>());
+        await smsSender.Received().SendAsync("Fixtures start today!", Arg.Any<string>(), Arg.Any<SmsSubscriber>());
     }
 
     [Fact]
     public async Task SendFixturesStartingSoonSampleAsync_sends_email_and_sms()
     {
-        var service = CreateService(out var store, out var resend, out var sms, out _, out _);
+        var service = CreateService(out var store, out var emailSender, out var smsSender, out _, out _);
         store.EmailSubscribers.Add(new Subscriber { Id = 1, Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
         store.SmsSubscribers.Add(new SmsSubscriber { Id = 2, PhoneNumber = "+1", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
         var recipients = new List<AdminSubscriberDto>
@@ -124,8 +121,8 @@ public class AdminServiceTests
 
         await service.SendFixturesStartingSoonSampleAsync(recipients);
 
-        await resend.Received().EmailSendAsync(Arg.Is<EmailMessage>(m => m.HtmlBody != null && m.HtmlBody.Contains("style=")));
-        await sms.Received().SendSmsAsync("+1", Arg.Any<string>());
+        await emailSender.Received().SendAsync("Fixtures start in 2 hours!", Arg.Any<string>(), Arg.Any<Subscriber>());
+        await smsSender.Received().SendAsync("Fixtures start in 2 hours!", Arg.Any<string>(), Arg.Any<SmsSubscriber>());
     }
 
     [Fact]
