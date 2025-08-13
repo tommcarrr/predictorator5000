@@ -32,10 +32,16 @@ public class WebAppDiResolutionTests : IClassFixture<WebApplicationFactory<Progr
             builder.ConfigureServices(services =>
             {
                 services.RemoveAll<IHostedService>();
-                services.RemoveAll<IDataStore>();
+                services.RemoveAll<IEmailSubscriberRepository>();
+                services.RemoveAll<ISmsSubscriberRepository>();
+                services.RemoveAll<ISentNotificationRepository>();
+                services.RemoveAll<TableDataStore>();
                 services.RemoveAll<IGameWeekRepository>();
                 services.RemoveAll<IBackgroundJobService>();
-                services.AddSingleton<IDataStore, InMemoryDataStore>();
+                var store = new InMemoryDataStore();
+                services.AddSingleton<IEmailSubscriberRepository>(store);
+                services.AddSingleton<ISmsSubscriberRepository>(store);
+                services.AddSingleton<ISentNotificationRepository>(store);
                 services.AddSingleton<IGameWeekRepository, InMemoryGameWeekRepository>();
                 services.AddSingleton<IBackgroundJobService>(_ => Substitute.For<IBackgroundJobService>());
                 descriptors = services;

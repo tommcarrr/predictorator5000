@@ -53,7 +53,7 @@ public class NotificationServiceTests
         var gameWeeks = new FakeGameWeekService();
         gameWeeks.Items.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = nowUtc.Date, EndDate = nowUtc.Date.AddDays(6) });
         var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<NotificationService>.Instance;
-        return new NotificationService(store, resend, sms, config, fixtures, gameWeeks, calculator, features, provider, jobs, inliner, renderer, logger);
+        return new NotificationService(store, store, store, resend, sms, config, fixtures, gameWeeks, calculator, features, provider, jobs, inliner, renderer, logger);
     }
 
     [Fact]

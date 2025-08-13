@@ -3,7 +3,7 @@ using Predictorator.Core.Models;
 
 namespace Predictorator.Tests.Helpers;
 
-public class InMemoryDataStore : IDataStore
+public class InMemoryDataStore : IEmailSubscriberRepository, ISmsSubscriberRepository, ISentNotificationRepository
 {
     public List<Subscriber> EmailSubscribers { get; } = new();
     public List<SmsSubscriber> SmsSubscribers { get; } = new();

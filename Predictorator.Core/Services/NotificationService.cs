@@ -9,7 +9,9 @@ namespace Predictorator.Core.Services;
 public class NotificationService
 {
     private static readonly TimeZoneInfo UkTimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
-    private readonly IDataStore _store;
+    private readonly IEmailSubscriberRepository _emails;
+    private readonly ISmsSubscriberRepository _smsSubscribers;
+    private readonly ISentNotificationRepository _sentNotifications;
     private readonly IResend _resend;
     private readonly ITwilioSmsSender _sms;
     private readonly IConfiguration _config;
@@ -24,7 +26,9 @@ public class NotificationService
     private readonly ILogger<NotificationService> _logger;
 
     public NotificationService(
-        IDataStore store,
+        IEmailSubscriberRepository emails,
+        ISmsSubscriberRepository smsSubscribers,
+        ISentNotificationRepository sentNotifications,
         IResend resend,
         ITwilioSmsSender sms,
         IConfiguration config,
@@ -38,7 +42,9 @@ public class NotificationService
         EmailTemplateRenderer renderer,
         ILogger<NotificationService> logger)
     {
-        _store = store;
+        _emails = emails;
+        _smsSubscribers = smsSubscribers;
+        _sentNotifications = sentNotifications;
         _resend = resend;
         _sms = sms;
         _config = config;
@@ -86,7 +92,7 @@ public class NotificationService
         if (future != null)
         {
             var key = future.Fixture.Date.Date.ToString("yyyy-MM-dd");
-            var sent = await _store.SentNotificationExistsAsync("NewFixtures", key);
+            var sent = await _sentNotifications.SentNotificationExistsAsync("NewFixtures", key);
             if (!sent)
             {
                 var futureUk = TimeZoneInfo.ConvertTime(future.Fixture.Date, UkTimeZone);
@@ -109,7 +115,7 @@ public class NotificationService
         if (firstUk.Date == nowUk.Date)
         {
             var key = first.Fixture.Date.ToString("O");
-            var sent = await _store.SentNotificationExistsAsync("FixturesStartingSoon", key);
+            var sent = await _sentNotifications.SentNotificationExistsAsync("FixturesStartingSoon", key);
             if (!sent)
             {
                 var sendTimeUtc = first.Fixture.Date.AddHours(-2);
@@ -170,14 +176,14 @@ public class NotificationService
         {
             if (r.Type == "Email")
             {
-                var sub = await _store.GetEmailSubscriberByIdAsync(r.Id);
+                var sub = await _emails.GetEmailSubscriberByIdAsync(r.Id);
                 if (sub != null)
                     await SendNotificationAsync(message, baseUrl, sub);
             }
             else
             {
                 _logger.LogInformation("Fetching SMS subscriber {Id} for sample", r.Id);
-                var sub = await _store.GetSmsSubscriberByIdAsync(r.Id);
+                var sub = await _smsSubscribers.GetSmsSubscriberByIdAsync(r.Id);
                 if (sub != null)
                 {
                     _logger.LogInformation("Sending sample SMS to {Phone}", sub.PhoneNumber);
@@ -191,17 +197,17 @@ public class NotificationService
 
     private async Task SendToAllAsync(string message, string baseUrl, string type, string key)
     {
-        var emails = await _store.GetVerifiedEmailSubscribersAsync();
+        var emails = await _emails.GetVerifiedEmailSubscribersAsync();
         var emailTasks = emails.Select(sub => SendNotificationAsync(message, baseUrl, sub));
 
         _logger.LogInformation("Retrieving all verified SMS subscribers");
-        var phones = await _store.GetVerifiedSmsSubscribersAsync();
+        var phones = await _smsSubscribers.GetVerifiedSmsSubscribersAsync();
         _logger.LogInformation("Sending notification to {Count} SMS subscribers", phones.Count);
         var smsTasks = phones.Select(sub => SendNotificationAsync(message, baseUrl, sub));
 
         await Task.WhenAll(emailTasks.Concat(smsTasks));
 
-        await _store.AddSentNotificationAsync(new SentNotification
+        await _sentNotifications.AddSentNotificationAsync(new SentNotification
         {
             Type = type,
             Key = key,

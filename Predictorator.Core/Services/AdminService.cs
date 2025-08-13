@@ -32,7 +32,8 @@ public class AdminSubscriberDto
 
 public class AdminService
 {
-    private readonly IDataStore _store;
+    private readonly IEmailSubscriberRepository _emails;
+    private readonly ISmsSubscriberRepository _smsSubscribers;
     private readonly IResend _resend;
     private readonly ITwilioSmsSender _sms;
     private readonly IConfiguration _config;
@@ -45,7 +46,8 @@ public class AdminService
     private readonly CachePrefixService _prefix;
 
     public AdminService(
-        IDataStore store,
+        IEmailSubscriberRepository emails,
+        ISmsSubscriberRepository smsSubscribers,
         IResend resend,
         ITwilioSmsSender sms,
         IConfiguration config,
@@ -57,7 +59,8 @@ public class AdminService
         IDateTimeProvider time,
         CachePrefixService prefix)
     {
-        _store = store;
+        _emails = emails;
+        _smsSubscribers = smsSubscribers;
         _resend = resend;
         _sms = sms;
         _config = config;
@@ -73,10 +76,10 @@ public class AdminService
     public async Task<List<AdminSubscriberDto>> GetSubscribersAsync()
     {
         _logger.LogInformation("Fetching SMS subscribers");
-        var emails = (await _store.GetEmailSubscribersAsync())
+        var emails = (await _emails.GetEmailSubscribersAsync())
             .Select(s => new AdminSubscriberDto(s.Id, s.Email, s.IsVerified, "Email"))
             .ToList();
-        var phones = (await _store.GetSmsSubscribersAsync())
+        var phones = (await _smsSubscribers.GetSmsSubscribersAsync())
             .Select(s => new AdminSubscriberDto(s.Id, s.PhoneNumber, s.IsVerified, "SMS"))
             .ToList();
         _logger.LogInformation("Fetched {Count} SMS subscribers", phones.Count);
@@ -87,21 +90,21 @@ public class AdminService
     {
         if (type == "Email")
         {
-            var entity = await _store.GetEmailSubscriberByIdAsync(id);
+            var entity = await _emails.GetEmailSubscriberByIdAsync(id);
             if (entity != null)
             {
                 entity.IsVerified = true;
-                await _store.UpdateEmailSubscriberAsync(entity);
+                await _emails.UpdateEmailSubscriberAsync(entity);
             }
         }
         else
         {
             _logger.LogInformation("Confirming SMS subscriber {Id}", id);
-            var entity = await _store.GetSmsSubscriberByIdAsync(id);
+            var entity = await _smsSubscribers.GetSmsSubscriberByIdAsync(id);
             if (entity != null)
             {
                 entity.IsVerified = true;
-                await _store.UpdateSmsSubscriberAsync(entity);
+                await _smsSubscribers.UpdateSmsSubscriberAsync(entity);
             }
         }
     }
@@ -110,14 +113,14 @@ public class AdminService
     {
         if (type == "Email")
         {
-            var entity = await _store.GetEmailSubscriberByIdAsync(id);
-            if (entity != null) await _store.RemoveEmailSubscriberAsync(entity);
+            var entity = await _emails.GetEmailSubscriberByIdAsync(id);
+            if (entity != null) await _emails.RemoveEmailSubscriberAsync(entity);
         }
         else
         {
             _logger.LogInformation("Deleting SMS subscriber {Id}", id);
-            var entity = await _store.GetSmsSubscriberByIdAsync(id);
-            if (entity != null) await _store.RemoveSmsSubscriberAsync(entity);
+            var entity = await _smsSubscribers.GetSmsSubscriberByIdAsync(id);
+            if (entity != null) await _smsSubscribers.RemoveSmsSubscriberAsync(entity);
         }
     }
 
@@ -125,7 +128,7 @@ public class AdminService
     {
         if (type == "Email")
         {
-            if (await _store.EmailSubscriberExistsAsync(contact))
+            if (await _emails.EmailSubscriberExistsAsync(contact))
                 return null;
             var sub = new Subscriber
             {
@@ -135,12 +138,12 @@ public class AdminService
                 UnsubscribeToken = Guid.NewGuid().ToString("N"),
                 CreatedAt = _time.UtcNow
             };
-            await _store.AddEmailSubscriberAsync(sub);
+            await _emails.AddEmailSubscriberAsync(sub);
             return new AdminSubscriberDto(sub.Id, sub.Email, sub.IsVerified, "Email");
         }
         else
         {
-            if (await _store.SmsSubscriberExistsAsync(contact))
+            if (await _smsSubscribers.SmsSubscriberExistsAsync(contact))
                 return null;
             var sub = new SmsSubscriber
             {
@@ -150,7 +153,7 @@ public class AdminService
                 UnsubscribeToken = Guid.NewGuid().ToString("N"),
                 CreatedAt = _time.UtcNow
             };
-            await _store.AddSmsSubscriberAsync(sub);
+            await _smsSubscribers.AddSmsSubscriberAsync(sub);
             return new AdminSubscriberDto(sub.Id, sub.PhoneNumber, sub.IsVerified, "SMS");
         }
     }
@@ -159,7 +162,7 @@ public class AdminService
     {
         var sb = new StringBuilder();
         sb.AppendLine("Type,Contact,IsVerified,VerificationToken,UnsubscribeToken,CreatedAt");
-        var emails = await _store.GetEmailSubscribersAsync();
+        var emails = await _emails.GetEmailSubscribersAsync();
         foreach (var e in emails)
         {
             sb.AppendLine(string.Join(',', new[]
@@ -173,7 +176,7 @@ public class AdminService
             }));
         }
 
-        var phones = await _store.GetSmsSubscribersAsync();
+        var phones = await _smsSubscribers.GetSmsSubscribersAsync();
         foreach (var p in phones)
         {
             sb.AppendLine(string.Join(',', new[]
@@ -219,7 +222,7 @@ public class AdminService
 
             if (type == "Email")
             {
-                if (await _store.EmailSubscriberExistsAsync(contact)) continue;
+                if (await _emails.EmailSubscriberExistsAsync(contact)) continue;
                 var sub = new Subscriber
                 {
                     Email = contact,
@@ -228,12 +231,12 @@ public class AdminService
                     UnsubscribeToken = unsubscribe,
                     CreatedAt = created
                 };
-                await _store.AddEmailSubscriberAsync(sub);
+                await _emails.AddEmailSubscriberAsync(sub);
                 added++;
             }
             else if (type == "SMS")
             {
-                if (await _store.SmsSubscriberExistsAsync(contact)) continue;
+                if (await _smsSubscribers.SmsSubscriberExistsAsync(contact)) continue;
                 var sub = new SmsSubscriber
                 {
                     PhoneNumber = contact,
@@ -242,7 +245,7 @@ public class AdminService
                     UnsubscribeToken = unsubscribe,
                     CreatedAt = created
                 };
-                await _store.AddSmsSubscriberAsync(sub);
+                await _smsSubscribers.AddSmsSubscriberAsync(sub);
                 added++;
             }
         }
@@ -257,7 +260,7 @@ public class AdminService
         {
             if (s.Type == "Email")
             {
-                var sub = await _store.GetEmailSubscriberByIdAsync(s.Id);
+                var sub = await _emails.GetEmailSubscriberByIdAsync(s.Id);
                 if (sub != null)
                 {
                     var html = _renderer.Render("This is a test notification.", baseUrl, sub.UnsubscribeToken, "VIEW FIXTURES", baseUrl, preheader: "This is a test notification.");

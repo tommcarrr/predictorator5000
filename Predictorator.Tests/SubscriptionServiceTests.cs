@@ -23,7 +23,7 @@ public class SubscriptionServiceTests
         var inliner = new EmailCssInliner();
         var renderer = new EmailTemplateRenderer();
         var logger = NullLogger<SubscriptionService>.Instance;
-        return new SubscriptionService(store, resend, config, sms, provider, inliner, renderer, logger);
+        return new SubscriptionService(store, store, resend, config, sms, provider, inliner, renderer, logger);
     }
 
     [Fact]

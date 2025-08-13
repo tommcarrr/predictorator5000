@@ -9,7 +9,8 @@ namespace Predictorator.Core.Services;
 
 public class SubscriptionService
 {
-    private readonly IDataStore _store;
+    private readonly IEmailSubscriberRepository _emails;
+    private readonly ISmsSubscriberRepository _smsSubscribers;
     private readonly IResend _resend;
     private readonly IConfiguration _config;
     private readonly ITwilioSmsSender _smsSender;
@@ -37,14 +38,14 @@ public class SubscriptionService
     private async Task<bool> VerifyEmailSubscriberAsync(string token)
     {
         _logger.LogInformation("Checking email subscriber with verification token {Token}", token);
-        var sub = await _store.GetEmailSubscriberByVerificationTokenAsync(token);
+        var sub = await _emails.GetEmailSubscriberByVerificationTokenAsync(token);
         if (sub == null)
         {
             _logger.LogInformation("Email subscriber with token {Token} not found", token);
             return false;
         }
         sub.IsVerified = true;
-        await _store.UpdateEmailSubscriberAsync(sub);
+        await _emails.UpdateEmailSubscriberAsync(sub);
         await SendAdminEmailAsync("Subscription confirmed", $"{sub.Email} confirmed their subscription.");
         return true;
     }
@@ -52,34 +53,34 @@ public class SubscriptionService
     private async Task<bool> VerifySmsSubscriberAsync(string token)
     {
         _logger.LogInformation("Checking SMS subscriber with verification token {Token}", token);
-        var sub = await _store.GetSmsSubscriberByVerificationTokenAsync(token);
+        var sub = await _smsSubscribers.GetSmsSubscriberByVerificationTokenAsync(token);
         if (sub == null)
         {
             _logger.LogInformation("SMS subscriber with token {Token} not found", token);
             return false;
         }
         sub.IsVerified = true;
-        await _store.UpdateSmsSubscriberAsync(sub);
+        await _smsSubscribers.UpdateSmsSubscriberAsync(sub);
         await SendAdminEmailAsync("Subscription confirmed", $"{sub.PhoneNumber} confirmed their subscription.");
         return true;
     }
 
     private Task<int> CountExpiredEmailSubscribersAsync(DateTime cutoff) =>
-        _store.CountExpiredEmailSubscribersAsync(cutoff);
+        _emails.CountExpiredEmailSubscribersAsync(cutoff);
 
     private Task<int> CountExpiredSmsSubscribersAsync(DateTime cutoff) =>
-        _store.CountExpiredSmsSubscribersAsync(cutoff);
+        _smsSubscribers.CountExpiredSmsSubscribersAsync(cutoff);
 
     private async Task<bool> UnsubscribeEmailSubscriberAsync(string token)
     {
         _logger.LogInformation("Attempting unsubscribe for email subscriber with token {Token}", token);
-        var sub = await _store.GetEmailSubscriberByUnsubscribeTokenAsync(token);
+        var sub = await _emails.GetEmailSubscriberByUnsubscribeTokenAsync(token);
         if (sub == null)
         {
             _logger.LogInformation("Email subscriber with token {Token} not found", token);
             return false;
         }
-        await _store.RemoveEmailSubscriberAsync(sub);
+        await _emails.RemoveEmailSubscriberAsync(sub);
         _logger.LogInformation("Email subscriber with token {Token} removed", token);
         return true;
     }
@@ -87,18 +88,19 @@ public class SubscriptionService
     private async Task<bool> UnsubscribeSmsSubscriberAsync(string token)
     {
         _logger.LogInformation("Attempting unsubscribe for SMS subscriber with token {Token}", token);
-        var sub = await _store.GetSmsSubscriberByUnsubscribeTokenAsync(token);
+        var sub = await _smsSubscribers.GetSmsSubscriberByUnsubscribeTokenAsync(token);
         if (sub == null)
         {
             _logger.LogInformation("SMS subscriber with token {Token} not found", token);
             return false;
         }
-        await _store.RemoveSmsSubscriberAsync(sub);
+        await _smsSubscribers.RemoveSmsSubscriberAsync(sub);
         _logger.LogInformation("SMS subscriber with token {Token} removed", token);
         return true;
     }
     public SubscriptionService(
-        IDataStore store,
+        IEmailSubscriberRepository emails,
+        ISmsSubscriberRepository smsSubscribers,
         IResend resend,
         IConfiguration config,
         ITwilioSmsSender smsSender,
@@ -107,7 +109,8 @@ public class SubscriptionService
         EmailTemplateRenderer renderer,
         ILogger<SubscriptionService> logger)
     {
-        _store = store;
+        _emails = emails;
+        _smsSubscribers = smsSubscribers;
         _resend = resend;
         _config = config;
         _smsSender = smsSender;
@@ -138,7 +141,7 @@ public class SubscriptionService
     }
     public async Task AddEmailSubscriberAsync(string email, string baseUrl)
     {
-        if (await _store.EmailSubscriberExistsAsync(email))
+        if (await _emails.EmailSubscriberExistsAsync(email))
             return;
 
         var subscriber = new Subscriber
@@ -149,7 +152,7 @@ public class SubscriptionService
             UnsubscribeToken = Guid.NewGuid().ToString("N"),
             CreatedAt = _dateTime.UtcNow
         };
-        await _store.AddEmailSubscriberAsync(subscriber);
+        await _emails.AddEmailSubscriberAsync(subscriber);
 
         await SendAdminEmailAsync("New subscriber", $"Email subscriber {email} added.");
 
@@ -171,7 +174,7 @@ public class SubscriptionService
     {
         _logger.LogInformation("Attempting to add SMS subscriber {PhoneNumber}", phoneNumber);
 
-        if (await _store.SmsSubscriberExistsAsync(phoneNumber))
+        if (await _smsSubscribers.SmsSubscriberExistsAsync(phoneNumber))
         {
             _logger.LogInformation("SMS subscriber {PhoneNumber} already exists", phoneNumber);
             return;
@@ -185,7 +188,7 @@ public class SubscriptionService
             UnsubscribeToken = Guid.NewGuid().ToString("N"),
             CreatedAt = _dateTime.UtcNow
         };
-        await _store.AddSmsSubscriberAsync(subscriber);
+        await _smsSubscribers.AddSmsSubscriberAsync(subscriber);
         _logger.LogInformation("SMS subscriber {PhoneNumber} stored with id {Id}", phoneNumber, subscriber.Id);
 
         await SendAdminEmailAsync("New subscriber", $"SMS subscriber {phoneNumber} added.");
@@ -234,19 +237,19 @@ public class SubscriptionService
 
         var removed = 0;
 
-        var emails = await _store.GetEmailSubscribersAsync();
+        var emails = await _emails.GetEmailSubscribersAsync();
         var expiredEmails = emails.Where(s => !s.IsVerified && s.CreatedAt < cutoff).ToList();
         foreach (var e in expiredEmails)
         {
-            await _store.RemoveEmailSubscriberAsync(e);
+            await _emails.RemoveEmailSubscriberAsync(e);
             removed++;
         }
 
-        var phones = await _store.GetSmsSubscribersAsync();
+        var phones = await _smsSubscribers.GetSmsSubscribersAsync();
         var expiredPhones = phones.Where(s => !s.IsVerified && s.CreatedAt < cutoff).ToList();
         foreach (var p in expiredPhones)
         {
-            await _store.RemoveSmsSubscriberAsync(p);
+            await _smsSubscribers.RemoveSmsSubscriberAsync(p);
             removed++;
         }
 
@@ -262,24 +265,24 @@ public class SubscriptionService
         if (contact.Contains('@'))
         {
             var normalized = contact.Trim().ToLowerInvariant();
-            var subscriber = await _store.GetEmailSubscriberByEmailAsync(normalized);
+            var subscriber = await _emails.GetEmailSubscriberByEmailAsync(normalized);
             if (subscriber == null)
                 return false;
-            await _store.RemoveEmailSubscriberAsync(subscriber);
+            await _emails.RemoveEmailSubscriberAsync(subscriber);
             return true;
         }
         else
         {
             var normalized = NormalizePhone(contact);
             _logger.LogInformation("Attempting unsubscribe by phone {Phone}", contact);
-            var subs = await _store.GetSmsSubscribersAsync();
+            var subs = await _smsSubscribers.GetSmsSubscribersAsync();
             var subscriber = subs.FirstOrDefault(s => NormalizePhone(s.PhoneNumber) == normalized);
             if (subscriber == null)
             {
                 _logger.LogInformation("SMS subscriber {Phone} not found", contact);
                 return false;
             }
-            await _store.RemoveSmsSubscriberAsync(subscriber);
+            await _smsSubscribers.RemoveSmsSubscriberAsync(subscriber);
             _logger.LogInformation("SMS subscriber {Phone} removed", contact);
             return true;
         }

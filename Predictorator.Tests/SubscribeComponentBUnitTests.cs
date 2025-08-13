@@ -40,7 +40,7 @@ public class SubscribeComponentBUnitTests
         var inliner = new EmailCssInliner();
         var renderer = new EmailTemplateRenderer();
         var logger = NullLogger<SubscriptionService>.Instance;
-        ctx.Services.AddSingleton(new SubscriptionService(store, resend, config, sms, time, inliner, renderer, logger));
+        ctx.Services.AddSingleton(new SubscriptionService(store, store, resend, config, sms, time, inliner, renderer, logger));
         return ctx;
     }
 
