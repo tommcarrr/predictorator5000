@@ -41,17 +41,17 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
         });
     }
 
-    [Fact(Skip="Requires table storage connection")]
+    [Fact(Skip = "Requires table storage connection")]
     public async Task Returns_429_after_limit_exceeded()
     {
         var client = _factory.CreateClient();
         var first = await client.GetAsync("/");
-        var second = await client.GetAsync("/other");
+        var second = await client.GetAsync("/");
 
         Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
     }
 
-    [Fact(Skip="Requires table storage connection")]
+    [Fact(Skip = "Requires table storage connection")]
     public async Task Excluded_ip_is_not_rate_limited()
     {
         var factory = _factory.WithWebHostBuilder(builder =>
@@ -65,12 +65,12 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
 
         var client = factory.CreateClient();
         var first = await client.GetAsync("/");
-        var second = await client.GetAsync("/about");
+        var second = await client.GetAsync("/");
 
         Assert.NotEqual(HttpStatusCode.TooManyRequests, second.StatusCode);
     }
 
-    [Fact(Skip="Requires table storage connection")]
+    [Fact(Skip = "Requires table storage connection")]
     public async Task Excluded_forwarded_ip_is_not_rate_limited()
     {
         var factory = _factory.WithWebHostBuilder(builder =>
@@ -85,7 +85,7 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
         var client = factory.CreateClient();
         client.DefaultRequestHeaders.Add("X-Forwarded-For", "1.2.3.4");
         var first = await client.GetAsync("/");
-        var second = await client.GetAsync("/other");
+        var second = await client.GetAsync("/");
 
         Assert.NotEqual(HttpStatusCode.TooManyRequests, second.StatusCode);
     }

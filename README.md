@@ -35,10 +35,9 @@ List any email addresses that should receive extra text in prediction emails und
 `PredictionEmail:SpecialRecipients`.
 Set `BASE_URL` to the public address of the site so scheduled notifications
 contain valid links.
-Each IP address may visit at most 50 unique routes per day. Returning to a cached
-page does not count toward this limit. The threshold can be adjusted with the
-`RouteLimiting:UniqueRouteLimit` setting. Specific IP addresses can be excluded
-via `RateLimiting:ExcludedIPs` or environment variables such as
+Each IP address is limited to 50 requests per day. The threshold can be adjusted
+with the `RouteLimiting:UniqueRouteLimit` setting. Specific IP addresses can be
+excluded via `RateLimiting:ExcludedIPs` or environment variables such as
 `RateLimiting__ExcludedIPs__0=127.0.0.1`.
 
 Game week data is cached to reduce database load. The duration defaults to two

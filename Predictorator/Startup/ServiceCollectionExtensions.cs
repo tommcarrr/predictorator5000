@@ -2,16 +2,19 @@ using Azure.Data.Tables;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Predictorator.Data;
 using Predictorator.Core.Data;
 using Predictorator.Core.Options;
 using Predictorator.Services;
 using Predictorator.Core.Services;
-using Predictorator.Middleware;
 using Resend;
 using MudBlazor.Services;
+using System.Threading.RateLimiting;
 
 namespace Predictorator.Startup;
 
@@ -27,6 +30,7 @@ public static class ServiceCollectionExtensions
             client.DefaultRequestHeaders.Add("x-rapidapi-key", rapidApiKey);
         });
         services.AddHttpContextAccessor();
+        services.AddMemoryCache();
         services.Configure<ForwardedHeadersOptions>(options =>
         {
             options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -35,7 +39,30 @@ public static class ServiceCollectionExtensions
         });
         services.AddTransient<IFixtureService, FixtureService>();
         services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
-        services.AddRouteLimiting(configuration);
+        services.Configure<RouteLimitingOptions>(configuration.GetSection(RouteLimitingOptions.SectionName));
+        services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+            {
+                var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                var rateOptions = context.RequestServices.GetRequiredService<IOptions<RateLimitingOptions>>().Value;
+                if (rateOptions.ExcludedIPs.Contains(ip))
+                {
+                    return RateLimitPartition.GetNoLimiter(ip);
+                }
+
+                var routeOptions = context.RequestServices.GetRequiredService<IOptions<RouteLimitingOptions>>().Value;
+                return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = routeOptions.UniqueRouteLimit,
+                    Window = TimeSpan.FromDays(1),
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0
+                });
+            });
+        });
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
         services.AddTransient<PredictionProcessingService>();
         services.AddHybridCache();
