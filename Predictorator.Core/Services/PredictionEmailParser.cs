@@ -6,6 +6,9 @@ namespace Predictorator.Core.Services;
 public static class PredictionEmailParser
 {
     private const string DateFormat = "dddd, MMMM d, yyyy";
+    private static readonly Regex PredictionRegex = new(
+        @"^(.*?)\s+(\d+)\s*-\s*(\d+)\s+(.*)$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public static IReadOnlyList<ParsedPrediction> Parse(string? text)
     {
@@ -30,7 +33,7 @@ public static class PredictionEmailParser
             if (!currentDate.HasValue)
                 continue;
 
-            var match = Regex.Match(line, @"^(.*?)\s+(\d+)\s*-\s*(\d+)\s+(.*)$");
+            var match = PredictionRegex.Match(line);
             if (!match.Success)
                 continue;
 
