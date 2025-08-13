@@ -37,6 +37,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
         services.AddRouteLimiting(configuration);
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
+        services.AddTransient<PredictionProcessingService>();
         services.AddHybridCache();
         services.AddSingleton<CachePrefixService>();
         services.Configure<GameWeekCacheOptions>(configuration.GetSection(GameWeekCacheOptions.SectionName));

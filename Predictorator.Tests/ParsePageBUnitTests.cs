@@ -17,8 +17,10 @@ public class ParsePageBUnitTests
         var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose;
         ctx.Services.AddMudServices();
-        ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
-        ctx.Services.AddSingleton<IDateTimeProvider>(new FakeDateTimeProvider { UtcNow = now, Today = now.Date });
+        var service = new PredictionProcessingService(
+            new FakeFixtureService(fixtures),
+            new FakeDateTimeProvider { UtcNow = now, Today = now.Date });
+        ctx.Services.AddSingleton(service);
         return ctx;
     }
 
