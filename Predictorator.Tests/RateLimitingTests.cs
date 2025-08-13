@@ -27,6 +27,7 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
                 services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
                 services.AddSingleton<IDateTimeProvider>(new SystemDateTimeProvider());
                 services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
+                services.PostConfigure<RateLimitingOptions>(o => o.Enabled = true);
                 services.AddTransient<IFixtureService>(_ => new FakeFixtureService(
                     new FixturesResponse { Response = new List<FixtureData>() }));
 
@@ -59,7 +60,11 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
             builder.ConfigureServices(services =>
             {
                 services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
-                services.PostConfigure<RateLimitingOptions>(o => o.ExcludedIPs = new[] { "unknown" });
+                services.PostConfigure<RateLimitingOptions>(o =>
+                {
+                    o.Enabled = true;
+                    o.ExcludedIPs = new[] { "unknown" };
+                });
             });
         });
 
@@ -78,7 +83,11 @@ public class RateLimitingTests : IClassFixture<WebApplicationFactory<Program>>
             builder.ConfigureServices(services =>
             {
                 services.PostConfigure<RouteLimitingOptions>(o => o.UniqueRouteLimit = 1);
-                services.PostConfigure<RateLimitingOptions>(o => o.ExcludedIPs = new[] { "1.2.3.4" });
+                services.PostConfigure<RateLimitingOptions>(o =>
+                {
+                    o.Enabled = true;
+                    o.ExcludedIPs = new[] { "1.2.3.4" };
+                });
             });
         });
 
