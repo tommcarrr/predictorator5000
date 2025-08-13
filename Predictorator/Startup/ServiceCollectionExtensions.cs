@@ -12,6 +12,7 @@ using Predictorator.Core.Data;
 using Predictorator.Core.Options;
 using Predictorator.Services;
 using Predictorator.Core.Services;
+using Predictorator.Core.Models;
 using Resend;
 using MudBlazor.Services;
 using System.Threading.RateLimiting;
@@ -91,6 +92,8 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IGameWeekService, GameWeekService>();
         services.AddSingleton<EmailCssInliner>();
         services.AddSingleton<EmailTemplateRenderer>();
+        services.AddTransient<INotificationSender<Subscriber>, EmailNotificationSender>();
+        services.AddTransient<INotificationSender<SmsSubscriber>, SmsNotificationSender>();
         services.AddSingleton<NotificationFeatureService>();
         services.AddSingleton<IBackgroundJobService, TableBackgroundJobService>();
         services.Configure<AdminUserOptions>(options =>

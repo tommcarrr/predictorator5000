@@ -10,6 +10,7 @@ using Predictorator.Core.Options;
 using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
 using Resend;
+using Predictorator.Core.Models;
 
 namespace Predictorator.Tests;
 
@@ -56,6 +57,8 @@ public class FunctionAppDiResolutionTests
         services.AddSingleton<IBackgroundJobService>(_ => Substitute.For<IBackgroundJobService>());
         services.AddSingleton<EmailCssInliner>();
         services.AddSingleton<EmailTemplateRenderer>();
+        services.AddTransient<INotificationSender<Subscriber>, EmailNotificationSender>();
+        services.AddTransient<INotificationSender<SmsSubscriber>, SmsNotificationSender>();
         services.AddHybridCache();
         services.Configure<GameWeekCacheOptions>(configuration.GetSection(GameWeekCacheOptions.SectionName));
         services.AddSingleton<CachePrefixService>();

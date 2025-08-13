@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Predictorator.Core.Data;
 using Predictorator.Core.Models;
-using Resend;
 using System.Linq;
 
 namespace Predictorator.Core.Services;
@@ -12,8 +11,6 @@ public class NotificationService
     private readonly IEmailSubscriberRepository _emails;
     private readonly ISmsSubscriberRepository _smsSubscribers;
     private readonly ISentNotificationRepository _sentNotifications;
-    private readonly IResend _resend;
-    private readonly ITwilioSmsSender _sms;
     private readonly IConfiguration _config;
     private readonly IFixtureService _fixtures;
     private readonly IGameWeekService _gameWeeks;
@@ -21,16 +18,14 @@ public class NotificationService
     private readonly NotificationFeatureService _features;
     private readonly IDateTimeProvider _time;
     private readonly IBackgroundJobService _jobs;
-    private readonly EmailCssInliner _inliner;
-    private readonly EmailTemplateRenderer _renderer;
+    private readonly INotificationSender<Subscriber> _emailSender;
+    private readonly INotificationSender<SmsSubscriber> _smsSender;
     private readonly ILogger<NotificationService> _logger;
 
     public NotificationService(
         IEmailSubscriberRepository emails,
         ISmsSubscriberRepository smsSubscribers,
         ISentNotificationRepository sentNotifications,
-        IResend resend,
-        ITwilioSmsSender sms,
         IConfiguration config,
         IFixtureService fixtures,
         IGameWeekService gameWeeks,
@@ -38,15 +33,13 @@ public class NotificationService
         NotificationFeatureService features,
         IDateTimeProvider time,
         IBackgroundJobService jobs,
-        EmailCssInliner inliner,
-        EmailTemplateRenderer renderer,
+        INotificationSender<Subscriber> emailSender,
+        INotificationSender<SmsSubscriber> smsSender,
         ILogger<NotificationService> logger)
     {
         _emails = emails;
         _smsSubscribers = smsSubscribers;
         _sentNotifications = sentNotifications;
-        _resend = resend;
-        _sms = sms;
         _config = config;
         _fixtures = fixtures;
         _gameWeeks = gameWeeks;
@@ -54,8 +47,8 @@ public class NotificationService
         _features = features;
         _time = time;
         _jobs = jobs;
-        _inliner = inliner;
-        _renderer = renderer;
+        _emailSender = emailSender;
+        _smsSender = smsSender;
         _logger = logger;
     }
 
@@ -137,37 +130,6 @@ public class NotificationService
         await SendToAllAsync("Fixtures start in 2 hours!", baseUrl, "FixturesStartingSoon", key);
     }
 
-    private EmailMessage CreateEmailMessage(string message, string baseUrl, Subscriber sub)
-    {
-        var html = _renderer.Render(message, baseUrl, sub.UnsubscribeToken, "VIEW FIXTURES", baseUrl, preheader: message);
-        var emailMessage = new EmailMessage
-        {
-            From = _config["Resend:From"] ?? "Prediction Fairy <no-reply@example.com>",
-            Subject = "Predictorator Notification",
-            HtmlBody = _inliner.InlineCss(html)
-        };
-        emailMessage.To.Add(sub.Email);
-        return emailMessage;
-    }
-
-    private string CreateSmsMessage(string message, string baseUrl, SmsSubscriber sub)
-    {
-        var link = $"{baseUrl}/Subscription/Unsubscribe?token={sub.UnsubscribeToken}";
-        return $"{message} {baseUrl}\n\n---\n\nUnsubscribe: {link}";
-    }
-
-    public async Task SendNotificationAsync(string message, string baseUrl, Subscriber sub)
-    {
-        var emailMessage = CreateEmailMessage(message, baseUrl, sub);
-        await _resend.EmailSendAsync(emailMessage);
-    }
-
-    public async Task SendNotificationAsync(string message, string baseUrl, SmsSubscriber sub)
-    {
-        var smsMessage = CreateSmsMessage(message, baseUrl, sub);
-        await _sms.SendSmsAsync(sub.PhoneNumber, smsMessage);
-    }
-
     public async Task SendSampleAsync(IEnumerable<AdminSubscriberDto> recipients, string message, string baseUrl)
     {
         var tasks = recipients.Select(async r =>
@@ -176,7 +138,7 @@ public class NotificationService
             {
                 var sub = await _emails.GetEmailSubscriberByIdAsync(r.Id);
                 if (sub != null)
-                    await SendNotificationAsync(message, baseUrl, sub);
+                    await _emailSender.SendAsync(message, baseUrl, sub);
             }
             else
             {
@@ -185,7 +147,7 @@ public class NotificationService
                 if (sub != null)
                 {
                     _logger.LogInformation("Sending sample SMS to {Phone}", sub.PhoneNumber);
-                    await SendNotificationAsync(message, baseUrl, sub);
+                    await _smsSender.SendAsync(message, baseUrl, sub);
                 }
             }
         }).ToList();
@@ -196,12 +158,12 @@ public class NotificationService
     private async Task SendToAllAsync(string message, string baseUrl, string type, string key)
     {
         var emails = await _emails.GetVerifiedEmailSubscribersAsync();
-        var emailTasks = emails.Select(sub => SendNotificationAsync(message, baseUrl, sub));
+        var emailTasks = emails.Select(sub => _emailSender.SendAsync(message, baseUrl, sub));
 
         _logger.LogInformation("Retrieving all verified SMS subscribers");
         var phones = await _smsSubscribers.GetVerifiedSmsSubscribersAsync();
         _logger.LogInformation("Sending notification to {Count} SMS subscribers", phones.Count);
-        var smsTasks = phones.Select(sub => SendNotificationAsync(message, baseUrl, sub));
+        var smsTasks = phones.Select(sub => _smsSender.SendAsync(message, baseUrl, sub));
 
         await Task.WhenAll(emailTasks.Concat(smsTasks));
 
