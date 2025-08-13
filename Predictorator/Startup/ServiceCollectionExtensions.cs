@@ -41,29 +41,34 @@ public static class ServiceCollectionExtensions
         services.AddTransient<IFixtureService, FixtureService>();
         services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
         services.Configure<RouteLimitingOptions>(configuration.GetSection(RouteLimitingOptions.SectionName));
-        services.Configure<RateLimitingOptions>(configuration.GetSection(RateLimitingOptions.SectionName));
-        services.AddRateLimiter(options =>
+        var rateLimitingSection = configuration.GetSection(RateLimitingOptions.SectionName);
+        services.Configure<RateLimitingOptions>(rateLimitingSection);
+        var rateLimitingOptions = rateLimitingSection.Get<RateLimitingOptions>() ?? new RateLimitingOptions();
+        if (rateLimitingOptions.Enabled)
         {
-            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+            services.AddRateLimiter(options =>
             {
-                var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-                var rateOptions = context.RequestServices.GetRequiredService<IOptions<RateLimitingOptions>>().Value;
-                if (rateOptions.ExcludedIPs.Contains(ip))
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
                 {
-                    return RateLimitPartition.GetNoLimiter(ip);
-                }
+                    var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                    var rateOptions = context.RequestServices.GetRequiredService<IOptions<RateLimitingOptions>>().Value;
+                    if (rateOptions.ExcludedIPs.Contains(ip))
+                    {
+                        return RateLimitPartition.GetNoLimiter(ip);
+                    }
 
-                var routeOptions = context.RequestServices.GetRequiredService<IOptions<RouteLimitingOptions>>().Value;
-                return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
-                {
-                    PermitLimit = routeOptions.UniqueRouteLimit,
-                    Window = TimeSpan.FromDays(1),
-                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                    QueueLimit = 0
+                    var routeOptions = context.RequestServices.GetRequiredService<IOptions<RouteLimitingOptions>>().Value;
+                    return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = routeOptions.UniqueRouteLimit,
+                        Window = TimeSpan.FromDays(1),
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 0
+                    });
                 });
             });
-        });
+        }
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
         services.AddTransient<PredictionProcessingService>();
         services.AddHybridCache();

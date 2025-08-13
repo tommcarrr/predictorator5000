@@ -9,6 +9,8 @@ using Predictorator.Data;
 using Serilog;
 using Serilog.Events;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Options;
+using Predictorator.Core.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,7 +64,11 @@ var app = builder.Build();
 
 app.UseRequestLocalization(localizationOptions);
 app.UseForwardedHeaders();
-app.UseRateLimiter();
+var rateOptions = app.Services.GetRequiredService<IOptions<RateLimitingOptions>>().Value;
+if (rateOptions.Enabled)
+{
+    app.UseRateLimiter();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
