@@ -1,7 +1,7 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Extensions.Timer;
 using Microsoft.Extensions.Logging;
-using Predictorator.Services;
+using Predictorator.Core.Services;
 
 namespace Predictorator.Functions;
 

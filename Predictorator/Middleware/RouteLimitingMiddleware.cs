@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using Predictorator.Options;
+using Predictorator.Core.Options;
 
 namespace Predictorator.Middleware;
 

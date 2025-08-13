@@ -1,4 +1,4 @@
-using Predictorator.Models;
+using Predictorator.Core.Models;
 using Predictorator.Services;
 
 namespace Predictorator.Endpoints;

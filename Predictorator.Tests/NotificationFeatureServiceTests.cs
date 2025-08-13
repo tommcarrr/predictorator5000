@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Configuration;
-using Predictorator.Services;
+using Predictorator.Core.Services;
 
 namespace Predictorator.Tests;
 

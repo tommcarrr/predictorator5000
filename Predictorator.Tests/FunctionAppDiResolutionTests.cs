@@ -5,9 +5,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using Predictorator.Data;
-using Predictorator.Options;
-using Predictorator.Services;
+using Predictorator.Core.Data;
+using Predictorator.Core.Options;
+using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
 using Resend;
 

@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace Predictorator.Services;
+namespace Predictorator.Core.Services;
 
 public static class PredictionEmailParser
 {

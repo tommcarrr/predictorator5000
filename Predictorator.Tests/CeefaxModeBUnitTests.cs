@@ -10,8 +10,9 @@ using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using Predictorator.Components;
 using Predictorator.Components.Layout;
-using Predictorator.Models.Fixtures;
+using Predictorator.Core.Models.Fixtures;
 using Predictorator.Services;
+using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
 
 namespace Predictorator.Tests;

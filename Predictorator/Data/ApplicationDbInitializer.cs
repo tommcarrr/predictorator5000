@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using Predictorator.Options;
+using Predictorator.Core.Options;
 
 namespace Predictorator.Data;
 

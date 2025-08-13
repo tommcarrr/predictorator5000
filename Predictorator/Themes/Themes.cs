@@ -1,6 +1,6 @@
 using MudBlazor;
 
-namespace Predictorator;
+namespace Predictorator.Themes;
 
 public static class Themes
 {

@@ -1,5 +1,5 @@
-using Predictorator.Models.Fixtures;
-using Predictorator.Services;
+using Predictorator.Core.Models.Fixtures;
+using Predictorator.Core.Services;
 
 namespace Predictorator.Tests.Helpers;
 

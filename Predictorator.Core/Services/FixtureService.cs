@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Caching.Hybrid;
-using Predictorator.Models.Fixtures;
+using Predictorator.Core.Models.Fixtures;
 
-namespace Predictorator.Services
+namespace Predictorator.Core.Services
 {
     public class FixtureService : IFixtureService
     {

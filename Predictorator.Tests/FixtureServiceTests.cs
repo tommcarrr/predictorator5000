@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
-using Predictorator.Models.Fixtures;
-using Predictorator.Services;
+using Predictorator.Core.Models.Fixtures;
+using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
 
 namespace Predictorator.Tests;

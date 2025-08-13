@@ -1,5 +1,5 @@
-using Predictorator.Models;
-using Predictorator.Services;
+using Predictorator.Core.Models;
+using Predictorator.Core.Services;
 using System.IO;
 using System.Linq;
 using System.Text;

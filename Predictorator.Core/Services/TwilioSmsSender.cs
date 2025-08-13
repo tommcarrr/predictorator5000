@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Options;
-using Predictorator.Options;
+using Predictorator.Core.Options;
 using Twilio;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
 
-namespace Predictorator.Services;
+namespace Predictorator.Core.Services;
 
 public class TwilioSmsSender : ITwilioSmsSender
 {

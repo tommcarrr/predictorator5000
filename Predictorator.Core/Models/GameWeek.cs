@@ -1,4 +1,4 @@
-namespace Predictorator.Models;
+namespace Predictorator.Core.Models;
 
 public class GameWeek
 {

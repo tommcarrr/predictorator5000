@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Logging;
-using Predictorator.Data;
-using Predictorator.Models;
-using Predictorator.Options;
+using Predictorator.Core.Data;
+using Predictorator.Core.Models;
+using Predictorator.Core.Options;
 using Resend;
 using System.Linq;
 
-namespace Predictorator.Services;
+namespace Predictorator.Core.Services;
 
 public class SubscriptionService
 {

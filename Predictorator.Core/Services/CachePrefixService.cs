@@ -1,6 +1,6 @@
 using System.Threading;
 
-namespace Predictorator.Services;
+namespace Predictorator.Core.Services;
 
 public sealed class CachePrefixService
 {

@@ -1,5 +1,5 @@
-using Predictorator.Data;
-using Predictorator.Models;
+using Predictorator.Core.Data;
+using Predictorator.Core.Models;
 
 namespace Predictorator.Tests.Helpers;
 

@@ -1,6 +1,6 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Extensions.Timer;
-using Predictorator.Services;
+using Predictorator.Core.Services;
 
 namespace Predictorator.Functions;
 

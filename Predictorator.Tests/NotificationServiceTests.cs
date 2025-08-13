@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
-using Predictorator.Models;
-using Predictorator.Models.Fixtures;
-using Predictorator.Services;
+using Predictorator.Core.Models;
+using Predictorator.Core.Models.Fixtures;
+using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
 using Resend;
 using Microsoft.Extensions.Logging.Abstractions;
