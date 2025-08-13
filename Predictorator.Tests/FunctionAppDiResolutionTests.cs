@@ -60,7 +60,10 @@ public class FunctionAppDiResolutionTests
         services.Configure<GameWeekCacheOptions>(configuration.GetSection(GameWeekCacheOptions.SectionName));
         services.AddSingleton<CachePrefixService>();
         services.AddTransient<IGameWeekService, GameWeekService>();
-        services.AddSingleton<IDataStore, InMemoryDataStore>();
+        var store = new InMemoryDataStore();
+        services.AddSingleton<IEmailSubscriberRepository>(store);
+        services.AddSingleton<ISmsSubscriberRepository>(store);
+        services.AddSingleton<ISentNotificationRepository>(store);
         services.AddSingleton<IGameWeekRepository, InMemoryGameWeekRepository>();
         services.AddTransient<SubscriptionService>();
         services.AddTransient<NotificationService>();

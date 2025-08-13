@@ -52,7 +52,10 @@ public static class ServiceCollectionExtensions
             ?? configuration["TableStorage:ConnectionString"];
         var tableService = new TableServiceClient(tableConn ?? throw new InvalidOperationException("Table storage connection string not configured"));
         services.AddSingleton(tableService);
-        services.AddScoped<IDataStore, TableDataStore>();
+        services.AddScoped<TableDataStore>();
+        services.AddScoped<IEmailSubscriberRepository>(sp => sp.GetRequiredService<TableDataStore>());
+        services.AddScoped<ISmsSubscriberRepository>(sp => sp.GetRequiredService<TableDataStore>());
+        services.AddScoped<ISentNotificationRepository>(sp => sp.GetRequiredService<TableDataStore>());
         services.AddScoped<IGameWeekRepository, TableGameWeekRepository>();
         services.AddTransient<SubscriptionService>();
         services.AddTransient<NotificationService>();

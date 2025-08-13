@@ -29,7 +29,10 @@ public class AdminPageAccessTests : IClassFixture<WebApplicationFactory<Program>
             builder.UseSetting("AdminUser:Password", "Admin123!");
             builder.ConfigureServices(services =>
             {
-                services.AddSingleton<IDataStore, InMemoryDataStore>();
+                var store = new InMemoryDataStore();
+                services.AddSingleton<IEmailSubscriberRepository>(store);
+                services.AddSingleton<ISmsSubscriberRepository>(store);
+                services.AddSingleton<ISentNotificationRepository>(store);
                 services.AddSingleton<IGameWeekService, FakeGameWeekService>();
                 services.AddSingleton<IResend>(_ => Substitute.For<IResend>());
                 services.AddSingleton<ITwilioSmsSender>(_ => Substitute.For<ITwilioSmsSender>());

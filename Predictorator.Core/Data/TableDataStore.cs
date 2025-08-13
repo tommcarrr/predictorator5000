@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 
 namespace Predictorator.Core.Data;
 
-public class TableDataStore : IDataStore
+public class TableDataStore : IEmailSubscriberRepository, ISmsSubscriberRepository, ISentNotificationRepository
 {
     private readonly TableClient _emailSubscribers;
     private readonly TableClient _smsSubscribers;

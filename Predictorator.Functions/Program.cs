@@ -50,7 +50,10 @@ var tableConn = configuration.GetConnectionString("TableStorage")
     ?? configuration["TableStorage:ConnectionString"];
 var tableService = new TableServiceClient(tableConn ?? throw new InvalidOperationException("Table storage connection string not configured"));
 builder.Services.AddSingleton(tableService);
-builder.Services.AddScoped<IDataStore, TableDataStore>();
+builder.Services.AddScoped<TableDataStore>();
+builder.Services.AddScoped<IEmailSubscriberRepository>(sp => sp.GetRequiredService<TableDataStore>());
+builder.Services.AddScoped<ISmsSubscriberRepository>(sp => sp.GetRequiredService<TableDataStore>());
+builder.Services.AddScoped<ISentNotificationRepository>(sp => sp.GetRequiredService<TableDataStore>());
 builder.Services.AddScoped<IGameWeekRepository, TableGameWeekRepository>();
 
 builder.Build().Run();
