@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Configuration;
@@ -26,7 +26,7 @@ public class FixtureServiceTests
         var prefix = new CachePrefixService();
         var accessor = Substitute.For<IHttpContextAccessor>();
         var config = Substitute.For<IConfiguration>();
-        var env = Substitute.For<IWebHostEnvironment>();
+        var env = Substitute.For<IHostEnvironment>();
         env.ContentRootPath.Returns(Directory.GetCurrentDirectory());
         var service = new FixtureService(httpClientFactory, cache, prefix, accessor, config, env);
 

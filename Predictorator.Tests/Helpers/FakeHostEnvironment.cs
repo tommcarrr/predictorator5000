@@ -1,14 +1,12 @@
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 
 namespace Predictorator.Tests.Helpers;
 
-public class FakeWebHostEnvironment : IWebHostEnvironment
+public class FakeHostEnvironment : IHostEnvironment
 {
-    public string WebRootPath { get; set; } = ".";
-    public string ContentRootPath { get; set; } = ".";
     public string EnvironmentName { get; set; } = "Development";
     public string ApplicationName { get; set; } = "Test";
-    public IFileProvider WebRootFileProvider { get; set; } = new NullFileProvider();
+    public string ContentRootPath { get; set; } = ".";
     public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
 }
