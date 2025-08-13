@@ -1,10 +1,10 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Predictorator.Components;
 using Predictorator.Startup;
 using Predictorator.Endpoints;
-using Predictorator.Middleware;
 using Predictorator.Data;
 using Serilog;
 using Serilog.Events;
@@ -62,7 +62,7 @@ var app = builder.Build();
 
 app.UseRequestLocalization(localizationOptions);
 app.UseForwardedHeaders();
-app.UseRouteLimiting();
+app.UseRateLimiter();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
