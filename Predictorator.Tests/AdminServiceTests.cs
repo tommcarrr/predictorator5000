@@ -7,7 +7,6 @@ using Predictorator.Tests.Helpers;
 using Predictorator.Models.Fixtures;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Collections.Generic;
-using System.IO;
 using System;
 using System.Text;
 
@@ -27,10 +26,7 @@ public class AdminServiceTests
                 ["BASE_URL"] = "http://localhost"
             })
             .Build();
-        var env = new FakeWebHostEnvironment { WebRootPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()) };
-        Directory.CreateDirectory(Path.Combine(env.WebRootPath, "css"));
-        File.WriteAllText(Path.Combine(env.WebRootPath, "css", "email.css"), "p{color:red;}");
-        var inliner = new EmailCssInliner(env);
+        var inliner = new EmailCssInliner();
         var renderer = new EmailTemplateRenderer();
         provider = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow };
         var fixtures = new FakeFixtureService(new FixturesResponse());

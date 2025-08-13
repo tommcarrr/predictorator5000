@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,7 +38,7 @@ public class FunctionAppDiResolutionTests
         var env = Substitute.For<IWebHostEnvironment>();
         env.ContentRootPath.Returns(Directory.GetCurrentDirectory());
         env.WebRootPath.Returns(Directory.GetCurrentDirectory());
-        services.AddSingleton(env);
+        services.AddSingleton<IWebHostEnvironment>(env);
 
         services.AddHttpClient("fixtures", client =>
         {

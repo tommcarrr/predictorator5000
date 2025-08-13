@@ -1,17 +1,20 @@
-using Microsoft.AspNetCore.Hosting;
 using PreMailer.Net;
 
 namespace Predictorator.Services;
 
 public class EmailCssInliner
 {
-    private readonly string? _css;
+    private readonly string _css;
 
-    public EmailCssInliner(IWebHostEnvironment env)
+    private const string DefaultCss = "body { font-family: Arial, sans-serif; }\na { color: #1e88e5; }\n";
+
+    public EmailCssInliner() : this(DefaultCss)
     {
-        var path = Path.Combine(env.WebRootPath, "css", "email.css");
-        if (File.Exists(path))
-            _css = File.ReadAllText(path);
+    }
+
+    public EmailCssInliner(string css)
+    {
+        _css = css;
     }
 
     public string InlineCss(string html)

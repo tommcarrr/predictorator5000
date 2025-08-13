@@ -6,7 +6,6 @@ using Predictorator.Services;
 using Predictorator.Tests.Helpers;
 using Resend;
 using Microsoft.Extensions.Logging.Abstractions;
-using System.IO;
 
 namespace Predictorator.Tests;
 
@@ -49,10 +48,7 @@ public class NotificationServiceTests
                 }
             }
         });
-        var env = new FakeWebHostEnvironment { WebRootPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()) };
-        Directory.CreateDirectory(Path.Combine(env.WebRootPath, "css"));
-        File.WriteAllText(Path.Combine(env.WebRootPath, "css", "email.css"), "p{color:red;}");
-        var inliner = new EmailCssInliner(env);
+        var inliner = new EmailCssInliner();
         var renderer = new EmailTemplateRenderer();
         var gameWeeks = new FakeGameWeekService();
         gameWeeks.Items.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = nowUtc.Date, EndDate = nowUtc.Date.AddDays(6) });

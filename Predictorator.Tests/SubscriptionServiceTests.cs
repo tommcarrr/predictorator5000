@@ -4,7 +4,6 @@ using Predictorator.Models;
 using Predictorator.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 using Predictorator.Tests.Helpers;
-using System.IO;
 using Resend;
 
 namespace Predictorator.Tests;
@@ -21,8 +20,7 @@ public class SubscriptionServiceTests
             .AddInMemoryCollection(new Dictionary<string, string?> { ["Resend:From"] = "from@example.com" })
             .Build();
         provider ??= new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
-        var env = new FakeWebHostEnvironment { WebRootPath = Path.GetTempPath() };
-        var inliner = new EmailCssInliner(env);
+        var inliner = new EmailCssInliner();
         var renderer = new EmailTemplateRenderer();
         var logger = NullLogger<SubscriptionService>.Instance;
         return new SubscriptionService(store, resend, config, sms, provider, inliner, renderer, logger);

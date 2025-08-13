@@ -1,17 +1,13 @@
 using Predictorator.Services;
-using Predictorator.Tests.Helpers;
 
 namespace Predictorator.Tests;
 
 public class EmailCssInlinerTests
 {
     [Fact]
-    public void InlineCss_returns_input_when_file_missing()
+    public void InlineCss_returns_input_when_css_empty()
     {
-        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(root);
-        var env = new FakeWebHostEnvironment { WebRootPath = root };
-        var inliner = new EmailCssInliner(env);
+        var inliner = new EmailCssInliner(string.Empty);
         var html = "<p>Hello</p>";
 
         var result = inliner.InlineCss(html);
@@ -20,13 +16,9 @@ public class EmailCssInlinerTests
     }
 
     [Fact]
-    public void InlineCss_inlines_styles_from_css_file()
+    public void InlineCss_inlines_styles_from_css_string()
     {
-        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-        Directory.CreateDirectory(Path.Combine(root, "css"));
-        File.WriteAllText(Path.Combine(root, "css", "email.css"), "p{color:red;}");
-        var env = new FakeWebHostEnvironment { WebRootPath = root };
-        var inliner = new EmailCssInliner(env);
+        var inliner = new EmailCssInliner("p{color:red;}");
         var html = "<p>Hello</p>";
 
         var result = inliner.InlineCss(html);
