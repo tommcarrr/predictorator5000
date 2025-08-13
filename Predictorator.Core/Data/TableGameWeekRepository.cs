@@ -7,11 +7,14 @@ namespace Predictorator.Core.Data;
 public class TableGameWeekRepository : IGameWeekRepository
 {
     private readonly TableClient _table;
+    private readonly TableClient _counter;
 
     public TableGameWeekRepository(TableServiceClient client)
     {
         _table = client.GetTableClient("GameWeeks");
         _table.CreateIfNotExists();
+        _counter = client.GetTableClient("GameWeekCounter");
+        _counter.CreateIfNotExists();
     }
 
     private static GameWeek ToGameWeek(GameWeekEntity e) => new()
@@ -32,14 +35,47 @@ public class TableGameWeekRepository : IGameWeekRepository
         EndDate = g.EndDate
     };
 
-    private async Task<int> GetNextIdAsync()
+    private async Task<int> GenerateIdAsync()
     {
-        var max = 0;
-        await foreach (var e in _table.QueryAsync<GameWeekEntity>(select: new[] { "Id" }))
+        while (true)
         {
-            if (e.Id > max) max = e.Id;
+            try
+            {
+                var resp = await _counter.GetEntityAsync<CounterEntity>("GameWeeks", "Counter");
+                var entity = resp.Value;
+                var id = entity.NextId;
+                entity.NextId = id + 1;
+                await _counter.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Replace);
+                return id;
+            }
+            catch (RequestFailedException ex) when (ex.Status == 404)
+            {
+                var id = 1;
+                await foreach (var e in _table.QueryAsync<GameWeekEntity>())
+                    if (e.Id >= id)
+                        id = e.Id + 1;
+
+                var entity = new CounterEntity
+                {
+                    PartitionKey = "GameWeeks",
+                    RowKey = "Counter",
+                    NextId = id + 1
+                };
+                try
+                {
+                    await _counter.AddEntityAsync(entity);
+                    return id;
+                }
+                catch (RequestFailedException addEx) when (addEx.Status == 409)
+                {
+                    // another thread created the counter; retry
+                }
+            }
+            catch (RequestFailedException ex) when (ex.Status == 412)
+            {
+                // ETag mismatch due to concurrent update; retry
+            }
         }
-        return max + 1;
     }
 
     public async Task<List<GameWeek>> GetGameWeeksAsync(string? season = null)
@@ -112,9 +148,21 @@ public class TableGameWeekRepository : IGameWeekRepository
         }
         if (existing == null)
         {
-            gameWeek.Id = await GetNextIdAsync();
+            gameWeek.Id = await GenerateIdAsync();
             var entity = ToEntity(gameWeek);
-            await _table.AddEntityAsync(entity);
+            try
+            {
+                await _table.AddEntityAsync(entity);
+            }
+            catch (RequestFailedException ex) when (ex.Status == 409)
+            {
+                var resp = await _table.GetEntityAsync<GameWeekEntity>(gameWeek.Season, gameWeek.Number.ToString());
+                var existingEntity = resp.Value;
+                existingEntity.StartDate = gameWeek.StartDate;
+                existingEntity.EndDate = gameWeek.EndDate;
+                gameWeek.Id = existingEntity.Id;
+                await _table.UpsertEntityAsync(existingEntity, TableUpdateMode.Replace);
+            }
         }
         else
         {
@@ -156,6 +204,15 @@ public class TableGameWeekRepository : IGameWeekRepository
         public int Id { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public DateTimeOffset? Timestamp { get; set; }
+        public ETag ETag { get; set; }
+    }
+
+    private class CounterEntity : ITableEntity
+    {
+        public string PartitionKey { get; set; } = string.Empty;
+        public string RowKey { get; set; } = string.Empty;
+        public int NextId { get; set; }
         public DateTimeOffset? Timestamp { get; set; }
         public ETag ETag { get; set; }
     }
