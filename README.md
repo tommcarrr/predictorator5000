@@ -49,17 +49,14 @@ All variables used by Docker Compose can be placed in a `.env` file. A sample
 is provided at `.env.example`. Copy this file to `.env` and update the values
 as needed before running the containers.
 
-Verification links sent to subscribers are valid for one hour. A background job
-runs weekly to calculate unverified subscriptions that have expired.
+Verification links sent to subscribers are valid for one hour. An Azure
+Function runs weekly to calculate unverified subscriptions that have expired.
 
 ### Background job processing
 
-By default the web app processes queued background jobs. To offload this work
-to the Azure Functions project set `UseFunctionAppForJobs` to `true` in
-configuration. When enabled, the web app will still schedule jobs but the
-functions app is responsible for executing them. The admin Jobs view reads
-from the same table storage queue that the function app uses, so it continues
-to list pending jobs regardless of where they are processed.
+Queued background jobs are executed by the Azure Functions project. The web
+app schedules jobs and the admin Jobs view reads from the same table storage
+queue, so pending jobs continue to be listed.
 
 Timer schedules for the functions can be overridden in configuration using the
 following keys (values shown are defaults):

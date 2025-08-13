@@ -60,12 +60,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<EmailTemplateRenderer>();
         services.AddSingleton<NotificationFeatureService>();
         services.AddSingleton<IBackgroundJobService, TableBackgroundJobService>();
-        var useFunctionJobs = configuration.GetValue<bool>("UseFunctionAppForJobs");
-        if (!useFunctionJobs)
-        {
-            services.AddHostedService<BackgroundJobProcessor>();
-            services.AddHostedService<RecurringJobProcessor>();
-        }
         services.Configure<AdminUserOptions>(options =>
         {
             configuration.GetSection(AdminUserOptions.SectionName).Bind(options);
