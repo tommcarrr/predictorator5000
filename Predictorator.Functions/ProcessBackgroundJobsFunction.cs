@@ -29,11 +29,14 @@ public class ProcessBackgroundJobsFunction
     public async Task Run([TimerTrigger("%ProcessBackgroundJobsSchedule%")] TimerInfo timer)
     {
         var now = _time.UtcNow;
+        _logger.LogInformation("Processing background jobs at {Time}", now);
         var jobs = _table.Query<BackgroundJob>(j => j.RunAt <= now).ToList();
+        _logger.LogInformation("Found {Count} job(s) to process", jobs.Count);
         foreach (var job in jobs)
         {
             try
             {
+                _logger.LogInformation("Running job {JobId} of type {JobType}", job.RowKey, job.JobType);
                 switch (job.JobType)
                 {
                     case "SendSample":
@@ -50,12 +53,14 @@ public class ProcessBackgroundJobsFunction
                         break;
                 }
                 await _table.DeleteEntityAsync(job.PartitionKey, job.RowKey);
+                _logger.LogInformation("Job {JobId} processed", job.RowKey);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error running background job {JobId}", job.RowKey);
             }
         }
+        _logger.LogInformation("Background job processing completed at {Time}", _time.UtcNow);
     }
 
     private record SamplePayload(List<AdminSubscriberDto> Recipients, string Message, string BaseUrl);
