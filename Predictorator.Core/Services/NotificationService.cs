@@ -100,8 +100,7 @@ public class NotificationService
                 {
                     var sendTimeUk = futureUk.Date.AddHours(10);
                     var sendTimeUtc = TimeZoneInfo.ConvertTimeToUtc(sendTimeUk, UkTimeZone);
-                    var delay = sendTimeUtc - nowUtc;
-                    if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
+                    var delay = TimeExtensions.ClampDelay(sendTimeUtc, _time);
                     await _jobs.ScheduleAsync(
                         "SendNewFixturesAvailable",
                         new { Key = key, BaseUrl = baseUrl },
@@ -119,8 +118,7 @@ public class NotificationService
             if (!sent)
             {
                 var sendTimeUtc = first.Fixture.Date.AddHours(-2);
-                var delay = sendTimeUtc - nowUtc;
-                if (delay < TimeSpan.Zero) delay = TimeSpan.Zero;
+                var delay = TimeExtensions.ClampDelay(sendTimeUtc, _time);
                 await _jobs.ScheduleAsync(
                     "SendFixturesStartingSoon",
                     new { Key = key, BaseUrl = baseUrl },
