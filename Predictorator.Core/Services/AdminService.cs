@@ -122,7 +122,10 @@ public class AdminService
         if (type == "Email")
         {
             if (await _emails.EmailSubscriberExistsAsync(contact))
+            {
+                _logger.LogInformation("Email subscriber {Email} already exists", contact);
                 return null;
+            }
             var sub = new Subscriber
             {
                 Email = contact,
@@ -132,12 +135,16 @@ public class AdminService
                 CreatedAt = _time.UtcNow
             };
             await _emails.AddEmailSubscriberAsync(sub);
+            _logger.LogInformation("Added email subscriber {Email} with id {Id}", sub.Email, sub.Id);
             return new AdminSubscriberDto(sub.Id, sub.Email, sub.IsVerified, "Email");
         }
         else
         {
             if (await _smsSubscribers.SmsSubscriberExistsAsync(contact))
+            {
+                _logger.LogInformation("SMS subscriber {Phone} already exists", contact);
                 return null;
+            }
             var sub = new SmsSubscriber
             {
                 PhoneNumber = contact,
@@ -147,6 +154,7 @@ public class AdminService
                 CreatedAt = _time.UtcNow
             };
             await _smsSubscribers.AddSmsSubscriberAsync(sub);
+            _logger.LogInformation("Added SMS subscriber {Phone} with id {Id}", sub.PhoneNumber, sub.Id);
             return new AdminSubscriberDto(sub.Id, sub.PhoneNumber, sub.IsVerified, "SMS");
         }
     }

@@ -54,12 +54,19 @@ public class NotificationService
 
     public async Task CheckFixturesAsync()
     {
+        _logger.LogInformation("Checking fixtures for notifications");
         if (!_features.AnyEnabled)
+        {
+            _logger.LogInformation("No notification features enabled; skipping fixture check");
             return;
+        }
 
         var baseUrl = _config["BASE_URL"];
         if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            _logger.LogWarning("BASE_URL configuration missing; cannot send notifications");
             return;
+        }
 
         var week = await _gameWeeks.GetNextGameWeekAsync(_time.Today);
         DateTime from;
@@ -76,7 +83,11 @@ public class NotificationService
 
         var response = await _fixtures.GetFixturesAsync(from, to);
         if (response.Response.Count == 0)
+        {
+            _logger.LogInformation("No fixtures found between {From} and {To}", from, to);
             return;
+        }
+        _logger.LogInformation("Retrieved {Count} fixtures between {From} and {To}", response.Response.Count, from, to);
 
         var nowUtc = _time.UtcNow;
         var nowUk = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, UkTimeZone);
@@ -94,6 +105,7 @@ public class NotificationService
                     var sendTimeUk = futureUk.Date.AddHours(10);
                     var sendTimeUtc = TimeZoneInfo.ConvertTimeToUtc(sendTimeUk, UkTimeZone);
                     var delay = TimeExtensions.ClampDelay(sendTimeUtc, _time);
+                    _logger.LogInformation("Scheduling new fixtures notification for {Date} with delay {Delay}", futureUk.Date, delay);
                     await _jobs.ScheduleAsync(
                         "SendNewFixturesAvailable",
                         new { Key = key, BaseUrl = baseUrl },
@@ -112,6 +124,7 @@ public class NotificationService
             {
                 var sendTimeUtc = first.Fixture.Date.AddHours(-2);
                 var delay = TimeExtensions.ClampDelay(sendTimeUtc, _time);
+                _logger.LogInformation("Scheduling fixtures starting soon notification for {Date} with delay {Delay}", firstUk, delay);
                 await _jobs.ScheduleAsync(
                     "SendFixturesStartingSoon",
                     new { Key = key, BaseUrl = baseUrl },
