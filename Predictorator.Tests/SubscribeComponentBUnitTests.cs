@@ -8,8 +8,6 @@ using NSubstitute;
 using Predictorator.Components.Pages.Subscription;
 using Predictorator.Services;
 using Predictorator.Tests.Helpers;
-using System.IO;
-using System;
 using Resend;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -38,10 +36,7 @@ public class SubscribeComponentBUnitTests
         var sms = Substitute.For<ITwilioSmsSender>();
         var time = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow, Today = DateTime.Today };
         ctx.Services.AddSingleton<IDateTimeProvider>(time);
-        var env = new FakeWebHostEnvironment { WebRootPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()) };
-        Directory.CreateDirectory(Path.Combine(env.WebRootPath, "css"));
-        File.WriteAllText(Path.Combine(env.WebRootPath, "css", "email.css"), "p{color:red;}");
-        var inliner = new EmailCssInliner(env);
+        var inliner = new EmailCssInliner();
         var renderer = new EmailTemplateRenderer();
         var logger = NullLogger<SubscriptionService>.Instance;
         ctx.Services.AddSingleton(new SubscriptionService(store, resend, config, sms, time, inliner, renderer, logger));
