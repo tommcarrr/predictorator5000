@@ -134,12 +134,6 @@ public class GameWeekService : IGameWeekService
             if (!DateTime.TryParse(parts[2], null, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var start)) continue;
             if (!DateTime.TryParse(parts[3], null, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var end)) continue;
 
-            var existing = await _repo.GetGameWeekAsync(season, number);
-            if (existing != null)
-            {
-                continue;
-            }
-
             var gw = new GameWeek
             {
                 Season = season,
