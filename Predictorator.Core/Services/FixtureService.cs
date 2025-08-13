@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Hosting;
 using Predictorator.Models.Fixtures;
 
 namespace Predictorator.Services
@@ -12,7 +13,7 @@ namespace Predictorator.Services
         private readonly CachePrefixService _prefix;
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly IConfiguration _configuration;
-        private readonly IWebHostEnvironment _environment;
+        private readonly IHostEnvironment _environment;
         private readonly TimeSpan _cacheDuration = TimeSpan.FromHours(12);
 
         public FixtureService(
@@ -21,7 +22,7 @@ namespace Predictorator.Services
             CachePrefixService prefix,
             IHttpContextAccessor contextAccessor,
             IConfiguration configuration,
-            IWebHostEnvironment environment)
+            IHostEnvironment environment)
         {
             _httpClient = httpClientFactory.CreateClient("fixtures");
             _cache = cache;

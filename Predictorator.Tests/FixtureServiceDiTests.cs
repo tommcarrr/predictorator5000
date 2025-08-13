@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Caching.Hybrid;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
 using Predictorator.Services;
@@ -19,7 +19,7 @@ public class FixtureServiceDiTests
         var httpClientFactory = Substitute.For<IHttpClientFactory>();
         services.AddSingleton(httpClientFactory);
         services.AddSingleton<IConfiguration>(Substitute.For<IConfiguration>());
-        var env = Substitute.For<IWebHostEnvironment>();
+        var env = Substitute.For<IHostEnvironment>();
         env.ContentRootPath.Returns(Directory.GetCurrentDirectory());
         services.AddSingleton(env);
         services.AddSingleton<CachePrefixService>();

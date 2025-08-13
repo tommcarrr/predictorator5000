@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +15,7 @@ public class FixtureServiceTestTokenTests
     [Fact]
     public async Task Returns_mock_data_when_token_matches()
     {
-        var env = Substitute.For<IWebHostEnvironment>();
+        var env = Substitute.For<IHostEnvironment>();
         env.ContentRootPath.Returns(Directory.GetCurrentDirectory());
 
         var config = new ConfigurationBuilder()
@@ -50,7 +50,7 @@ public class FixtureServiceTestTokenTests
     [Fact]
     public async Task Fetches_from_http_when_token_does_not_match()
     {
-        var env = Substitute.For<IWebHostEnvironment>();
+        var env = Substitute.For<IHostEnvironment>();
         env.ContentRootPath.Returns(Directory.GetCurrentDirectory());
 
         var config = new ConfigurationBuilder()
