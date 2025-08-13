@@ -39,7 +39,12 @@ public class AdminServiceTests
         var notifications = new NotificationService(store, resend, sms, config, fixtures, gameWeeks, range, features, provider, jobs, inliner, renderer, nLogger);
         var aLogger = NullLogger<AdminService>.Instance;
         var prefix = new CachePrefixService();
-        return new AdminService(store, resend, sms, config, inliner, renderer, notifications, aLogger, jobs, provider, prefix);
+        var handlers = new ISubscriberHandler[]
+        {
+            new EmailSubscriberHandler(store, provider),
+            new SmsSubscriberHandler(store, provider, NullLogger<SmsSubscriberHandler>.Instance)
+        };
+        return new AdminService(store, resend, sms, config, inliner, renderer, notifications, aLogger, jobs, provider, prefix, handlers);
     }
 
     [Fact]

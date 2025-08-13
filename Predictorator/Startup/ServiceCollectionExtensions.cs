@@ -56,6 +56,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGameWeekRepository, TableGameWeekRepository>();
         services.AddTransient<SubscriptionService>();
         services.AddTransient<NotificationService>();
+        services.AddTransient<ISubscriberHandler, EmailSubscriberHandler>();
+        services.AddTransient<ISubscriberHandler, SmsSubscriberHandler>();
         services.AddTransient<AdminService>();
         services.AddTransient<IGameWeekService, GameWeekService>();
         services.AddSingleton<EmailCssInliner>();

@@ -7,6 +7,7 @@ using System.Linq;
 using System.IO;
 using System.Text;
 using System.Globalization;
+using System.Collections.Generic;
 
 namespace Predictorator.Core.Services;
 
@@ -43,6 +44,7 @@ public class AdminService
     private readonly IBackgroundJobService _jobs;
     private readonly IDateTimeProvider _time;
     private readonly CachePrefixService _prefix;
+    private readonly Dictionary<string, ISubscriberHandler> _handlers;
 
     public AdminService(
         IDataStore store,
@@ -55,7 +57,8 @@ public class AdminService
         ILogger<AdminService> logger,
         IBackgroundJobService jobs,
         IDateTimeProvider time,
-        CachePrefixService prefix)
+        CachePrefixService prefix,
+        IEnumerable<ISubscriberHandler> handlers)
     {
         _store = store;
         _resend = resend;
@@ -68,6 +71,7 @@ public class AdminService
         _jobs = jobs;
         _time = time;
         _prefix = prefix;
+        _handlers = handlers.ToDictionary(h => h.Type, StringComparer.OrdinalIgnoreCase);
     }
 
     public async Task<List<AdminSubscriberDto>> GetSubscribersAsync()
@@ -85,74 +89,27 @@ public class AdminService
 
     public async Task ConfirmAsync(string type, int id)
     {
-        if (type == "Email")
+        if (_handlers.TryGetValue(type, out var handler))
         {
-            var entity = await _store.GetEmailSubscriberByIdAsync(id);
-            if (entity != null)
-            {
-                entity.IsVerified = true;
-                await _store.UpdateEmailSubscriberAsync(entity);
-            }
-        }
-        else
-        {
-            _logger.LogInformation("Confirming SMS subscriber {Id}", id);
-            var entity = await _store.GetSmsSubscriberByIdAsync(id);
-            if (entity != null)
-            {
-                entity.IsVerified = true;
-                await _store.UpdateSmsSubscriberAsync(entity);
-            }
+            await handler.ConfirmAsync(id);
         }
     }
 
     public async Task DeleteAsync(string type, int id)
     {
-        if (type == "Email")
+        if (_handlers.TryGetValue(type, out var handler))
         {
-            var entity = await _store.GetEmailSubscriberByIdAsync(id);
-            if (entity != null) await _store.RemoveEmailSubscriberAsync(entity);
-        }
-        else
-        {
-            _logger.LogInformation("Deleting SMS subscriber {Id}", id);
-            var entity = await _store.GetSmsSubscriberByIdAsync(id);
-            if (entity != null) await _store.RemoveSmsSubscriberAsync(entity);
+            await handler.DeleteAsync(id);
         }
     }
 
     public async Task<AdminSubscriberDto?> AddSubscriberAsync(string type, string contact)
     {
-        if (type == "Email")
+        if (_handlers.TryGetValue(type, out var handler))
         {
-            if (await _store.EmailSubscriberExistsAsync(contact))
-                return null;
-            var sub = new Subscriber
-            {
-                Email = contact,
-                IsVerified = true,
-                VerificationToken = Guid.NewGuid().ToString("N"),
-                UnsubscribeToken = Guid.NewGuid().ToString("N"),
-                CreatedAt = _time.UtcNow
-            };
-            await _store.AddEmailSubscriberAsync(sub);
-            return new AdminSubscriberDto(sub.Id, sub.Email, sub.IsVerified, "Email");
+            return await handler.AddSubscriberAsync(contact);
         }
-        else
-        {
-            if (await _store.SmsSubscriberExistsAsync(contact))
-                return null;
-            var sub = new SmsSubscriber
-            {
-                PhoneNumber = contact,
-                IsVerified = true,
-                VerificationToken = Guid.NewGuid().ToString("N"),
-                UnsubscribeToken = Guid.NewGuid().ToString("N"),
-                CreatedAt = _time.UtcNow
-            };
-            await _store.AddSmsSubscriberAsync(sub);
-            return new AdminSubscriberDto(sub.Id, sub.PhoneNumber, sub.IsVerified, "SMS");
-        }
+        return null;
     }
 
     public async Task<string> ExportSubscribersCsvAsync()
