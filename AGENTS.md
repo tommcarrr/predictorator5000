@@ -39,7 +39,7 @@ Codex must be proficient in the following technologies and frameworks, which are
   - Execute all tests with `dotnet test Predictorator.sln` which will automatically build the solution.
   - Only use `--no-build` with `dotnet test` after running `dotnet build Predictorator.sln`.
   - Avoid `--no-restore` unless you've already restored packages with `dotnet restore` (or built the solution).
-  - Playwright UI tests are skipped by default; set `RUN_UI_TESTS=true` (and optionally `BASE_URL` and `UI_TEST_TOKEN`) to enable them.
+  - Playwright UI tests are skipped by default; set `RUN_UI_TESTS=true` (and optionally `BASE_URL`) to enable them.
 
 ### Documentation
 
