@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,9 +33,6 @@ public class AdminPageAccessTests : IClassFixture<WebApplicationFactory<Program>
                 services.AddSingleton<IResend>(_ => Substitute.For<IResend>());
                 services.AddSingleton<ITwilioSmsSender>(_ => Substitute.For<ITwilioSmsSender>());
                 services.AddSingleton<IBackgroundJobService>(_ => Substitute.For<IBackgroundJobService>());
-                // remove hosted services
-                var toRemove = services.Where(d => d.ImplementationType == typeof(BackgroundJobProcessor) || d.ImplementationType == typeof(RecurringJobProcessor)).ToList();
-                foreach (var d in toRemove) services.Remove(d);
             });
         });
     }
