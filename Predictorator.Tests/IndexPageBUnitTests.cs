@@ -452,7 +452,7 @@ public class IndexPageBUnitTests
         cut.Find("input[type=checkbox]").Change(true);
         cut.FindAll("button").First(b => b.TextContent.Contains("Submit")).Click();
 
-        Assert.Contains("mailto:user@example.com", navMan.NavigatedTo);
+        cut.WaitForAssertion(() => Assert.Contains("mailto:user@example.com", navMan.NavigatedTo));
 
         var set = ctx.JSInterop.Invocations.Single(i => i.Identifier == "localStorage.setItem");
         Assert.Equal("predictionsEmail", set.Arguments[0]?.ToString());
@@ -500,8 +500,9 @@ public class IndexPageBUnitTests
         cut.Find("input[type=email]").Change("vip@example.com");
         cut.FindAll("button").First(b => b.TextContent.Contains("Submit")).Click();
 
+        cut.WaitForAssertion(() => Assert.Contains("mailto:vip@example.com", navMan.NavigatedTo));
+
         var uri = navMan.NavigatedTo!;
-        Assert.Contains("mailto:vip@example.com", uri);
         var bodyEncoded = uri.Split("&body=")[1];
         var bodyText = Uri.UnescapeDataString(bodyEncoded);
         Assert.StartsWith("Hello Helen Lyttle,", bodyText);
