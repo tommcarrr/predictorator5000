@@ -67,7 +67,6 @@ following keys (values shown are defaults):
 - `ProcessBackgroundJobsSchedule` = `0 */5 10-21 * * *`
 - `FixtureNotificationsSchedule` = `0 0 1 * * *`
 - `ClearExpiredSubscriptionsSchedule` = `0 0 * * * *`
-- `CheckUnverifiedExpiredSchedule` = `0 0 1 * * 1`
 
 To temporarily disable new subscriptions, set `Subscription:Disabled` to `true`.
 The notice shown in the subscribe dialog can be customized with
