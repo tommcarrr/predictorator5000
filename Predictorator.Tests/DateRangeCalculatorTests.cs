@@ -1,4 +1,4 @@
-using Predictorator.Services;
+using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
 
 namespace Predictorator.Tests;

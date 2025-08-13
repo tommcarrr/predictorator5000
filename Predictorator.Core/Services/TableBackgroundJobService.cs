@@ -1,10 +1,10 @@
 using System.Text.Json;
 using Azure.Data.Tables;
-using Predictorator.Models;
+using Predictorator.Core.Models;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace Predictorator.Services;
+namespace Predictorator.Core.Services;
 
 public class TableBackgroundJobService : IBackgroundJobService
 {

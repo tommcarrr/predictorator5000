@@ -12,6 +12,7 @@ using Predictorator.Components.Layout;
 using Predictorator.Tests.Helpers;
 using Predictorator.Components.Pages.Subscription;
 using Predictorator.Services;
+using Predictorator.Core.Services;
 
 namespace Predictorator.Tests;
 

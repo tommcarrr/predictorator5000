@@ -1,15 +1,15 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
-using Predictorator.Data;
-using Predictorator.Models;
-using Predictorator.Options;
+using Predictorator.Core.Data;
+using Predictorator.Core.Models;
+using Predictorator.Core.Options;
 using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
 using System.Linq;
 
-namespace Predictorator.Services;
+namespace Predictorator.Core.Services;
 
 public class GameWeekService : IGameWeekService
 {

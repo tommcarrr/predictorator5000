@@ -7,6 +7,7 @@ using MudBlazor;
 using NSubstitute;
 using Predictorator.Components.Pages.Subscription;
 using Predictorator.Services;
+using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
 using Resend;
 using Microsoft.Extensions.Logging.Abstractions;

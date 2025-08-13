@@ -6,8 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Predictorator.Models.Fixtures;
+using Predictorator.Core.Models.Fixtures;
 using Predictorator.Services;
+using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
 
 namespace Predictorator.Tests;
@@ -56,7 +57,7 @@ public class HomePageTests : IClassFixture<WebApplicationFactory<Program>>
                     }));
 
                 var gwService = new FakeGameWeekService();
-                gwService.Items.Add(new Predictorator.Models.GameWeek { Season = "24-25", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) });
+                gwService.Items.Add(new Predictorator.Core.Models.GameWeek { Season = "24-25", Number = 1, StartDate = DateTime.Today, EndDate = DateTime.Today.AddDays(6) });
                 services.AddSingleton<IGameWeekService>(gwService);
 
                 services.RemoveAll(typeof(IBrowserStorage));

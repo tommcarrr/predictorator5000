@@ -1,8 +1,8 @@
 using Azure;
 using Azure.Data.Tables;
-using Predictorator.Models;
+using Predictorator.Core.Models;
 
-namespace Predictorator.Data;
+namespace Predictorator.Core.Data;
 
 public class TableGameWeekRepository : IGameWeekRepository
 {

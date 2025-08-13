@@ -8,8 +8,10 @@ using NSubstitute;
 using AngleSharp.Dom;
 using Predictorator.Components;
 using Predictorator.Components.Layout;
-using Predictorator.Models.Fixtures;
+using Predictorator.Core.Models.Fixtures;
 using Predictorator.Services;
+using ThemeStyles = Predictorator.Themes.Themes;
+using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
 
 namespace Predictorator.Tests;
@@ -118,7 +120,7 @@ public class DarkModeBUnitTests
     [Fact]
     public void FootballTheme_Defines_DarkPalette()
     {
-        Assert.Equal("#121212", Themes.FootballPredictorTheme.PaletteDark!.Background);
-        Assert.Equal("#1E5F3E", Themes.FootballPredictorTheme.PaletteDark.Primary);
+        Assert.Equal("#121212", ThemeStyles.FootballPredictorTheme.PaletteDark!.Background);
+        Assert.Equal("#1E5F3E", ThemeStyles.FootballPredictorTheme.PaletteDark.Primary);
     }
 }

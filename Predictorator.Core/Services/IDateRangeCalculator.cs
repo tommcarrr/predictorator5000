@@ -1,4 +1,4 @@
-namespace Predictorator.Services;
+namespace Predictorator.Core.Services;
 
 public interface IDateRangeCalculator
 {

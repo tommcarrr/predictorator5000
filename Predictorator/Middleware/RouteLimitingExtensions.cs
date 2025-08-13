@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Predictorator.Options;
+using Predictorator.Core.Options;
 
 namespace Predictorator.Middleware;
 

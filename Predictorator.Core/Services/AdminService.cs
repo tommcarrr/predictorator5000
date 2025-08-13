@@ -1,6 +1,6 @@
-using Predictorator.Data;
+using Predictorator.Core.Data;
 using Microsoft.Extensions.Logging;
-using Predictorator.Models;
+using Predictorator.Core.Models;
 using Resend;
 using System;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.IO;
 using System.Text;
 using System.Globalization;
 
-namespace Predictorator.Services;
+namespace Predictorator.Core.Services;
 
 public class AdminSubscriberDto
 {

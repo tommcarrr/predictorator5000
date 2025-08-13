@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Predictorator.Endpoints;
-using Predictorator.Models;
+using Predictorator.Core.Models;
 using Predictorator.Services;
 
 namespace Predictorator.Tests;

@@ -1,4 +1,4 @@
-﻿namespace Predictorator.Models.Fixtures;
+﻿namespace Predictorator.Core.Models.Fixtures;
 
 public class Venue
 {

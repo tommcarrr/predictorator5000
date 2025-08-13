@@ -1,4 +1,4 @@
-namespace Predictorator.Options;
+namespace Predictorator.Core.Options;
 
 public class RouteLimitingOptions
 {

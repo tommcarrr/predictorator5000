@@ -1,6 +1,6 @@
 using PreMailer.Net;
 
-namespace Predictorator.Services;
+namespace Predictorator.Core.Services;
 
 public class EmailCssInliner
 {

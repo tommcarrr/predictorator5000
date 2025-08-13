@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Logging;
-using Predictorator.Data;
-using Predictorator.Models;
+using Predictorator.Core.Data;
+using Predictorator.Core.Models;
 using Resend;
 using System.Linq;
 
-namespace Predictorator.Services;
+namespace Predictorator.Core.Services;
 
 public class NotificationService
 {

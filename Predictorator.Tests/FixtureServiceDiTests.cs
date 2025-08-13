@@ -3,7 +3,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
-using Predictorator.Services;
+using Predictorator.Core.Services;
 
 namespace Predictorator.Tests;
 

@@ -1,10 +1,10 @@
 using Azure;
 using Azure.Data.Tables;
-using Predictorator.Models;
+using Predictorator.Core.Models;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 
-namespace Predictorator.Data;
+namespace Predictorator.Core.Data;
 
 public class TableDataStore : IDataStore
 {

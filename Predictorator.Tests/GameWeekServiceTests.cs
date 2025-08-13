@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Predictorator.Data;
-using Predictorator.Models;
-using Predictorator.Options;
-using Predictorator.Services;
+using Predictorator.Core.Data;
+using Predictorator.Core.Models;
+using Predictorator.Core.Options;
+using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
 using System.IO;
 using System.Linq;

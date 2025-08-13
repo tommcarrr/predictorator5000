@@ -1,6 +1,6 @@
 using System;
 
-namespace Predictorator.Services;
+namespace Predictorator.Core.Services;
 
 public class EmailTemplateRenderer
 {

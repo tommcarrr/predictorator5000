@@ -4,8 +4,8 @@ using Azure.Data.Tables;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Extensions.Timer;
 using Microsoft.Extensions.Logging;
-using Predictorator.Models;
-using Predictorator.Services;
+using Predictorator.Core.Models;
+using Predictorator.Core.Services;
 
 namespace Predictorator.Functions;
 

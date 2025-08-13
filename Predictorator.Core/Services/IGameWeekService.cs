@@ -1,7 +1,7 @@
 using System.IO;
-using Predictorator.Models;
+using Predictorator.Core.Models;
 
-namespace Predictorator.Services;
+namespace Predictorator.Core.Services;
 
 public interface IGameWeekService
 {

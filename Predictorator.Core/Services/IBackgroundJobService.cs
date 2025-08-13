@@ -1,6 +1,6 @@
-namespace Predictorator.Services;
+namespace Predictorator.Core.Services;
 
-using Predictorator.Models;
+using Predictorator.Core.Models;
 
 public interface IBackgroundJobService
 {

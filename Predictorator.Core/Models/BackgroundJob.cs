@@ -1,7 +1,7 @@
 using Azure;
 using Azure.Data.Tables;
 
-namespace Predictorator.Models;
+namespace Predictorator.Core.Models;
 
 public class BackgroundJob : ITableEntity
 {

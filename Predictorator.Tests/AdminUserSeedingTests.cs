@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
-using Predictorator.Options;
+using Predictorator.Core.Options;
 using Predictorator.Data;
 
 namespace Predictorator.Tests;

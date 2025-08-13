@@ -5,8 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using MudBlazor.Services;
 using Predictorator.Components.Layout;
-using Predictorator.Models.Fixtures;
+using Predictorator.Core.Models.Fixtures;
 using Predictorator.Services;
+using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
 using IndexPage = Predictorator.Components.Pages.Index;
 using System.Linq;
@@ -31,8 +32,8 @@ public class IndexPageBUnitTests
         var gwService = new FakeGameWeekService();
         var today = DateTime.UtcNow.Date;
         gwService.Items.AddRange([
-            new Predictorator.Models.GameWeek { Season = "24-25", Number = 1, StartDate = today, EndDate = today.AddDays(6) },
-            new Predictorator.Models.GameWeek { Season = "24-25", Number = 2, StartDate = today.AddDays(7), EndDate = today.AddDays(13) }
+            new Predictorator.Core.Models.GameWeek { Season = "24-25", Number = 1, StartDate = today, EndDate = today.AddDays(6) },
+            new Predictorator.Core.Models.GameWeek { Season = "24-25", Number = 2, StartDate = today.AddDays(7), EndDate = today.AddDays(13) }
         ]);
         ctx.Services.AddSingleton<IGameWeekService>(gwService);
         var provider = new FakeDateTimeProvider

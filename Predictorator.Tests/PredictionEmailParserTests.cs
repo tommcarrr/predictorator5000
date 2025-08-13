@@ -1,5 +1,5 @@
 using Xunit;
-using Predictorator.Services;
+using Predictorator.Core.Services;
 
 namespace Predictorator.Tests;
 
