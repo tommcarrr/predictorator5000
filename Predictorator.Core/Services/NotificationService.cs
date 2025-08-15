@@ -104,7 +104,7 @@ public class NotificationService
                 if (futureUk.Date == nowUk.Date)
                 {
                     var sendTimeUk = futureUk.Date.AddHours(10);
-                    var sendTimeUtc = TimeZoneInfo.ConvertTimeToUtc(sendTimeUk, UkTimeZone);
+                    var sendTimeUtc = TimeZoneInfo.ConvertTimeToUtc(sendTimeUk, UkTimeZone).AddMinutes(-1);
                     var delay = TimeExtensions.ClampDelay(sendTimeUtc, _time);
                     _logger.LogInformation("Scheduling new fixtures notification for {Date} with delay {Delay}", futureUk.Date, delay);
                     await _jobs.ScheduleAsync(
@@ -123,7 +123,7 @@ public class NotificationService
             var sent = await _sentNotifications.SentNotificationExistsAsync("FixturesStartingSoon", key);
             if (!sent)
             {
-                var sendTimeUtc = first.Fixture.Date.AddHours(-2);
+                var sendTimeUtc = first.Fixture.Date.AddHours(-2).AddMinutes(-1);
                 var delay = TimeExtensions.ClampDelay(sendTimeUtc, _time);
                 _logger.LogInformation("Scheduling fixtures starting soon notification for {Date} with delay {Delay}", firstUk, delay);
                 await _jobs.ScheduleAsync(

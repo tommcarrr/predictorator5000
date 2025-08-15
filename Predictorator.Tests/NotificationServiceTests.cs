@@ -68,7 +68,7 @@ public class NotificationServiceTests
         await jobs.Received().ScheduleAsync(
             "SendNewFixturesAvailable",
             Arg.Any<object>(),
-            Arg.Any<TimeSpan>());
+            Arg.Is<TimeSpan>(d => d == TimeSpan.FromMinutes(59)));
     }
 
     [Fact]
