@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Predictorator.Core.Data;
 using Predictorator.Core.Models;
+using System;
 using System.Linq;
 
 namespace Predictorator.Core.Services;
@@ -171,14 +172,32 @@ public class NotificationService
     private async Task SendToAllAsync(string message, string baseUrl, string type, string key)
     {
         var emails = await _emails.GetVerifiedEmailSubscribersAsync();
-        var emailTasks = emails.Select(sub => _emailSender.SendAsync(message, baseUrl, sub));
+        foreach (var sub in emails)
+        {
+            try
+            {
+                await _emailSender.SendAsync(message, baseUrl, sub);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending email to {Email}", sub.Email);
+            }
+        }
 
         _logger.LogInformation("Retrieving all verified SMS subscribers");
         var phones = await _smsSubscribers.GetVerifiedSmsSubscribersAsync();
         _logger.LogInformation("Sending notification to {Count} SMS subscribers", phones.Count);
-        var smsTasks = phones.Select(sub => _smsSender.SendAsync(message, baseUrl, sub));
-
-        await Task.WhenAll(emailTasks.Concat(smsTasks));
+        foreach (var sub in phones)
+        {
+            try
+            {
+                await _smsSender.SendAsync(message, baseUrl, sub);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending SMS to {Phone}", sub.PhoneNumber);
+            }
+        }
 
         await _sentNotifications.AddSentNotificationAsync(new SentNotification
         {
