@@ -100,4 +100,20 @@ public class NotificationServiceTests
         await smsSender.Received().SendAsync("Fixtures start today!", "http://localhost", Arg.Any<SmsSubscriber>());
         Assert.Single(store.SentNotifications);
     }
+
+    [Fact]
+    public async Task SendNewFixturesAvailableAsync_handles_sender_errors()
+    {
+        var now = DateTime.UtcNow;
+        var service = CreateService(now, now.AddDays(1), out var store, out _, out var emailSender, out _);
+        var sub = new Subscriber { Email = "u@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = now };
+        store.EmailSubscribers.Add(sub);
+        emailSender
+            .SendAsync(Arg.Any<string>(), Arg.Any<string>(), sub)
+            .Returns<Task>(_ => throw new Exception("boom"));
+
+        await service.SendNewFixturesAvailableAsync("key", "http://localhost");
+
+        Assert.Single(store.SentNotifications);
+    }
 }
