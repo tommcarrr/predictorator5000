@@ -13,7 +13,7 @@ namespace Predictorator.Tests;
 
 public class AdminServiceTests
 {
-    private static AdminService CreateService(out InMemoryDataStore store, out INotificationSender<Subscriber> emailSender, out INotificationSender<SmsSubscriber> smsSender, out IBackgroundJobService jobs, out FakeDateTimeProvider provider)
+    private static AdminService CreateService(out InMemoryDataStore store, out INotificationSender<Subscriber> emailSender, out INotificationSender<SmsSubscriber> smsSender, out IBackgroundJobService jobs, out FakeDateTimeProvider provider, out IBackgroundJobErrorService errors)
     {
         store = new InMemoryDataStore();
         emailSender = Substitute.For<INotificationSender<Subscriber>>();
@@ -30,19 +30,20 @@ public class AdminServiceTests
         var range = new DateRangeCalculator(provider);
         var features = new NotificationFeatureService(config);
         jobs = Substitute.For<IBackgroundJobService>();
+        errors = Substitute.For<IBackgroundJobErrorService>();
         var nLogger = NullLogger<NotificationService>.Instance;
         var gameWeeks = new FakeGameWeekService();
         gameWeeks.Items.Add(new GameWeek { Season = "25-26", Number = 1, StartDate = provider.UtcNow.Date, EndDate = provider.UtcNow.Date.AddDays(6) });
         var notifications = new NotificationService(store, store, store, config, fixtures, gameWeeks, range, features, provider, jobs, emailSender, smsSender, nLogger);
         var aLogger = NullLogger<AdminService>.Instance;
         var prefix = new CachePrefixService();
-        return new AdminService(store, store, config, notifications, aLogger, jobs, provider, prefix, emailSender, smsSender);
+        return new AdminService(store, store, config, notifications, aLogger, jobs, provider, prefix, emailSender, smsSender, errors);
     }
 
     [Fact]
     public async Task AddSubscriberAsync_adds_verified_email()
     {
-        var service = CreateService(out var store, out _, out _, out _, out _);
+        var service = CreateService(out var store, out _, out _, out _, out _, out _);
         var dto = await service.AddSubscriberAsync("Email", "user@example.com");
 
         var sub = store.EmailSubscribers.Single();
@@ -55,7 +56,7 @@ public class AdminServiceTests
     [Fact]
     public async Task AddSubscriberAsync_adds_verified_sms()
     {
-        var service = CreateService(out var store, out _, out _, out _, out _);
+        var service = CreateService(out var store, out _, out _, out _, out _, out _);
         var dto = await service.AddSubscriberAsync("SMS", "+1");
 
         var sub = store.SmsSubscribers.Single();
@@ -68,7 +69,7 @@ public class AdminServiceTests
     [Fact]
     public async Task ConfirmAsync_marks_subscriber_verified()
     {
-        var service = CreateService(out var store, out _, out _, out _, out _);
+        var service = CreateService(out var store, out _, out _, out _, out _, out _);
         var subscriber = new Subscriber { Email = "a", IsVerified = false, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow };
         await store.AddEmailSubscriberAsync(subscriber);
 
@@ -80,7 +81,7 @@ public class AdminServiceTests
     [Fact]
     public async Task DeleteAsync_removes_sms_subscriber()
     {
-        var service = CreateService(out var store, out _, out _, out _, out _);
+        var service = CreateService(out var store, out _, out _, out _, out _, out _);
         var smsSub = new SmsSubscriber { PhoneNumber = "+1", VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow };
         await store.AddSmsSubscriberAsync(smsSub);
 
@@ -92,7 +93,7 @@ public class AdminServiceTests
     [Fact]
     public async Task SendNewFixturesSampleAsync_sends_email_and_sms()
     {
-        var service = CreateService(out var store, out var emailSender, out var smsSender, out _, out _);
+        var service = CreateService(out var store, out var emailSender, out var smsSender, out _, out _, out _);
         store.EmailSubscribers.Add(new Subscriber { Id = 1, Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
         store.SmsSubscribers.Add(new SmsSubscriber { Id = 2, PhoneNumber = "+1", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
         var recipients = new List<AdminSubscriberDto>
@@ -110,7 +111,7 @@ public class AdminServiceTests
     [Fact]
     public async Task SendFixturesStartingSoonSampleAsync_sends_email_and_sms()
     {
-        var service = CreateService(out var store, out var emailSender, out var smsSender, out _, out _);
+        var service = CreateService(out var store, out var emailSender, out var smsSender, out _, out _, out _);
         store.EmailSubscribers.Add(new Subscriber { Id = 1, Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
         store.SmsSubscribers.Add(new SmsSubscriber { Id = 2, PhoneNumber = "+1", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
         var recipients = new List<AdminSubscriberDto>
@@ -128,7 +129,7 @@ public class AdminServiceTests
     [Fact]
     public async Task ScheduleFixturesStartingSoonSampleAsync_schedules_job()
     {
-        var service = CreateService(out var store, out _, out _, out var jobs, out var time);
+        var service = CreateService(out var store, out _, out _, out var jobs, out var time, out _);
         var recipients = new List<AdminSubscriberDto>
         {
             new(1, "a@example.com", true, "Email")
@@ -147,7 +148,7 @@ public class AdminServiceTests
     [Fact]
     public async Task ScheduleNewFixturesAsync_schedules_job()
     {
-        var service = CreateService(out _, out _, out _, out var jobs, out var time);
+        var service = CreateService(out _, out _, out _, out var jobs, out var time, out _);
         var sendAt = time.UtcNow.AddMinutes(30);
 
         await service.ScheduleNewFixturesAsync(sendAt);
@@ -161,7 +162,7 @@ public class AdminServiceTests
     [Fact]
     public async Task ScheduleFixturesStartingSoonAsync_schedules_job()
     {
-        var service = CreateService(out _, out _, out _, out var jobs, out var time);
+        var service = CreateService(out _, out _, out _, out var jobs, out var time, out _);
         var sendAt = time.UtcNow.AddMinutes(30);
 
         await service.ScheduleFixturesStartingSoonAsync(sendAt);
@@ -175,7 +176,7 @@ public class AdminServiceTests
     [Fact]
     public async Task ExportSubscribersCsvAsync_exports_all()
     {
-        var service = CreateService(out var store, out _, out _, out _, out _);
+        var service = CreateService(out var store, out _, out _, out _, out _, out _);
         store.EmailSubscribers.Add(new Subscriber { Email = "user@example.com", IsVerified = true, VerificationToken = "v", UnsubscribeToken = "u", CreatedAt = DateTime.UtcNow });
         store.SmsSubscribers.Add(new SmsSubscriber { PhoneNumber = "+1", IsVerified = false, VerificationToken = "v2", UnsubscribeToken = "u2", CreatedAt = DateTime.UtcNow });
 
@@ -189,7 +190,7 @@ public class AdminServiceTests
     [Fact]
     public async Task ImportSubscribersCsvAsync_adds_new_and_skips_existing()
     {
-        var service = CreateService(out var store, out _, out _, out _, out var provider);
+        var service = CreateService(out var store, out _, out _, out _, out var provider, out _);
         store.EmailSubscribers.Add(new Subscriber { Email = "existing@example.com", IsVerified = true, VerificationToken = "v1", UnsubscribeToken = "u1", CreatedAt = provider.UtcNow });
         var csv = "Type,Contact,IsVerified,VerificationToken,UnsubscribeToken,CreatedAt\n" +
                   $"Email,existing@example.com,true,v1,u1,{provider.UtcNow:O}\n" +
@@ -206,7 +207,7 @@ public class AdminServiceTests
     [Fact]
     public async Task GetJobsAsync_returns_jobs()
     {
-        var service = CreateService(out _, out _, out _, out var jobs, out _);
+        var service = CreateService(out _, out _, out _, out var jobs, out _, out _);
         var list = new List<BackgroundJob> { new() { RowKey = "1", JobType = "Test", RunAt = DateTimeOffset.UtcNow } };
         jobs.GetJobsAsync().Returns(list);
 
@@ -219,10 +220,33 @@ public class AdminServiceTests
     [Fact]
     public async Task DeleteJobAsync_calls_service()
     {
-        var service = CreateService(out _, out _, out _, out var jobs, out _);
+        var service = CreateService(out _, out _, out _, out var jobs, out _, out _);
 
         await service.DeleteJobAsync("abc");
 
         await jobs.Received().DeleteAsync("abc");
+    }
+
+    [Fact]
+    public async Task GetErrorsAsync_returns_errors()
+    {
+        var service = CreateService(out _, out _, out _, out _, out _, out var errors);
+        var list = new List<BackgroundJobError> { new() { RowKey = "1", JobType = "Test", Message = "err", OccurredAt = DateTimeOffset.UtcNow } };
+        errors.GetErrorsAsync().Returns(list);
+
+        var result = await service.GetErrorsAsync();
+
+        Assert.Single(result);
+        Assert.Equal("Test", result[0].JobType);
+    }
+
+    [Fact]
+    public async Task DeleteErrorAsync_calls_service()
+    {
+        var service = CreateService(out _, out _, out _, out _, out _, out var errors);
+
+        await service.DeleteErrorAsync("1");
+
+        await errors.Received().DeleteErrorAsync("1");
     }
 }

@@ -101,6 +101,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<INotificationSender<SmsSubscriber>, SmsNotificationSender>();
         services.AddSingleton<NotificationFeatureService>();
         services.AddSingleton<IBackgroundJobService, TableBackgroundJobService>();
+        services.AddSingleton<IBackgroundJobErrorService, TableBackgroundJobErrorService>();
         services.Configure<AdminUserOptions>(options =>
         {
             configuration.GetSection(AdminUserOptions.SectionName).Bind(options);

@@ -1,0 +1,56 @@
+@rendermode InteractiveServer
+@inject AdminService AdminService
+@inject ToastInterop Toast
+@inject IDialogService DialogService
+@using Predictorator.Core.Models
+@using Predictorator.Components
+
+<h2>Errors</h2>
+@if (_errors == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <MudTable Items="_errors" Hover="true" Breakpoint="Breakpoint.None">
+        <HeaderContent>
+            <MudTh>Type</MudTh>
+            <MudTh>Occurred At (UTC)</MudTh>
+            <MudTh>Message</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate Context="row">
+            <MudTd>@row.JobType</MudTd>
+            <MudTd>@row.OccurredAt.ToString("u")</MudTd>
+            <MudTd>@row.Message</MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" OnClick="@(() => ViewAsync(row))">View</MudButton>
+                <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Filled" OnClick="@(() => DeleteAsync(row))">Delete</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    private List<BackgroundJobError>? _errors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var data = await AdminService.GetErrorsAsync();
+        _errors = data.ToList();
+    }
+
+    private void ViewAsync(BackgroundJobError error)
+    {
+        var parameters = new DialogParameters { ["Error"] = error };
+        DialogService.Show<ErrorDialog>("Error Details", parameters);
+    }
+
+    private async Task DeleteAsync(BackgroundJobError error)
+    {
+        await AdminService.DeleteErrorAsync(error.RowKey);
+        _errors!.Remove(error);
+        await Toast.ShowToast("Error deleted!", "success");
+    }
+}
+

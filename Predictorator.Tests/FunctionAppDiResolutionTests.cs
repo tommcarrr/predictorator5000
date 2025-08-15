@@ -55,6 +55,7 @@ public class FunctionAppDiResolutionTests
         services.Configure<TwilioOptions>(configuration.GetSection(TwilioOptions.SectionName));
         services.AddTransient<ITwilioSmsSender, TwilioSmsSender>();
         services.AddSingleton<IBackgroundJobService>(_ => Substitute.For<IBackgroundJobService>());
+        services.AddSingleton<IBackgroundJobErrorService>(_ => Substitute.For<IBackgroundJobErrorService>());
         services.AddSingleton<EmailCssInliner>();
         services.AddSingleton<EmailTemplateRenderer>();
         services.AddTransient<INotificationSender<Subscriber>, EmailNotificationSender>();

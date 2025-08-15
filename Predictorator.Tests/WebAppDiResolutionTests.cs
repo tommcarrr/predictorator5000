@@ -38,12 +38,14 @@ public class WebAppDiResolutionTests : IClassFixture<WebApplicationFactory<Progr
                 services.RemoveAll<TableDataStore>();
                 services.RemoveAll<IGameWeekRepository>();
                 services.RemoveAll<IBackgroundJobService>();
+                services.RemoveAll<IBackgroundJobErrorService>();
                 var store = new InMemoryDataStore();
                 services.AddSingleton<IEmailSubscriberRepository>(store);
                 services.AddSingleton<ISmsSubscriberRepository>(store);
                 services.AddSingleton<ISentNotificationRepository>(store);
                 services.AddSingleton<IGameWeekRepository, InMemoryGameWeekRepository>();
                 services.AddSingleton<IBackgroundJobService>(_ => Substitute.For<IBackgroundJobService>());
+                services.AddSingleton<IBackgroundJobErrorService>(_ => Substitute.For<IBackgroundJobErrorService>());
                 descriptors = services;
             });
         });
