@@ -52,54 +52,69 @@ public class ProcessBackgroundJobsFunction
     [Function("ProcessBackgroundJobs")]
     public async Task Run([TimerTrigger("%ProcessBackgroundJobsSchedule%")] TimerInfo timer)
     {
-        var now = _time.UtcNow;
-        _logger.LogInformation("Processing background jobs at {Time}", now);
-        var jobs = _table.Query<BackgroundJob>(j => j.RunAt <= now).ToList();
-        _logger.LogInformation("Found {Count} job(s) to process", jobs.Count);
-        var results = new List<JobResult>();
-        foreach (var job in jobs)
+        try
         {
-            try
+            var now = _time.UtcNow;
+            _logger.LogInformation("Processing background jobs at {Time}", now);
+            var jobs = _table.Query<BackgroundJob>(j => j.RunAt <= now).ToList();
+            _logger.LogInformation("Found {Count} job(s) to process", jobs.Count);
+            var results = new List<JobResult>();
+            foreach (var job in jobs)
             {
-                _logger.LogInformation("Running job {JobId} of type {JobType}", job.RowKey, job.JobType);
-                switch (job.JobType)
+                try
                 {
-                    case "SendSample":
-                        var sample = JsonSerializer.Deserialize<SamplePayload>(job.Payload)!;
-                        await _notifications.SendSampleAsync(sample.Recipients, sample.Message, sample.BaseUrl);
-                        break;
-                    case "SendNewFixturesAvailable":
-                        var nf = JsonSerializer.Deserialize<KeyPayload>(job.Payload)!;
-                        await _notifications.SendNewFixturesAvailableAsync(nf.Key, nf.BaseUrl);
-                        break;
-                    case "SendFixturesStartingSoon":
-                        var fs = JsonSerializer.Deserialize<KeyPayload>(job.Payload)!;
-                        await _notifications.SendFixturesStartingSoonAsync(fs.Key, fs.BaseUrl);
-                        break;
+                    _logger.LogInformation("Running job {JobId} of type {JobType}", job.RowKey, job.JobType);
+                    switch (job.JobType)
+                    {
+                        case "SendSample":
+                            var sample = JsonSerializer.Deserialize<SamplePayload>(job.Payload)!;
+                            await _notifications.SendSampleAsync(sample.Recipients, sample.Message, sample.BaseUrl);
+                            break;
+                        case "SendNewFixturesAvailable":
+                            var nf = JsonSerializer.Deserialize<KeyPayload>(job.Payload)!;
+                            await _notifications.SendNewFixturesAvailableAsync(nf.Key, nf.BaseUrl);
+                            break;
+                        case "SendFixturesStartingSoon":
+                            var fs = JsonSerializer.Deserialize<KeyPayload>(job.Payload)!;
+                            await _notifications.SendFixturesStartingSoonAsync(fs.Key, fs.BaseUrl);
+                            break;
+                    }
+                    await _table.DeleteEntityAsync(job.PartitionKey, job.RowKey);
+                    _logger.LogInformation("Job {JobId} processed", job.RowKey);
+                    results.Add(new JobResult(job.RowKey, job.JobType, true, null));
                 }
-                await _table.DeleteEntityAsync(job.PartitionKey, job.RowKey);
-                _logger.LogInformation("Job {JobId} processed", job.RowKey);
-                results.Add(new JobResult(job.RowKey, job.JobType, true, null));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error running background job {JobId}", job.RowKey);
-                results.Add(new JobResult(job.RowKey, job.JobType, false, ex));
-                await _errors.AddErrorAsync(new BackgroundJobError
+                catch (Exception ex)
                 {
-                    JobId = job.RowKey,
-                    JobType = job.JobType,
-                    Message = ex.Message,
-                    StackTrace = ex.ToString(),
-                    OccurredAt = _time.UtcNow
-                });
+                    _logger.LogError(ex, "Error running background job {JobId}", job.RowKey);
+                    results.Add(new JobResult(job.RowKey, job.JobType, false, ex));
+                    await _errors.AddErrorAsync(new BackgroundJobError
+                    {
+                        JobId = job.RowKey,
+                        JobType = job.JobType,
+                        Message = ex.Message,
+                        StackTrace = ex.ToString(),
+                        OccurredAt = _time.UtcNow
+                    });
+                }
             }
+            if (results.Any())
+            {
+                await SendReportAsync(results);
+            }
+            _logger.LogInformation("Background job processing completed at {Time}", _time.UtcNow);
         }
-        if (results.Any())
+        catch (Exception ex)
         {
-            await SendReportAsync(results);
+            _logger.LogError(ex, "Error running ProcessBackgroundJobs");
+            await _errors.AddErrorAsync(new BackgroundJobError
+            {
+                JobId = "ProcessBackgroundJobs",
+                JobType = "ProcessBackgroundJobs",
+                Message = ex.Message,
+                StackTrace = ex.ToString(),
+                OccurredAt = _time.UtcNow
+            });
         }
-        _logger.LogInformation("Background job processing completed at {Time}", _time.UtcNow);
     }
 
     private record SamplePayload(List<AdminSubscriberDto> Recipients, string Message, string BaseUrl);
