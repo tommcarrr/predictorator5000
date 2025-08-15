@@ -37,6 +37,7 @@ public class AdminPageAccessTests : IClassFixture<WebApplicationFactory<Program>
                 services.AddSingleton<IResend>(_ => Substitute.For<IResend>());
                 services.AddSingleton<ITwilioSmsSender>(_ => Substitute.For<ITwilioSmsSender>());
                 services.AddSingleton<IBackgroundJobService>(_ => Substitute.For<IBackgroundJobService>());
+                services.AddSingleton<IBackgroundJobErrorService>(_ => Substitute.For<IBackgroundJobErrorService>());
             });
         });
     }

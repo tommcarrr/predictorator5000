@@ -1,0 +1,20 @@
+@using Predictorator.Core.Models
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.subtitle1">@Error.JobType (@Error.JobId)</MudText>
+        <MudText Typo="Typo.body2" Class="mt-2">@Error.Message</MudText>
+        <MudText Typo="Typo.caption" Class="mt-4" Style="white-space: pre-wrap">@Error.StackTrace</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Color="Color.Primary">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance DialogInstance { get; set; } = default!;
+    [Parameter] public BackgroundJobError Error { get; set; } = default!;
+
+    void Close() => DialogInstance.Close();
+}
+

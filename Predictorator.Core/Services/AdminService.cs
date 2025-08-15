@@ -41,6 +41,7 @@ public class AdminService
     private readonly CachePrefixService _prefix;
     private readonly INotificationSender<Subscriber> _emailSender;
     private readonly INotificationSender<SmsSubscriber> _smsSender;
+    private readonly IBackgroundJobErrorService _errors;
 
     public AdminService(
         IEmailSubscriberRepository emails,
@@ -52,7 +53,8 @@ public class AdminService
         IDateTimeProvider time,
         CachePrefixService prefix,
         INotificationSender<Subscriber> emailSender,
-        INotificationSender<SmsSubscriber> smsSender)
+        INotificationSender<SmsSubscriber> smsSender,
+        IBackgroundJobErrorService errors)
     {
         _emails = emails;
         _smsSubscribers = smsSubscribers;
@@ -64,6 +66,7 @@ public class AdminService
         _prefix = prefix;
         _emailSender = emailSender;
         _smsSender = smsSender;
+        _errors = errors;
     }
 
     public async Task<List<AdminSubscriberDto>> GetSubscribersAsync()
@@ -332,6 +335,17 @@ public class AdminService
     public Task DeleteJobAsync(string id)
     {
         return _jobs.DeleteAsync(id);
+    }
+
+    public async Task<List<BackgroundJobError>> GetErrorsAsync()
+    {
+        var errors = await _errors.GetErrorsAsync();
+        return errors.ToList();
+    }
+
+    public Task DeleteErrorAsync(string id)
+    {
+        return _errors.DeleteErrorAsync(id);
     }
 
     public Task ClearCachesAsync()
