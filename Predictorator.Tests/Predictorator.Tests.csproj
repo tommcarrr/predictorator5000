@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Predictorator\Predictorator.csproj" />
+    <ProjectReference Include="..\Predictorator.Functions\Predictorator.Functions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

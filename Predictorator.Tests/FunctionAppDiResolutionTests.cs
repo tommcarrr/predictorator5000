@@ -4,13 +4,13 @@ using System.IO;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using Predictorator.Core.Data;
-using Predictorator.Core.Options;
 using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
-using Resend;
 using Predictorator.Core.Models;
+using Predictorator.Functions;
 
 namespace Predictorator.Tests;
 
@@ -29,7 +29,8 @@ public class FunctionAppDiResolutionTests
                 ["Twilio:FromNumber"] = "+1000000000",
                 ["Twilio:AccountSid"] = "sid",
                 ["Twilio:AuthToken"] = "token",
-                ["GameWeekCache:CacheDurationHours"] = "1"
+                ["GameWeekCache:CacheDurationHours"] = "1",
+                ["ConnectionStrings:TableStorage"] = "UseDevelopmentStorage=true"
             })
             .Build();
 
@@ -40,37 +41,23 @@ public class FunctionAppDiResolutionTests
         env.ContentRootPath.Returns(Directory.GetCurrentDirectory());
         services.AddSingleton<IHostEnvironment>(env);
 
-        services.AddHttpClient("fixtures", client =>
-        {
-            client.BaseAddress = new Uri("https://api-football-v1.p.rapidapi.com/v3/");
-        });
-        services.AddHttpContextAccessor();
-        services.AddTransient<IFixtureService, FixtureService>();
-        services.AddSingleton<IDateRangeCalculator, DateRangeCalculator>();
-        services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
-        services.AddSingleton<NotificationFeatureService>();
-        services.AddHttpClient<ResendClient>();
-        services.Configure<ResendClientOptions>(o => o.ApiToken = configuration["Resend:ApiToken"]!);
-        services.AddTransient<IResend, ResendClient>();
-        services.Configure<TwilioOptions>(configuration.GetSection(TwilioOptions.SectionName));
-        services.AddTransient<ITwilioSmsSender, TwilioSmsSender>();
-        services.AddSingleton<IBackgroundJobService>(_ => Substitute.For<IBackgroundJobService>());
-        services.AddSingleton<IBackgroundJobErrorService>(_ => Substitute.For<IBackgroundJobErrorService>());
-        services.AddSingleton<EmailCssInliner>();
-        services.AddSingleton<EmailTemplateRenderer>();
-        services.AddTransient<INotificationSender<Subscriber>, EmailNotificationSender>();
-        services.AddTransient<INotificationSender<SmsSubscriber>, SmsNotificationSender>();
-        services.AddHybridCache();
-        services.Configure<GameWeekCacheOptions>(configuration.GetSection(GameWeekCacheOptions.SectionName));
-        services.AddSingleton<CachePrefixService>();
-        services.AddTransient<IGameWeekService, GameWeekService>();
+        services.AddPredictoratorFunctionServices(configuration);
+
+        services.RemoveAll<IEmailSubscriberRepository>();
+        services.RemoveAll<ISmsSubscriberRepository>();
+        services.RemoveAll<ISentNotificationRepository>();
+        services.RemoveAll<TableDataStore>();
+        services.RemoveAll<IGameWeekRepository>();
+        services.RemoveAll<IBackgroundJobService>();
+        services.RemoveAll<IBackgroundJobErrorService>();
+
         var store = new InMemoryDataStore();
         services.AddSingleton<IEmailSubscriberRepository>(store);
         services.AddSingleton<ISmsSubscriberRepository>(store);
         services.AddSingleton<ISentNotificationRepository>(store);
         services.AddSingleton<IGameWeekRepository, InMemoryGameWeekRepository>();
-        services.AddTransient<SubscriptionService>();
-        services.AddTransient<NotificationService>();
+        services.AddSingleton<IBackgroundJobService>(_ => Substitute.For<IBackgroundJobService>());
+        services.AddSingleton<IBackgroundJobErrorService>(_ => Substitute.For<IBackgroundJobErrorService>());
 
         _provider = services.BuildServiceProvider();
         _services = services;
