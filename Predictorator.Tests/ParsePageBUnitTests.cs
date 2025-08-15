@@ -176,6 +176,7 @@ public class ParsePageBUnitTests
 
         const string text = "Monday, January 1, 2024\nTeam A 1 - 2 Team B";
         await using var ctx = CreateContext(fixtures, fixtureTime.AddHours(4));
+        ctx.JSInterop.Setup<bool>("app.copyToClipboardText", _ => true).SetResult(true);
         var provider = ctx.Render<MudSnackbarProvider>();
         var cut = ctx.Render<Parse>();
 
@@ -184,7 +185,7 @@ public class ParsePageBUnitTests
         cut.FindAll("button").First(b => b.TextContent == "Parse").Click();
         cut.FindAll("button").First(b => b.TextContent == "Copy to Clipboard").Click();
 
-        var invocation = ctx.JSInterop.Invocations.Single(i => i.Identifier == "navigator.clipboard.writeText");
+        var invocation = ctx.JSInterop.Invocations.Single(i => i.Identifier == "app.copyToClipboardText");
         var lines = invocation.Arguments[0]?.ToString()?.Split('\n', StringSplitOptions.RemoveEmptyEntries);
         Assert.Equal("Name\tDate\tHome Team\tHome Prediction\tHome Actual\tAway Prediction\tAway Actual\tAway Team\tPoints", lines![0]);
         Assert.Equal("Bob\t01/01/2024\tTeam A\t1\t3\t2\t2\tTeam B\t0", lines[1]);

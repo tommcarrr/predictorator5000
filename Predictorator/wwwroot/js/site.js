@@ -19,8 +19,13 @@ window.app = (() => {
         }
     }
 
+    function isSafari() {
+        const ua = navigator.userAgent;
+        return ua.includes('Safari') && !ua.includes('Chrome') && !ua.includes('Chromium');
+    }
+
     function copyToClipboardText(text) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
+        if (!isSafari() && navigator.clipboard && navigator.clipboard.writeText) {
             return navigator.clipboard.writeText(text)
                 .then(() => true)
                 .catch(err => {
@@ -29,7 +34,7 @@ window.app = (() => {
                 });
         }
 
-        return fallbackCopyText(text);
+        return Promise.resolve(fallbackCopyText(text));
     }
 
     function fallbackCopyHtml(html) {
@@ -46,7 +51,7 @@ window.app = (() => {
     }
 
     function copyToClipboardHtml(html) {
-        if (navigator.clipboard && window.ClipboardItem) {
+        if (!isSafari() && navigator.clipboard && window.ClipboardItem) {
             const item = new ClipboardItem({
                 'text/html': new Blob([html], { type: 'text/html' })
             });
@@ -58,7 +63,7 @@ window.app = (() => {
                 });
         }
 
-        return fallbackCopyHtml(html);
+        return Promise.resolve(fallbackCopyHtml(html));
     }
 
     let ceefaxTimer = null;
@@ -207,6 +212,8 @@ window.app = (() => {
 
       return {
           copyPredictions,
+          copyToClipboardText,
+          copyToClipboardHtml,
           registerScoreInputs,
           registerToastHandler,
           setCeefax,
