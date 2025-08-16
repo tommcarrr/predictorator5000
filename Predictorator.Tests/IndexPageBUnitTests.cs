@@ -137,6 +137,24 @@ public class IndexPageBUnitTests
     }
 
     [Fact]
+    public async Task Registers_Pong_EasterEgg_On_First_Render()
+    {
+        await using var ctx = CreateContext();
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
+            b.CloseComponent();
+        };
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        cut.WaitForAssertion(() =>
+        {
+            ctx.JSInterop.Invocations.Single(i => i.Identifier == "app.registerPongEasterEgg");
+        });
+    }
+
+    [Fact]
     public async Task FixtureRow_Should_Render_With_Alignment_Classes()
     {
         await using var ctx = CreateContext();
