@@ -93,30 +93,23 @@ public class NotificationService
         var nowUtc = _time.UtcNow;
         var nowUk = TimeZoneInfo.ConvertTimeFromUtc(nowUtc, UkTimeZone);
         var ordered = response.Response.OrderBy(f => f.Fixture.Date).ToList();
-        var future = ordered.FirstOrDefault(f => f.Fixture.Date.ToUniversalTime() > nowUtc);
-        if (future != null)
-        {
-            var key = future.Fixture.Date.Date.ToString("yyyy-MM-dd");
-            var sent = await _sentNotifications.SentNotificationExistsAsync("NewFixtures", key);
-            if (!sent)
-            {
-                var futureUk = TimeZoneInfo.ConvertTime(future.Fixture.Date, UkTimeZone);
-                if (futureUk.Date == nowUk.Date)
-                {
-                    var sendTimeUk = futureUk.Date.AddHours(10);
-                    var sendTimeUtc = TimeZoneInfo.ConvertTimeToUtc(sendTimeUk, UkTimeZone).AddMinutes(-1);
-                    var delay = TimeExtensions.ClampDelay(sendTimeUtc, _time);
-                    _logger.LogInformation("Scheduling new fixtures notification for {Date} with delay {Delay}", futureUk.Date, delay);
-                    await _jobs.ScheduleAsync(
-                        "SendNewFixturesAvailable",
-                        new { Key = key, BaseUrl = baseUrl },
-                        delay);
-                }
-            }
-        }
-
         var first = ordered.First();
         var firstUk = TimeZoneInfo.ConvertTime(first.Fixture.Date, UkTimeZone);
+
+        var newFixturesKey = firstUk.Date.ToString("yyyy-MM-dd");
+        var newFixturesSent = await _sentNotifications.SentNotificationExistsAsync("NewFixtures", newFixturesKey);
+        if (!newFixturesSent && firstUk.Date == nowUk.Date && first.Fixture.Date.ToUniversalTime() > nowUtc)
+        {
+            var sendTimeUk = firstUk.Date.AddHours(10);
+            var sendTimeUtc = TimeZoneInfo.ConvertTimeToUtc(sendTimeUk, UkTimeZone).AddMinutes(-1);
+            var delay = TimeExtensions.ClampDelay(sendTimeUtc, _time);
+            _logger.LogInformation("Scheduling new fixtures notification for {Date} with delay {Delay}", firstUk.Date, delay);
+            await _jobs.ScheduleAsync(
+                "SendNewFixturesAvailable",
+                new { Key = newFixturesKey, BaseUrl = baseUrl },
+                delay);
+        }
+
         if (firstUk.Date == nowUk.Date)
         {
             var key = first.Fixture.Date.ToString("O");

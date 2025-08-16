@@ -14,6 +14,27 @@ public class NotificationServiceTests
         out InMemoryDataStore store, out IBackgroundJobService jobs,
         out INotificationSender<Subscriber> emailSender, out INotificationSender<SmsSubscriber> smsSender)
     {
+        var response = new FixturesResponse
+        {
+            FromDate = nowUtc.Date,
+            ToDate = nowUtc.Date.AddDays(6),
+            Response = new List<FixtureData>
+            {
+                new()
+                {
+                    Fixture = new Fixture { Id = 1, Date = fixtureTimeUtc, Venue = new Venue { Name = "A", City = "B" } },
+                    Teams = new Teams { Home = new Team { Name = "H" }, Away = new Team { Name = "A" } },
+                    Score = new Score { Fulltime = new ScoreHomeAway() }
+                }
+            }
+        };
+        return CreateService(nowUtc, response, out store, out jobs, out emailSender, out smsSender);
+    }
+
+    private static NotificationService CreateService(DateTime nowUtc, FixturesResponse fixturesResponse,
+        out InMemoryDataStore store, out IBackgroundJobService jobs,
+        out INotificationSender<Subscriber> emailSender, out INotificationSender<SmsSubscriber> smsSender)
+    {
         store = new InMemoryDataStore();
         jobs = Substitute.For<IBackgroundJobService>();
         emailSender = Substitute.For<INotificationSender<Subscriber>>();
@@ -33,20 +54,7 @@ public class NotificationServiceTests
         var features = new NotificationFeatureService(config);
         var provider = new FakeDateTimeProvider { UtcNow = nowUtc, Today = nowUtc.Date };
         var calculator = new DateRangeCalculator(provider);
-        var fixtures = new FakeFixtureService(new FixturesResponse
-        {
-            FromDate = nowUtc.Date,
-            ToDate = nowUtc.Date.AddDays(6),
-            Response = new List<FixtureData>
-            {
-                new()
-                {
-                    Fixture = new Fixture { Id = 1, Date = fixtureTimeUtc, Venue = new Venue { Name = "A", City = "B" } },
-                    Teams = new Teams { Home = new Team { Name = "H" }, Away = new Team { Name = "A" } },
-                    Score = new Score { Fulltime = new ScoreHomeAway() }
-                }
-            }
-        });
+        var fixtures = new FakeFixtureService(fixturesResponse);
         var inliner = new EmailCssInliner();
         var renderer = new EmailTemplateRenderer();
         var gameWeeks = new FakeGameWeekService();
@@ -77,6 +85,45 @@ public class NotificationServiceTests
         var now = new DateTime(2024, 6, 1, 8, 0, 0, DateTimeKind.Utc);
         var fixture = now.AddDays(2);
         var service = CreateService(now, fixture, out _, out var jobs, out _, out _);
+
+        await service.CheckFixturesAsync();
+
+        await jobs.DidNotReceive().ScheduleAsync(
+            "SendNewFixturesAvailable",
+            Arg.Any<object>(),
+            Arg.Any<TimeSpan>());
+    }
+
+    [Fact]
+    public async Task CheckFixturesAsync_only_schedules_new_fixture_once_per_game_week()
+    {
+        var day1 = new DateTime(2024, 6, 1, 8, 0, 0, DateTimeKind.Utc);
+        var day1Fixture = day1.AddHours(2);
+        var day2 = day1.AddDays(1);
+        var day2Fixture = day2.AddHours(2);
+
+        var fixtures = new FixturesResponse
+        {
+            FromDate = day1.Date,
+            ToDate = day1.Date.AddDays(6),
+            Response = new List<FixtureData>
+            {
+                new()
+                {
+                    Fixture = new Fixture { Id = 1, Date = day1Fixture, Venue = new Venue { Name = "A", City = "B" } },
+                    Teams = new Teams { Home = new Team { Name = "H1" }, Away = new Team { Name = "A1" } },
+                    Score = new Score { Fulltime = new ScoreHomeAway() }
+                },
+                new()
+                {
+                    Fixture = new Fixture { Id = 2, Date = day2Fixture, Venue = new Venue { Name = "C", City = "D" } },
+                    Teams = new Teams { Home = new Team { Name = "H2" }, Away = new Team { Name = "A2" } },
+                    Score = new Score { Fulltime = new ScoreHomeAway() }
+                }
+            }
+        };
+
+        var service = CreateService(day2, fixtures, out _, out var jobs, out _, out _);
 
         await service.CheckFixturesAsync();
 
