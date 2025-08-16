@@ -232,7 +232,8 @@ window.app = (() => {
         if (!isMobileDevice()) return;
         document.querySelectorAll('.team-name').forEach(nameEl => {
             let timer = null;
-            const start = () => {
+            const start = (e) => {
+                e.preventDefault();
                 timer = setTimeout(() => {
                     const row = nameEl.closest('.fixture-row');
                     const playerIsHome = nameEl.classList.contains('home-name');
