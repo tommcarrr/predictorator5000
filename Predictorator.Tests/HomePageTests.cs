@@ -67,7 +67,7 @@ public class HomePageTests : IClassFixture<WebApplicationFactory<Program>>
         });
     }
 
-    [Fact(Skip="Requires table storage connection")]
+    [Fact(Skip = "Requires table storage connection")]
     public async Task Index_returns_view_with_buttons()
     {
         var client = _factory.CreateClient();

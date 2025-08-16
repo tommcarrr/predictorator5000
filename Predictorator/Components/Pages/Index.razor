@@ -361,6 +361,7 @@ else if (_fixtures.Response.Any())
         {
             var delay = Config.GetValue<int?>("ScoreInputFocusDelayMs") ?? 500;
             await Js.InvokeVoidAsync("app.registerScoreInputs", delay);
+            await Js.InvokeVoidAsync("app.registerPongEasterEgg");
         }
     }
 }

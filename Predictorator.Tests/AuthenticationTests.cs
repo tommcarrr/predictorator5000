@@ -16,7 +16,7 @@ public class AuthenticationTests : IClassFixture<WebApplicationFactory<Program>>
         });
     }
 
-    [Fact(Skip="Requires table storage connection")]
+    [Fact(Skip = "Requires table storage connection")]
     public async Task Register_Page_Should_Return_NotFound()
     {
         var client = _factory.CreateClient();
@@ -24,7 +24,7 @@ public class AuthenticationTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact(Skip="Requires table storage connection")]
+    [Fact(Skip = "Requires table storage connection")]
     public async Task Login_Endpoint_Returns_BadRequest_When_Body_Missing()
     {
         var client = _factory.CreateClient();

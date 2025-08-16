@@ -126,6 +126,126 @@ window.app = (() => {
             });
         });
     }
+
+    function startPongGame(row, playerIsHome) {
+        if (document.getElementById('pongOverlay')) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'pongOverlay';
+        overlay.innerHTML = '<canvas id="pongCanvas" width="300" height="150"></canvas>';
+        document.body.appendChild(overlay);
+
+        const canvas = overlay.querySelector('#pongCanvas');
+        const ctx = canvas.getContext('2d');
+        const paddleHeight = 40;
+        const paddleWidth = 5;
+        let playerY = canvas.height / 2 - paddleHeight / 2;
+        let computerY = playerY;
+        let ballX = canvas.width / 2;
+        let ballY = canvas.height / 2;
+        let ballVX = 2;
+        let ballVY = 2;
+        let playerScore = 0;
+        let compScore = 0;
+        let running = true;
+
+        function resetBall() {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            ballVX = -ballVX;
+            ballVY = 2 * (Math.random() > 0.5 ? 1 : -1);
+        }
+
+        canvas.addEventListener('touchmove', e => {
+            const rect = canvas.getBoundingClientRect();
+            playerY = e.touches[0].clientY - rect.top - paddleHeight / 2;
+            e.preventDefault();
+        });
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            playerY = e.clientY - rect.top - paddleHeight / 2;
+        });
+
+        function update() {
+            ballX += ballVX;
+            ballY += ballVY;
+            if (ballY < 0 || ballY > canvas.height) ballVY = -ballVY;
+
+            if (ballX <= paddleWidth) {
+                if (ballY > playerY && ballY < playerY + paddleHeight) {
+                    ballVX = -ballVX;
+                } else {
+                    compScore++;
+                    resetBall();
+                }
+            }
+
+            if (ballX >= canvas.width - paddleWidth) {
+                if (ballY > computerY && ballY < computerY + paddleHeight) {
+                    ballVX = -ballVX;
+                } else {
+                    playerScore++;
+                    resetBall();
+                }
+            }
+
+            if (ballY > computerY + paddleHeight / 2) computerY += 2;
+            else if (ballY < computerY + paddleHeight / 2) computerY -= 2;
+        }
+
+        function draw() {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, playerY, paddleWidth, paddleHeight);
+            ctx.fillRect(canvas.width - paddleWidth, computerY, paddleWidth, paddleHeight);
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = '16px sans-serif';
+            ctx.fillText(playerScore, canvas.width / 4, 20);
+            ctx.fillText(compScore, canvas.width * 3 / 4, 20);
+        }
+
+        function loop() {
+            if (!running) return;
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+        loop();
+
+        setTimeout(() => {
+            running = false;
+            overlay.remove();
+            const inputs = row.querySelectorAll('.score-input input');
+            if (inputs.length >= 2) {
+                inputs[playerIsHome ? 0 : 1].value = playerScore;
+                inputs[playerIsHome ? 0 : 1].dispatchEvent(new Event('input', { bubbles: true }));
+                inputs[playerIsHome ? 1 : 0].value = compScore;
+                inputs[playerIsHome ? 1 : 0].dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }, 30000);
+    }
+
+    function registerPongEasterEgg() {
+        if (!isMobileDevice()) return;
+        document.querySelectorAll('.team-name').forEach(nameEl => {
+            let timer = null;
+            const start = () => {
+                timer = setTimeout(() => {
+                    const row = nameEl.closest('.fixture-row');
+                    const playerIsHome = nameEl.classList.contains('home-name');
+                    startPongGame(row, playerIsHome);
+                }, 3000);
+            };
+            const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+            nameEl.addEventListener('touchstart', start);
+            nameEl.addEventListener('touchend', cancel);
+            nameEl.addEventListener('touchcancel', cancel);
+            nameEl.addEventListener('touchmove', cancel);
+        });
+    }
     
       function copyPredictions() {
         const groups = document.querySelectorAll('.fixture-group');
@@ -215,6 +335,7 @@ window.app = (() => {
           copyToClipboardText,
           copyToClipboardHtml,
           registerScoreInputs,
+          registerPongEasterEgg,
           registerToastHandler,
           setCeefax,
           login,
