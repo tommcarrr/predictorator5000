@@ -107,6 +107,7 @@ html, body {
     height: 100%;
     background: rgba(0,0,0,0.8);
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 1000;
@@ -115,6 +116,12 @@ html, body {
 #pongOverlay canvas {
     background: #000;
     touch-action: none;
+}
+
+#pongScore {
+    color: #fff;
+    font: 16px sans-serif;
+    margin-bottom: 8px;
 }
 
 @media (max-width: 600px) {

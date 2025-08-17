@@ -120,7 +120,7 @@ public class HomePageTests
     public async Task TripleTapTeamName_Should_StartPongGame()
     {
         await NavigateWithRetriesAsync(_page!, BaseUrl);
-        await _page!.Locator(".team-name").First.WaitForAsync();
+        var teamName = (await _page!.Locator(".team-name").First.TextContentAsync())?.Trim();
         await _page.EvaluateAsync(@"() => {
             const el = document.querySelector('.team-name');
             const tap = () => {
@@ -132,5 +132,10 @@ public class HomePageTests
             setTimeout(tap, 200);
         }");
         await _page.WaitForSelectorAsync("#pongOverlay");
+        await _page.WaitForSelectorAsync("#pongScore");
+        var scoreText = await _page.TextContentAsync("#pongScore");
+        StringAssert.Contains(teamName, scoreText);
+        var timerText = await _page.TextContentAsync("#pongTimer");
+        Assert.That(int.Parse(timerText), Is.InRange(0, 30));
     }
 }

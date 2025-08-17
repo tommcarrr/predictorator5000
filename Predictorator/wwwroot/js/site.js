@@ -129,10 +129,22 @@ window.app = (() => {
 
     function startPongGame(row, playerIsHome) {
         if (document.getElementById('pongOverlay')) return;
-
         const overlay = document.createElement('div');
         overlay.id = 'pongOverlay';
-        overlay.innerHTML = '<canvas id="pongCanvas" width="300" height="150"></canvas>';
+        const homeName = row.querySelector('.home-name')?.textContent.trim() || 'Home';
+        const awayName = row.querySelector('.away-name')?.textContent.trim() || 'Away';
+        const playerName = playerIsHome ? homeName : awayName;
+        const computerName = playerIsHome ? awayName : homeName;
+        overlay.innerHTML = `
+            <div id="pongScore">
+                <span id="pongPlayerName"></span>
+                <span id="pongPlayerScore">0</span>
+                -
+                <span id="pongComputerScore">0</span>
+                <span id="pongComputerName"></span>
+                <span id="pongTimer">30</span>
+            </div>
+            <canvas id="pongCanvas" width="300" height="150"></canvas>`;
         document.body.appendChild(overlay);
 
         const canvas = overlay.querySelector('#pongCanvas');
@@ -148,6 +160,39 @@ window.app = (() => {
         let playerScore = 0;
         let compScore = 0;
         let running = true;
+        const computerSpeed = 1.5;
+
+        const playerNameEl = overlay.querySelector('#pongPlayerName');
+        const playerScoreEl = overlay.querySelector('#pongPlayerScore');
+        const compNameEl = overlay.querySelector('#pongComputerName');
+        const compScoreEl = overlay.querySelector('#pongComputerScore');
+        const timerEl = overlay.querySelector('#pongTimer');
+        playerNameEl.textContent = playerName;
+        compNameEl.textContent = computerName;
+        timerEl.textContent = '30';
+
+        let timeLeft = 30;
+
+        function endGame() {
+            running = false;
+            overlay.remove();
+            const inputs = row.querySelectorAll('.score-input input');
+            if (inputs.length >= 2) {
+                inputs[playerIsHome ? 0 : 1].value = playerScore;
+                inputs[playerIsHome ? 0 : 1].dispatchEvent(new Event('input', { bubbles: true }));
+                inputs[playerIsHome ? 1 : 0].value = compScore;
+                inputs[playerIsHome ? 1 : 0].dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+
+        const countdown = setInterval(() => {
+            timeLeft--;
+            timerEl.textContent = String(timeLeft);
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                endGame();
+            }
+        }, 1000);
 
         function resetBall() {
             ballX = canvas.width / 2;
@@ -174,8 +219,10 @@ window.app = (() => {
             if (ballX <= paddleWidth) {
                 if (ballY > playerY && ballY < playerY + paddleHeight) {
                     ballVX = -ballVX;
+                    ballVY += (Math.random() - 0.5);
                 } else {
                     compScore++;
+                    compScoreEl.textContent = compScore;
                     resetBall();
                 }
             }
@@ -183,14 +230,16 @@ window.app = (() => {
             if (ballX >= canvas.width - paddleWidth) {
                 if (ballY > computerY && ballY < computerY + paddleHeight) {
                     ballVX = -ballVX;
+                    ballVY += (Math.random() - 0.5);
                 } else {
                     playerScore++;
+                    playerScoreEl.textContent = playerScore;
                     resetBall();
                 }
             }
 
-            if (ballY > computerY + paddleHeight / 2) computerY += 2;
-            else if (ballY < computerY + paddleHeight / 2) computerY -= 2;
+            if (ballY > computerY + paddleHeight / 2) computerY += computerSpeed;
+            else if (ballY < computerY + paddleHeight / 2) computerY -= computerSpeed;
         }
 
         function draw() {
@@ -202,9 +251,6 @@ window.app = (() => {
             ctx.beginPath();
             ctx.arc(ballX, ballY, 3, 0, Math.PI * 2);
             ctx.fill();
-            ctx.font = '16px sans-serif';
-            ctx.fillText(playerScore, canvas.width / 4, 20);
-            ctx.fillText(compScore, canvas.width * 3 / 4, 20);
         }
 
         function loop() {
@@ -214,18 +260,6 @@ window.app = (() => {
             requestAnimationFrame(loop);
         }
         loop();
-
-        setTimeout(() => {
-            running = false;
-            overlay.remove();
-            const inputs = row.querySelectorAll('.score-input input');
-            if (inputs.length >= 2) {
-                inputs[playerIsHome ? 0 : 1].value = playerScore;
-                inputs[playerIsHome ? 0 : 1].dispatchEvent(new Event('input', { bubbles: true }));
-                inputs[playerIsHome ? 1 : 0].value = compScore;
-                inputs[playerIsHome ? 1 : 0].dispatchEvent(new Event('input', { bubbles: true }));
-            }
-        }, 30000);
     }
 
     function registerPongEasterEgg() {
