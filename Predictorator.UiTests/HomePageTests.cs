@@ -141,7 +141,7 @@ public class HomePageTests
         var scoreText = await _page!.TextContentAsync("#pongScore");
         StringAssert.Contains(teamName, scoreText!);
         var timerText = await _page!.TextContentAsync("#pongTimer");
-        Assert.That(int.Parse(timerText!), Is.InRange(0, 30));
+        Assert.That(int.Parse(timerText!), Is.InRange(0, 10));
         var prevId = await _page!.EvaluateAsync<string>("document.querySelector('#pongTimer').previousElementSibling.id");
         Assert.That(prevId, Is.EqualTo("pongScore"));
         var playerFirst = await _page!.EvaluateAsync<string>("document.querySelector('#pongPlayerName').children[0].style.color");

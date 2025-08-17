@@ -195,7 +195,7 @@ window.app = (() => {
                 <span id="pongComputerScore">0</span>
                 <span id="pongComputerName"></span>
             </div>
-            <div id="pongTimer">30</div>
+            <div id="pongTimer">10</div>
             <canvas id="pongCanvas" width="300" height="150"></canvas>`;
         document.body.appendChild(overlay);
 
@@ -221,12 +221,12 @@ window.app = (() => {
         let computerY = canvas.height / 2 - computerPaddleHeight / 2;
         let ballX = canvas.width / 2;
         let ballY = canvas.height / 2;
-        let ballVX = 2;
-        let ballVY = 2;
+        let ballVX = 3;
+        let ballVY = 3;
         let playerScore = 0;
         let compScore = 0;
         let running = true;
-        const computerSpeed = 1.5;
+        const computerSpeed = 2;
 
         const playerNameEl = overlay.querySelector('#pongPlayerName');
         const playerScoreEl = overlay.querySelector('#pongPlayerScore');
@@ -235,9 +235,9 @@ window.app = (() => {
         const timerEl = overlay.querySelector('#pongTimer');
         colorizeName(playerNameEl, playerName, [playerBg, playerFg]);
         colorizeName(compNameEl, computerName, [computerBg, computerFg]);
-        timerEl.textContent = '30';
+        timerEl.textContent = '10';
 
-        let timeLeft = 30;
+        let timeLeft = 10;
 
         function endGame() {
             running = false;
@@ -264,7 +264,7 @@ window.app = (() => {
             ballX = canvas.width / 2;
             ballY = canvas.height / 2;
             ballVX = -ballVX;
-            ballVY = 2 * (Math.random() > 0.5 ? 1 : -1);
+            ballVY = 3 * (Math.random() > 0.5 ? 1 : -1);
         }
 
         canvas.addEventListener('touchmove', e => {
