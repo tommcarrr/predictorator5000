@@ -241,10 +241,11 @@ window.app = (() => {
                 }, 3000);
             };
             const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
-            nameEl.addEventListener('touchstart', start);
+            nameEl.addEventListener('touchstart', start, { passive: false });
             nameEl.addEventListener('touchend', cancel);
             nameEl.addEventListener('touchcancel', cancel);
             nameEl.addEventListener('touchmove', cancel);
+            nameEl.addEventListener('contextmenu', e => e.preventDefault());
         });
     }
     
