@@ -135,6 +135,46 @@ window.app = (() => {
         const awayName = row.querySelector('.away-name')?.textContent.trim() || 'Away';
         const playerName = playerIsHome ? homeName : awayName;
         const computerName = playerIsHome ? awayName : homeName;
+
+        const teamColors = {
+            'arsenal': ['#ef0107', '#ffffff'],
+            'aston villa': ['#7a003c', '#95bfe5'],
+            'bournemouth': ['#da291c', '#000000'],
+            'brentford': ['#e30613', '#ffffff'],
+            'brighton': ['#0057b8', '#ffffff'],
+            'burnley': ['#6c1d45', '#99badd'],
+            'chelsea': ['#034694', '#ffffff'],
+            'crystal palace': ['#c4122e', '#1b458f'],
+            'everton': ['#003399', '#ffffff'],
+            'fulham': ['#000000', '#ffffff'],
+            'liverpool': ['#c8102e', '#ffffff'],
+            'luton': ['#ff8200', '#002f6c'],
+            'manchester city': ['#6cabdd', '#1c2c5b'],
+            'manchester united': ['#da291c', '#fbe122'],
+            'newcastle': ['#000000', '#ffffff'],
+            'nottingham forest': ['#dd0000', '#ffffff'],
+            'sheffield united': ['#ee2737', '#ffffff'],
+            'tottenham': ['#132257', '#ffffff'],
+            'west ham': ['#7a263a', '#1bb1e7'],
+            'wolverhampton': ['#fdb913', '#231f20']
+        };
+
+        const getTeamColors = name => teamColors[name.toLowerCase()] || ['#fff'];
+        const playerColors = getTeamColors(playerName);
+        const computerColors = getTeamColors(computerName);
+        const playerColor = playerColors[0];
+        const computerColor = computerColors[0];
+
+        function colorizeName(el, name, colors) {
+            el.innerHTML = '';
+            name.split('').forEach((ch, i) => {
+                const span = document.createElement('span');
+                span.textContent = ch;
+                span.style.color = colors[i % colors.length];
+                el.appendChild(span);
+            });
+        }
+
         overlay.innerHTML = `
             <div id="pongScore">
                 <span id="pongPlayerName"></span>
@@ -142,8 +182,8 @@ window.app = (() => {
                 -
                 <span id="pongComputerScore">0</span>
                 <span id="pongComputerName"></span>
-                <span id="pongTimer">30</span>
             </div>
+            <div id="pongTimer">30</div>
             <canvas id="pongCanvas" width="300" height="150"></canvas>`;
         document.body.appendChild(overlay);
 
@@ -167,8 +207,8 @@ window.app = (() => {
         const compNameEl = overlay.querySelector('#pongComputerName');
         const compScoreEl = overlay.querySelector('#pongComputerScore');
         const timerEl = overlay.querySelector('#pongTimer');
-        playerNameEl.textContent = playerName;
-        compNameEl.textContent = computerName;
+        colorizeName(playerNameEl, playerName, playerColors);
+        colorizeName(compNameEl, computerName, computerColors);
         timerEl.textContent = '30';
 
         let timeLeft = 30;
@@ -245,10 +285,12 @@ window.app = (() => {
         function draw() {
             ctx.fillStyle = 'black';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
+            ctx.fillStyle = playerColor;
             ctx.fillRect(0, playerY, paddleWidth, paddleHeight);
+            ctx.fillStyle = computerColor;
             ctx.fillRect(canvas.width - paddleWidth, computerY, paddleWidth, paddleHeight);
             ctx.beginPath();
+            ctx.fillStyle = '#fff';
             ctx.arc(ballX, ballY, 3, 0, Math.PI * 2);
             ctx.fill();
         }
