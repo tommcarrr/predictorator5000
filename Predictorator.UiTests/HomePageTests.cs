@@ -151,4 +151,29 @@ public class HomePageTests
         var compSecond = await _page!.EvaluateAsync<string>("document.querySelector('#pongComputerName').children[1].style.color");
         Assert.That(compFirst, Is.Not.EqualTo(compSecond));
     }
+
+    [Test]
+    public async Task EvertonVsLiverpool_Should_Adjust_Paddle_Sizes()
+    {
+        await NavigateWithRetriesAsync(_page!, BaseUrl);
+        await _page!.EvaluateAsync(@"() => {
+            document.querySelector('.home-name').textContent = 'Everton';
+            document.querySelector('.away-name').textContent = 'Liverpool';
+        }");
+        await _page!.EvaluateAsync(@"() => {
+            const el = document.querySelector('.team-name');
+            const tap = () => {
+                const touch = new Touch({ identifier: Date.now(), target: el, clientX: 0, clientY: 0 });
+                el.dispatchEvent(new TouchEvent('touchstart', { touches: [touch], bubbles: true, cancelable: true }));
+            };
+            tap();
+            setTimeout(tap, 100);
+            setTimeout(tap, 200);
+        }");
+        await _page!.WaitForSelectorAsync("#pongOverlay");
+        var playerHeight = await _page!.GetAttributeAsync("#pongOverlay", "data-player-paddle-height");
+        var computerHeight = await _page!.GetAttributeAsync("#pongOverlay", "data-computer-paddle-height");
+        Assert.That(playerHeight, Is.EqualTo("60"));
+        Assert.That(computerHeight, Is.EqualTo("20"));
+    }
 }
