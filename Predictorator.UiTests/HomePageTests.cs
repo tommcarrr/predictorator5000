@@ -151,4 +151,54 @@ public class HomePageTests
         var compSecond = await _page!.EvaluateAsync<string>("document.querySelector('#pongComputerName').children[1].style.color");
         Assert.That(compFirst, Is.Not.EqualTo(compSecond));
     }
+
+    [Test]
+    public async Task EvertonVsLiverpool_Should_Adjust_Paddles_When_Player_Is_Everton()
+    {
+        await NavigateWithRetriesAsync(_page!, BaseUrl);
+        await _page!.EvaluateAsync(@"() => {
+            document.querySelector('.home-name').textContent = 'Everton';
+            document.querySelector('.away-name').textContent = 'Liverpool';
+        }");
+        await _page!.EvaluateAsync(@"() => {
+            const el = document.querySelector('.home-name');
+            const tap = () => {
+                const touch = new Touch({ identifier: Date.now(), target: el, clientX: 0, clientY: 0 });
+                el.dispatchEvent(new TouchEvent('touchstart', { touches: [touch], bubbles: true, cancelable: true }));
+            };
+            tap();
+            setTimeout(tap, 100);
+            setTimeout(tap, 200);
+        }");
+        await _page!.WaitForSelectorAsync("#pongCanvas");
+        var playerHeight = await _page!.EvaluateAsync<int>("() => parseInt(document.getElementById('pongCanvas').dataset.playerPaddleHeight)");
+        var compHeight = await _page!.EvaluateAsync<int>("() => parseInt(document.getElementById('pongCanvas').dataset.computerPaddleHeight)");
+        Assert.That(playerHeight, Is.EqualTo(60));
+        Assert.That(compHeight, Is.EqualTo(20));
+    }
+
+    [Test]
+    public async Task EvertonVsLiverpool_Should_Adjust_Paddles_When_Player_Is_Liverpool()
+    {
+        await NavigateWithRetriesAsync(_page!, BaseUrl);
+        await _page!.EvaluateAsync(@"() => {
+            document.querySelector('.home-name').textContent = 'Everton';
+            document.querySelector('.away-name').textContent = 'Liverpool';
+        }");
+        await _page!.EvaluateAsync(@"() => {
+            const el = document.querySelector('.away-name');
+            const tap = () => {
+                const touch = new Touch({ identifier: Date.now(), target: el, clientX: 0, clientY: 0 });
+                el.dispatchEvent(new TouchEvent('touchstart', { touches: [touch], bubbles: true, cancelable: true }));
+            };
+            tap();
+            setTimeout(tap, 100);
+            setTimeout(tap, 200);
+        }");
+        await _page!.WaitForSelectorAsync("#pongCanvas");
+        var playerHeight = await _page!.EvaluateAsync<int>("() => parseInt(document.getElementById('pongCanvas').dataset.playerPaddleHeight)");
+        var compHeight = await _page!.EvaluateAsync<int>("() => parseInt(document.getElementById('pongCanvas').dataset.computerPaddleHeight)");
+        Assert.That(playerHeight, Is.EqualTo(20));
+        Assert.That(compHeight, Is.EqualTo(60));
+    }
 }

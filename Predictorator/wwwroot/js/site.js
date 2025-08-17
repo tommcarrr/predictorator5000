@@ -189,10 +189,31 @@ window.app = (() => {
 
         const canvas = overlay.querySelector('#pongCanvas');
         const ctx = canvas.getContext('2d');
-        const paddleHeight = 40;
+        const basePaddleHeight = 40;
         const paddleWidth = 5;
-        let playerY = canvas.height / 2 - paddleHeight / 2;
-        let computerY = playerY;
+        let playerPaddleHeight = basePaddleHeight;
+        let computerPaddleHeight = basePaddleHeight;
+
+        const lowerPlayer = playerName.toLowerCase();
+        const lowerComputer = computerName.toLowerCase();
+        const isEvertonVsLiverpool =
+            (lowerPlayer === 'everton' && lowerComputer === 'liverpool') ||
+            (lowerPlayer === 'liverpool' && lowerComputer === 'everton');
+        if (isEvertonVsLiverpool) {
+            if (lowerPlayer === 'everton') {
+                playerPaddleHeight = basePaddleHeight * 1.5;
+                computerPaddleHeight = basePaddleHeight * 0.5;
+            } else {
+                playerPaddleHeight = basePaddleHeight * 0.5;
+                computerPaddleHeight = basePaddleHeight * 1.5;
+            }
+        }
+
+        canvas.dataset.playerPaddleHeight = playerPaddleHeight;
+        canvas.dataset.computerPaddleHeight = computerPaddleHeight;
+
+        let playerY = canvas.height / 2 - playerPaddleHeight / 2;
+        let computerY = canvas.height / 2 - computerPaddleHeight / 2;
         let ballX = canvas.width / 2;
         let ballY = canvas.height / 2;
         let ballVX = 2;
@@ -243,12 +264,12 @@ window.app = (() => {
 
         canvas.addEventListener('touchmove', e => {
             const rect = canvas.getBoundingClientRect();
-            playerY = e.touches[0].clientY - rect.top - paddleHeight / 2;
+            playerY = e.touches[0].clientY - rect.top - playerPaddleHeight / 2;
             e.preventDefault();
         });
         canvas.addEventListener('mousemove', e => {
             const rect = canvas.getBoundingClientRect();
-            playerY = e.clientY - rect.top - paddleHeight / 2;
+            playerY = e.clientY - rect.top - playerPaddleHeight / 2;
         });
 
         function update() {
@@ -257,7 +278,7 @@ window.app = (() => {
             if (ballY < 0 || ballY > canvas.height) ballVY = -ballVY;
 
             if (ballX <= paddleWidth) {
-                if (ballY > playerY && ballY < playerY + paddleHeight) {
+                if (ballY > playerY && ballY < playerY + playerPaddleHeight) {
                     ballVX = -ballVX;
                     ballVY += (Math.random() - 0.5);
                 } else {
@@ -268,7 +289,7 @@ window.app = (() => {
             }
 
             if (ballX >= canvas.width - paddleWidth) {
-                if (ballY > computerY && ballY < computerY + paddleHeight) {
+                if (ballY > computerY && ballY < computerY + computerPaddleHeight) {
                     ballVX = -ballVX;
                     ballVY += (Math.random() - 0.5);
                 } else {
@@ -278,17 +299,17 @@ window.app = (() => {
                 }
             }
 
-            if (ballY > computerY + paddleHeight / 2) computerY += computerSpeed;
-            else if (ballY < computerY + paddleHeight / 2) computerY -= computerSpeed;
+            if (ballY > computerY + computerPaddleHeight / 2) computerY += computerSpeed;
+            else if (ballY < computerY + computerPaddleHeight / 2) computerY -= computerSpeed;
         }
 
         function draw() {
             ctx.fillStyle = 'black';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = playerColor;
-            ctx.fillRect(0, playerY, paddleWidth, paddleHeight);
+            ctx.fillRect(0, playerY, paddleWidth, playerPaddleHeight);
             ctx.fillStyle = computerColor;
-            ctx.fillRect(canvas.width - paddleWidth, computerY, paddleWidth, paddleHeight);
+            ctx.fillRect(canvas.width - paddleWidth, computerY, paddleWidth, computerPaddleHeight);
             ctx.beginPath();
             ctx.fillStyle = '#fff';
             ctx.arc(ballX, ballY, 3, 0, Math.PI * 2);
