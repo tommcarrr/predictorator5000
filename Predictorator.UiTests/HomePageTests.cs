@@ -117,14 +117,19 @@ public class HomePageTests
     }
 
     [Test]
-    public async Task LongPressTeamName_Should_StartPongGame()
+    public async Task TripleTapTeamName_Should_StartPongGame()
     {
         await NavigateWithRetriesAsync(_page!, BaseUrl);
         await _page!.Locator(".team-name").First.WaitForAsync();
         await _page.EvaluateAsync(@"() => {
             const el = document.querySelector('.team-name');
-            const touch = new Touch({ identifier: 0, target: el, clientX: 0, clientY: 0 });
-            el.dispatchEvent(new TouchEvent('touchstart', { touches: [touch], bubbles: true, cancelable: true }));
+            const tap = () => {
+                const touch = new Touch({ identifier: Date.now(), target: el, clientX: 0, clientY: 0 });
+                el.dispatchEvent(new TouchEvent('touchstart', { touches: [touch], bubbles: true, cancelable: true }));
+            };
+            tap();
+            setTimeout(tap, 100);
+            setTimeout(tap, 200);
         }");
         await _page.WaitForSelectorAsync("#pongOverlay");
     }

@@ -231,20 +231,22 @@ window.app = (() => {
     function registerPongEasterEgg() {
         if (!isMobileDevice()) return;
         document.querySelectorAll('.team-name').forEach(nameEl => {
-            let timer = null;
-            const start = (e) => {
+            let tapCount = 0;
+            let tapTimer = null;
+            const onTap = (e) => {
                 e.preventDefault();
-                timer = setTimeout(() => {
+                tapCount++;
+                if (tapTimer) clearTimeout(tapTimer);
+                if (tapCount === 3) {
                     const row = nameEl.closest('.fixture-row');
                     const playerIsHome = nameEl.classList.contains('home-name');
                     startPongGame(row, playerIsHome);
-                }, 3000);
+                    tapCount = 0;
+                    return;
+                }
+                tapTimer = setTimeout(() => { tapCount = 0; }, 600);
             };
-            const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
-            nameEl.addEventListener('touchstart', start, { passive: false });
-            nameEl.addEventListener('touchend', cancel);
-            nameEl.addEventListener('touchcancel', cancel);
-            nameEl.addEventListener('touchmove', cancel);
+            nameEl.addEventListener('touchstart', onTap, { passive: false });
             nameEl.addEventListener('contextmenu', e => e.preventDefault());
         });
     }
