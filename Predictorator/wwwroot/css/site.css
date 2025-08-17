@@ -124,6 +124,12 @@ html, body {
     margin-bottom: 8px;
 }
 
+#pongTimer {
+    color: #fff;
+    font: 16px sans-serif;
+    margin-bottom: 8px;
+}
+
 @media (max-width: 600px) {
     .fixture-line {
         grid-template-columns: 1fr 20px 2rem 0.5rem 2rem 20px 1fr;

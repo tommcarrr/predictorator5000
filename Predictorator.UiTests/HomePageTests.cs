@@ -120,8 +120,12 @@ public class HomePageTests
     public async Task TripleTapTeamName_Should_StartPongGame()
     {
         await NavigateWithRetriesAsync(_page!, BaseUrl);
-        var teamName = (await _page!.Locator(".team-name").First.TextContentAsync())?.Trim();
-        await _page.EvaluateAsync(@"() => {
+        await _page!.EvaluateAsync(@"() => {
+            document.querySelector('.home-name').textContent = 'Aston Villa';
+            document.querySelector('.away-name').textContent = 'Newcastle';
+        }");
+        var teamName = "Aston Villa";
+        await _page!.EvaluateAsync(@"() => {
             const el = document.querySelector('.team-name');
             const tap = () => {
                 const touch = new Touch({ identifier: Date.now(), target: el, clientX: 0, clientY: 0 });
@@ -131,11 +135,20 @@ public class HomePageTests
             setTimeout(tap, 100);
             setTimeout(tap, 200);
         }");
-        await _page.WaitForSelectorAsync("#pongOverlay");
-        await _page.WaitForSelectorAsync("#pongScore");
-        var scoreText = await _page.TextContentAsync("#pongScore");
-        StringAssert.Contains(teamName, scoreText);
-        var timerText = await _page.TextContentAsync("#pongTimer");
-        Assert.That(int.Parse(timerText), Is.InRange(0, 30));
+        await _page!.WaitForSelectorAsync("#pongOverlay");
+        await _page!.WaitForSelectorAsync("#pongScore");
+        await _page!.WaitForSelectorAsync("#pongTimer");
+        var scoreText = await _page!.TextContentAsync("#pongScore");
+        StringAssert.Contains(teamName, scoreText!);
+        var timerText = await _page!.TextContentAsync("#pongTimer");
+        Assert.That(int.Parse(timerText!), Is.InRange(0, 30));
+        var prevId = await _page!.EvaluateAsync<string>("document.querySelector('#pongTimer').previousElementSibling.id");
+        Assert.That(prevId, Is.EqualTo("pongScore"));
+        var playerFirst = await _page!.EvaluateAsync<string>("document.querySelector('#pongPlayerName').children[0].style.color");
+        var playerSecond = await _page!.EvaluateAsync<string>("document.querySelector('#pongPlayerName').children[1].style.color");
+        Assert.That(playerFirst, Is.Not.EqualTo(playerSecond));
+        var compFirst = await _page!.EvaluateAsync<string>("document.querySelector('#pongComputerName').children[0].style.color");
+        var compSecond = await _page!.EvaluateAsync<string>("document.querySelector('#pongComputerName').children[1].style.color");
+        Assert.That(compFirst, Is.Not.EqualTo(compSecond));
     }
 }
