@@ -46,7 +46,12 @@ public class HomePageTests
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
 
-        var context = await _browser.NewContextAsync();
+        var context = await _browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 375, Height = 667 },
+            UserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1",
+            HasTouch = true
+        });
         _page = await context.NewPageAsync();
         _page.SetDefaultTimeout(90000);
     }
@@ -109,5 +114,18 @@ public class HomePageTests
         await _page.GetByRole(AriaRole.Link, new() { Name = "Privacy Policy" }).ClickAsync();
         await _page.GetByRole(AriaRole.Dialog).GetByText("Privacy Policy").WaitForAsync();
         Assert.That(_page.Url, Is.EqualTo(initialUrl));
+    }
+
+    [Test]
+    public async Task LongPressTeamName_Should_StartPongGame()
+    {
+        await NavigateWithRetriesAsync(_page!, BaseUrl);
+        await _page!.Locator(".team-name").First.WaitForAsync();
+        await _page.EvaluateAsync(@"() => {
+            const el = document.querySelector('.team-name');
+            const touch = new Touch({ identifier: 0, target: el, clientX: 0, clientY: 0 });
+            el.dispatchEvent(new TouchEvent('touchstart', { touches: [touch], bubbles: true, cancelable: true }));
+        }");
+        await _page.WaitForSelectorAsync("#pongOverlay");
     }
 }
