@@ -159,20 +159,32 @@ window.app = (() => {
             'wolverhampton': ['#fdb913', '#231f20']
         };
 
-        const getTeamColors = name => teamColors[name.toLowerCase()] || ['#fff'];
-        const playerColors = getTeamColors(playerName);
-        const computerColors = getTeamColors(computerName);
-        const playerColor = playerColors[0];
-        const computerColor = computerColors[0];
+        function getContrast(hex) {
+            const c = hex.substring(1);
+            const r = parseInt(c.substring(0, 2), 16) / 255;
+            const g = parseInt(c.substring(2, 4), 16) / 255;
+            const b = parseInt(c.substring(4, 6), 16) / 255;
+            const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+            return luminance > 0.5 ? '#000000' : '#ffffff';
+        }
+
+        const getTeamColors = name => {
+            const colors = teamColors[name.toLowerCase()] || ['#000000', '#ffffff'];
+            let [bg, fg] = colors;
+            if (!fg || bg.toLowerCase() === fg.toLowerCase()) {
+                fg = getContrast(bg);
+            }
+            return [bg, fg];
+        };
+        const [playerBg, playerFg] = getTeamColors(playerName);
+        const [computerBg, computerFg] = getTeamColors(computerName);
 
         function colorizeName(el, name, colors) {
-            el.innerHTML = '';
-            name.split('').forEach((ch, i) => {
-                const span = document.createElement('span');
-                span.textContent = ch;
-                span.style.color = colors[i % colors.length];
-                el.appendChild(span);
-            });
+            const [bg, fg] = colors;
+            el.textContent = name;
+            el.style.backgroundColor = bg;
+            el.style.color = fg;
+            el.style.padding = '0 4px';
         }
 
         overlay.innerHTML = `
@@ -207,8 +219,8 @@ window.app = (() => {
         const compNameEl = overlay.querySelector('#pongComputerName');
         const compScoreEl = overlay.querySelector('#pongComputerScore');
         const timerEl = overlay.querySelector('#pongTimer');
-        colorizeName(playerNameEl, playerName, playerColors);
-        colorizeName(compNameEl, computerName, computerColors);
+        colorizeName(playerNameEl, playerName, [playerBg, playerFg]);
+        colorizeName(compNameEl, computerName, [computerBg, computerFg]);
         timerEl.textContent = '30';
 
         let timeLeft = 30;
@@ -283,11 +295,13 @@ window.app = (() => {
         }
 
         function draw() {
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = playerColor;
+            ctx.fillStyle = playerBg;
+            ctx.fillRect(0, 0, canvas.width / 2, canvas.height);
+            ctx.fillStyle = computerBg;
+            ctx.fillRect(canvas.width / 2, 0, canvas.width / 2, canvas.height);
+            ctx.fillStyle = playerFg;
             ctx.fillRect(0, playerY, paddleWidth, paddleHeight);
-            ctx.fillStyle = computerColor;
+            ctx.fillStyle = computerFg;
             ctx.fillRect(canvas.width - paddleWidth, computerY, paddleWidth, paddleHeight);
             ctx.beginPath();
             ctx.fillStyle = '#fff';
