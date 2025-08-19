@@ -532,6 +532,91 @@ public class IndexPageBUnitTests
         Assert.EndsWith("<insert name>.", bodyText.TrimEnd());
     }
 
+    [Fact]
+    public async Task SavePredictions_Persists_To_LocalStorage()
+    {
+        await using var ctx = CreateContext();
+        var fixtures = new FixturesResponse
+        {
+            Response =
+            [
+                new FixtureData
+                {
+                    Fixture = new Fixture { Id = 1, Date = DateTime.UtcNow, Venue = new Venue { Name = "V" } },
+                    Teams = new Teams
+                    {
+                        Home = new Team { Name = "Home", Logo = string.Empty },
+                        Away = new Team { Name = "Away", Logo = string.Empty }
+                    },
+                    Score = new Score { Fulltime = new ScoreHomeAway { Home = 1, Away = 2 } }
+                }
+            ]
+        };
+        ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
+
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
+            b.CloseComponent();
+        };
+
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        cut.WaitForAssertion(() => Assert.NotEmpty(cut.FindAll("[data-testid=score-input]")));
+        cut.Find("#saveBtn").Click();
+
+        cut.WaitForAssertion(() =>
+        {
+            var inv = ctx.JSInterop.Invocations.Single(i => i.Identifier == "localStorage.setItem");
+            var json = inv.Arguments[1]?.ToString();
+            Assert.Contains("\"1\":{\"Home\":1,\"Away\":2}", json);
+        });
+    }
+
+    [Fact]
+    public async Task LoadsPredictions_From_LocalStorage_On_Render()
+    {
+        await using var ctx = CreateContext();
+        var fixtures = new FixturesResponse
+        {
+            Response =
+            [
+                new FixtureData
+                {
+                    Fixture = new Fixture { Id = 1, Date = DateTime.UtcNow, Venue = new Venue { Name = "V" } },
+                    Teams = new Teams
+                    {
+                        Home = new Team { Name = "Home", Logo = string.Empty },
+                        Away = new Team { Name = "Away", Logo = string.Empty }
+                    },
+                    Score = new Score { Fulltime = new ScoreHomeAway { Home = null, Away = null } }
+                }
+            ]
+        };
+        ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
+
+        var key = "predictions_24-25_gw1";
+        var stored = "{\"1\":{\"Home\":1,\"Away\":2}}";
+        ctx.JSInterop.Setup<string>("localStorage.getItem", key).SetResult(stored);
+
+        RenderFragment body = b =>
+        {
+            b.OpenComponent<IndexPage>(0);
+            b.AddAttribute(1, "Season", "24-25");
+            b.AddAttribute(2, "Week", 1);
+            b.CloseComponent();
+        };
+
+        var cut = ctx.Render<MainLayout>(p => p.Add(l => l.Body, body));
+        cut.WaitForAssertion(() =>
+        {
+            var inputs = cut.FindAll("[data-testid=score-input]");
+            Assert.Equal("1", inputs[0].GetAttribute("value"));
+            Assert.Equal("2", inputs[1].GetAttribute("value"));
+        });
+    }
+
     private class RecordingNavigationManager : NavigationManager
     {
         public string? NavigatedTo { get; private set; }
