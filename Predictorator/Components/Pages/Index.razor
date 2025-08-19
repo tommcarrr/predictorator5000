@@ -15,6 +15,7 @@
 @using System.Text
 @using System.Linq
 @using Microsoft.Extensions.Configuration
+@using System.Text.Json
 
 <PageTitle>@PageTitleText</PageTitle>
 
@@ -101,6 +102,8 @@ else if (_fixtures.Response.Any())
                UserAttributes="@(new Dictionary<string, object>{{"id","fillRandomBtn"}})">Complete with Random Scores</MudButton>
     <MudButton Color="Color.Info" Variant="Variant.Filled" OnClick="@ClearScores"
                UserAttributes="@(new Dictionary<string, object>{{"id","clearBtn"}})">Clear Predictions</MudButton>
+    <MudButton Color="Color.Secondary" Variant="Variant.Filled" OnClick="@SavePredictions"
+               UserAttributes="@(new Dictionary<string, object>{{"id","saveBtn"}})">Save Predictions</MudButton>
     <MudButton Color="Color.Success" Variant="Variant.Filled"
                UserAttributes="@(new Dictionary<string, object>{{"id","copyBtn"}})">Copy Predictions to Clipboard</MudButton>
     <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@OpenEmailDialog"
@@ -242,7 +245,7 @@ else if (_fixtures.Response.Any())
         }
     }
 
-    private void ClearScores()
+    private async Task ClearScores()
     {
         if (_fixtures == null) return;
         foreach (var f in _fixtures.Response)
@@ -253,6 +256,19 @@ else if (_fixtures.Response.Any())
             if (f.Score?.Fulltime.Away == null)
                 pred.Away = null;
         }
+
+        await Js.InvokeVoidAsync("localStorage.removeItem", PredictionsStorageKey);
+    }
+
+    private async Task SavePredictions()
+    {
+        if (_fixtures == null) return;
+        var toStore = _predictions
+            .Where(kv => kv.Value.Home.HasValue && kv.Value.Away.HasValue)
+            .ToDictionary(kv => kv.Key, kv => kv.Value);
+        var json = JsonSerializer.Serialize(toStore);
+        await Js.InvokeVoidAsync("localStorage.setItem", PredictionsStorageKey, json);
+        Snackbar.Add("Predictions saved.", Severity.Success);
     }
 
     private async Task OpenEmailDialog()
@@ -349,6 +365,7 @@ else if (_fixtures.Response.Any())
     }
 
     private const string EmailStorageKey = "predictionsEmail";
+    private string PredictionsStorageKey => $"predictions_{Season}_gw{Week}";
     private class PredictionInput
     {
         public int? Home { get; set; }
@@ -359,9 +376,34 @@ else if (_fixtures.Response.Any())
     {
         if (firstRender)
         {
+            await LoadPredictionsAsync();
             var delay = Config.GetValue<int?>("ScoreInputFocusDelayMs") ?? 500;
             await Js.InvokeVoidAsync("app.registerScoreInputs", delay);
             await Js.InvokeVoidAsync("app.registerPongEasterEgg");
         }
+    }
+
+    private async Task LoadPredictionsAsync()
+    {
+        var stored = await Js.InvokeAsync<string?>("localStorage.getItem", PredictionsStorageKey);
+        if (string.Equals(stored, "null", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(stored))
+            return;
+
+        var parsed = JsonSerializer.Deserialize<Dictionary<int, PredictionInput>>(stored);
+        if (parsed == null)
+            return;
+
+        foreach (var kvp in parsed)
+        {
+            if (_predictions.TryGetValue(kvp.Key, out var pred))
+            {
+                if (pred.Home == null)
+                    pred.Home = kvp.Value.Home;
+                if (pred.Away == null)
+                    pred.Away = kvp.Value.Away;
+            }
+        }
+
+        StateHasChanged();
     }
 }
