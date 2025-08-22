@@ -65,4 +65,25 @@ public class AnnouncementServiceTests
         var result = await svc.GetCurrentAsync();
         Assert.Null(result);
     }
+
+    [Fact]
+    public async Task SaveAsync_assigns_id_and_converts_expiry_to_utc()
+    {
+        var repo = new InMemoryAnnouncementRepository();
+        var time = new FakeDateTimeProvider { UtcNow = DateTime.UtcNow };
+        var svc = new AnnouncementService(repo, time);
+        var ann = new Announcement
+        {
+            Title = "Title",
+            Message = "Message",
+            IsEnabled = true,
+            ExpiresAt = DateTime.Now
+        };
+
+        await svc.SaveAsync(ann);
+
+        Assert.NotNull(repo.Announcement);
+        Assert.NotEqual(Guid.Empty, repo.Announcement!.Id);
+        Assert.Equal(DateTimeKind.Utc, repo.Announcement!.ExpiresAt.Kind);
+    }
 }
