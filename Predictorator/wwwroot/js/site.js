@@ -333,7 +333,6 @@ window.app = (() => {
     }
 
     function registerPongEasterEgg() {
-        if (!isMobileDevice()) return;
         document.querySelectorAll('.team-name').forEach(nameEl => {
             let tapCount = 0;
             let tapTimer = null;
@@ -351,6 +350,7 @@ window.app = (() => {
                 tapTimer = setTimeout(() => { tapCount = 0; }, 600);
             };
             nameEl.addEventListener('touchstart', onTap, { passive: false });
+            nameEl.addEventListener('click', onTap);
             nameEl.addEventListener('contextmenu', e => e.preventDefault());
         });
     }
