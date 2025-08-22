@@ -528,6 +528,9 @@ public class IndexPageBUnitTests
         var bodyEncoded = uri.Split("&body=")[1];
         var bodyText = Uri.UnescapeDataString(bodyEncoded);
         Assert.StartsWith("Hello Helen Lyttle,", bodyText);
+        var jokeLine = "Here is a funny joke I heard recently that I thought you might enjoy...";
+        var limerickLine = "Here is a limerick I recently composed, I apologize in advance for its mildly ribald tone...";
+        Assert.True(bodyText.Contains(jokeLine) || bodyText.Contains(limerickLine));
         var preIndex = bodyText.IndexOf("My predictions are as follows...");
         var tableIndex = bodyText.IndexOf("Home 1 - 0 Away");
         var postIndex = bodyText.IndexOf("Yours sincerely,");
