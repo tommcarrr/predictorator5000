@@ -29,6 +29,12 @@ public class AnnouncementService
     {
         if (announcement.Id == Guid.Empty)
             announcement.Id = Guid.NewGuid();
+
+        // Azure Table storage requires DateTime values to be in UTC. Convert the
+        // expiry to UTC to avoid serialization errors when persisting the
+        // announcement.
+        announcement.ExpiresAt = announcement.ExpiresAt.ToUniversalTime();
+
         await _repo.UpsertAsync(announcement);
     }
 }
