@@ -14,6 +14,7 @@ using Predictorator.Core.Models.Fixtures;
 using Predictorator.Services;
 using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
+using Predictorator.Core.Data;
 
 namespace Predictorator.Tests;
 
@@ -35,6 +36,7 @@ public class CeefaxModeBUnitTests
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
         ctx.Services.AddSingleton<IGameWeekService>(new FakeGameWeekService());
         var provider = new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) };
+        ctx.Services.AddSingleton<IDateTimeProvider>(provider);
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider));
 
         var settings = new Dictionary<string, string?>
@@ -47,6 +49,8 @@ public class CeefaxModeBUnitTests
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         ctx.Services.AddSingleton<IConfiguration>(config);
         ctx.Services.AddSingleton<NotificationFeatureService>();
+        ctx.Services.AddSingleton<IAnnouncementRepository, InMemoryAnnouncementRepository>();
+        ctx.Services.AddSingleton<AnnouncementService>();
         return ctx;
     }
 
@@ -178,7 +182,9 @@ public class CeefaxModeBUnitTests
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
         ctx.Services.AddSingleton<IGameWeekService>(new FakeGameWeekService());
-        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) }));
+        var provider2 = new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) };
+        ctx.Services.AddSingleton<IDateTimeProvider>(provider2);
+        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider2));
 
         var settings = new Dictionary<string, string?>
         {
@@ -190,6 +196,8 @@ public class CeefaxModeBUnitTests
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         ctx.Services.AddSingleton<IConfiguration>(config);
         ctx.Services.AddSingleton<NotificationFeatureService>();
+        ctx.Services.AddSingleton<IAnnouncementRepository, InMemoryAnnouncementRepository>();
+        ctx.Services.AddSingleton<AnnouncementService>();
 
         var cut = ctx.Render<App>();
         var layout = cut.FindComponent<MainLayout>();
@@ -217,7 +225,9 @@ public class CeefaxModeBUnitTests
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
         ctx.Services.AddSingleton<IGameWeekService>(new FakeGameWeekService());
-        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) }));
+        var provider3 = new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) };
+        ctx.Services.AddSingleton<IDateTimeProvider>(provider3);
+        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider3));
 
         var settings = new Dictionary<string, string?>
         {
@@ -229,6 +239,8 @@ public class CeefaxModeBUnitTests
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         ctx.Services.AddSingleton<IConfiguration>(config);
         ctx.Services.AddSingleton<NotificationFeatureService>();
+        ctx.Services.AddSingleton<IAnnouncementRepository, InMemoryAnnouncementRepository>();
+        ctx.Services.AddSingleton<AnnouncementService>();
 
         var cut = ctx.Render<App>();
         var layout = cut.FindComponent<MainLayout>();
@@ -271,8 +283,9 @@ public class CeefaxModeBUnitTests
         };
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(fixtures));
         ctx.Services.AddSingleton<IGameWeekService>(new FakeGameWeekService());
-        var provider = new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) };
-        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider));
+        var provider4 = new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) };
+        ctx.Services.AddSingleton<IDateTimeProvider>(provider4);
+        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider4));
 
         var settings = new Dictionary<string, string?>
         {
@@ -284,6 +297,8 @@ public class CeefaxModeBUnitTests
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         ctx.Services.AddSingleton<IConfiguration>(config);
         ctx.Services.AddSingleton<NotificationFeatureService>();
+        ctx.Services.AddSingleton<IAnnouncementRepository, InMemoryAnnouncementRepository>();
+        ctx.Services.AddSingleton<AnnouncementService>();
 
         var cut = ctx.Render<App>();
         var inputs = cut.FindAll("[data-testid=score-input]");

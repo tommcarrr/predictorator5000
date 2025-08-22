@@ -12,6 +12,7 @@ using Predictorator.Tests.Helpers;
 using IndexPage = Predictorator.Components.Pages.Index;
 using System.Linq;
 using System.Collections.Generic;
+using Predictorator.Core.Data;
 
 namespace Predictorator.Tests;
 
@@ -41,6 +42,7 @@ public class IndexPageBUnitTests
             Today = new DateTime(2024, 1, 1),
             UtcNow = new DateTime(2024, 1, 1)
         };
+        ctx.Services.AddSingleton<IDateTimeProvider>(provider);
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider));
 
         var settings = new Dictionary<string, string?>
@@ -61,6 +63,8 @@ public class IndexPageBUnitTests
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         ctx.Services.AddSingleton<IConfiguration>(config);
         ctx.Services.AddSingleton<NotificationFeatureService>();
+        ctx.Services.AddSingleton<IAnnouncementRepository, InMemoryAnnouncementRepository>();
+        ctx.Services.AddSingleton<AnnouncementService>();
         return ctx;
     }
 

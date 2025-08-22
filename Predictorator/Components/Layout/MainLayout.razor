@@ -6,6 +6,7 @@
 @inject UiModeService UiMode
 @inject IDialogService DialogService
 @inject NotificationFeatureService NotificationFeatures
+@inject IServiceProvider Services
 @using Predictorator.Components.Pages.Subscription
 @using Predictorator.Components.Privacy
 
@@ -236,8 +237,33 @@
             await SetCookie("ceefaxMode", IsCeefax);
 
             await Js.InvokeVoidAsync("app.setCeefax", IsCeefax);
+            await ShowAnnouncementAsync();
             await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private async Task ShowAnnouncementAsync()
+    {
+        var svc = Services.GetService<AnnouncementService>();
+        if (svc == null)
+            return;
+        var ann = await svc.GetCurrentAsync();
+        if (ann == null)
+            return;
+
+        var seen = await Js.InvokeAsync<string?>("localStorage.getItem", "announcementSeen");
+        if (seen == ann.Id.ToString())
+            return;
+
+        var parameters = new DialogParameters
+        {
+            ["Title"] = ann.Title,
+            ["Message"] = ann.Message
+        };
+        var options = new DialogOptions { CloseButton = true };
+        var dialog = DialogService.Show<AnnouncementDialog>(ann.Title, parameters, options);
+        await dialog.Result;
+        await Js.InvokeVoidAsync("localStorage.setItem", "announcementSeen", ann.Id.ToString());
     }
 
     private async Task ToggleDarkModeAsync()

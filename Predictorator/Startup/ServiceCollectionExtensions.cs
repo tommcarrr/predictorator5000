@@ -90,9 +90,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEmailSubscriberRepository>(sp => sp.GetRequiredService<TableDataStore>());
         services.AddScoped<ISmsSubscriberRepository>(sp => sp.GetRequiredService<TableDataStore>());
         services.AddScoped<ISentNotificationRepository>(sp => sp.GetRequiredService<TableDataStore>());
+        services.AddScoped<IAnnouncementRepository, TableAnnouncementRepository>();
         services.AddScoped<IGameWeekRepository, TableGameWeekRepository>();
         services.AddTransient<SubscriptionService>();
         services.AddTransient<NotificationService>();
+        services.AddTransient<AnnouncementService>();
         services.AddTransient<AdminService>();
         services.AddTransient<IGameWeekService, GameWeekService>();
         services.AddSingleton<EmailCssInliner>();

@@ -39,6 +39,7 @@ public class WebAppDiResolutionTests : IClassFixture<WebApplicationFactory<Progr
                 services.RemoveAll<IGameWeekRepository>();
                 services.RemoveAll<IBackgroundJobService>();
                 services.RemoveAll<IBackgroundJobErrorService>();
+                services.RemoveAll<IAnnouncementRepository>();
                 var store = new InMemoryDataStore();
                 services.AddSingleton<IEmailSubscriberRepository>(store);
                 services.AddSingleton<ISmsSubscriberRepository>(store);
@@ -46,6 +47,7 @@ public class WebAppDiResolutionTests : IClassFixture<WebApplicationFactory<Progr
                 services.AddSingleton<IGameWeekRepository, InMemoryGameWeekRepository>();
                 services.AddSingleton<IBackgroundJobService>(_ => Substitute.For<IBackgroundJobService>());
                 services.AddSingleton<IBackgroundJobErrorService>(_ => Substitute.For<IBackgroundJobErrorService>());
+                services.AddSingleton<IAnnouncementRepository, InMemoryAnnouncementRepository>();
                 descriptors = services;
             });
         });

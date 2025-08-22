@@ -1,0 +1,53 @@
+@rendermode InteractiveServer
+@inject AnnouncementService AnnouncementService
+@inject ToastInterop Toast
+
+<h2>Announcements</h2>
+@if (_model == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="_model" OnValidSubmit="SaveAsync">
+        <MudStack Spacing="2">
+            <MudCheckBox T="bool" @bind-Value="_model.IsEnabled" Label="Display message" />
+            <MudTextField @bind-Value="_model.Title" Label="Title" />
+            <MudTextField @bind-Value="_model.Message" Label="Message" Lines="5" />
+            <MudDatePicker @bind-Date="_expires" Label="Expires" />
+            <MudButton ButtonType="ButtonType.Submit" Color="Color.Primary" Variant="Variant.Filled">Save</MudButton>
+        </MudStack>
+    </EditForm>
+}
+
+@code {
+    private Announcement? _model;
+    private DateTime? _expires;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _model = await AnnouncementService.GetAsync() ?? new Announcement { ExpiresAt = DateTime.Today };
+        _expires = _model.ExpiresAt;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (_model == null)
+            return;
+        if (!_expires.HasValue)
+        {
+            await Toast.ShowToast("Please choose an expiry date.", "error");
+            return;
+        }
+        _model.ExpiresAt = _expires.Value;
+        try
+        {
+            await AnnouncementService.SaveAsync(_model);
+            await Toast.ShowToast("Announcement saved!", "success");
+        }
+        catch
+        {
+            await Toast.ShowToast("Failed to save announcement.", "error");
+        }
+    }
+}
