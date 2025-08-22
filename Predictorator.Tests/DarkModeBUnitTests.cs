@@ -13,6 +13,7 @@ using Predictorator.Services;
 using ThemeStyles = Predictorator.Themes.Themes;
 using Predictorator.Core.Services;
 using Predictorator.Tests.Helpers;
+using Predictorator.Core.Data;
 
 namespace Predictorator.Tests;
 
@@ -36,6 +37,7 @@ public class DarkModeBUnitTests
             Today = new DateTime(2024, 1, 1),
             UtcNow = new DateTime(2024, 1, 1)
         };
+        ctx.Services.AddSingleton<IDateTimeProvider>(provider);
         ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider));
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
 
@@ -49,6 +51,8 @@ public class DarkModeBUnitTests
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         ctx.Services.AddSingleton<IConfiguration>(config);
         ctx.Services.AddSingleton<NotificationFeatureService>();
+        ctx.Services.AddSingleton<IAnnouncementRepository, InMemoryAnnouncementRepository>();
+        ctx.Services.AddSingleton<AnnouncementService>();
         return ctx;
     }
 
@@ -94,7 +98,9 @@ public class DarkModeBUnitTests
         ctx.Services.AddSingleton(Substitute.For<IDialogService>());
         ctx.Services.AddSingleton<IFixtureService>(new FakeFixtureService(new FixturesResponse { Response = [] }));
         ctx.Services.AddSingleton<IGameWeekService>(new FakeGameWeekService());
-        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) }));
+        var provider2 = new FakeDateTimeProvider { Today = new DateTime(2024, 1, 1), UtcNow = new DateTime(2024, 1, 1) };
+        ctx.Services.AddSingleton<IDateTimeProvider>(provider2);
+        ctx.Services.AddSingleton<IDateRangeCalculator>(new DateRangeCalculator(provider2));
 
         var settings = new Dictionary<string, string?>
         {
@@ -106,6 +112,8 @@ public class DarkModeBUnitTests
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         ctx.Services.AddSingleton<IConfiguration>(config);
         ctx.Services.AddSingleton<NotificationFeatureService>();
+        ctx.Services.AddSingleton<IAnnouncementRepository, InMemoryAnnouncementRepository>();
+        ctx.Services.AddSingleton<AnnouncementService>();
 
         var cut = ctx.Render<App>();
         var layout = cut.FindComponent<MainLayout>();

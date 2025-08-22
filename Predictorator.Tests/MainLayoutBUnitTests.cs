@@ -13,6 +13,7 @@ using Predictorator.Tests.Helpers;
 using Predictorator.Components.Pages.Subscription;
 using Predictorator.Services;
 using Predictorator.Core.Services;
+using Predictorator.Core.Data;
 
 namespace Predictorator.Tests;
 
@@ -43,6 +44,9 @@ public class MainLayoutBUnitTests
         var config = new ConfigurationBuilder().AddInMemoryCollection(settings).Build();
         ctx.Services.AddSingleton<IConfiguration>(config);
         ctx.Services.AddSingleton<NotificationFeatureService>();
+        ctx.Services.AddSingleton<IAnnouncementRepository, InMemoryAnnouncementRepository>();
+        ctx.Services.AddSingleton<IDateTimeProvider>(new FakeDateTimeProvider { Today = DateTime.Today, UtcNow = DateTime.UtcNow });
+        ctx.Services.AddSingleton<AnnouncementService>();
         return ctx;
     }
 

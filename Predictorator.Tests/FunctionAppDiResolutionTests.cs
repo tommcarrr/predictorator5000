@@ -50,6 +50,7 @@ public class FunctionAppDiResolutionTests
         services.RemoveAll<IGameWeekRepository>();
         services.RemoveAll<IBackgroundJobService>();
         services.RemoveAll<IBackgroundJobErrorService>();
+        services.RemoveAll<IAnnouncementRepository>();
 
         var store = new InMemoryDataStore();
         services.AddSingleton<IEmailSubscriberRepository>(store);
@@ -58,6 +59,7 @@ public class FunctionAppDiResolutionTests
         services.AddSingleton<IGameWeekRepository, InMemoryGameWeekRepository>();
         services.AddSingleton<IBackgroundJobService>(_ => Substitute.For<IBackgroundJobService>());
         services.AddSingleton<IBackgroundJobErrorService>(_ => Substitute.For<IBackgroundJobErrorService>());
+        services.AddSingleton<IAnnouncementRepository, InMemoryAnnouncementRepository>();
 
         _provider = services.BuildServiceProvider();
         _services = services;
