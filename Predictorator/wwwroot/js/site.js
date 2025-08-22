@@ -330,7 +330,7 @@ window.app = (() => {
         let playerY = canvas.height / 2 - playerPaddleHeight / 2;
         let computerY = canvas.height / 2 - computerPaddleHeight / 2;
         const initialBallSpeed = 2;
-        const speedIncrease = 1.05;
+        const speedIncrease = 1.2;
         let ballX = canvas.width / 2;
         let ballY = canvas.height / 2;
         let ballVX = initialBallSpeed;
