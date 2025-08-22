@@ -117,7 +117,7 @@ public class HomePageTests
     }
 
     [Test]
-    public async Task TripleTapTeamName_Should_StartPongGame()
+    public async Task TripleClickTeamName_Should_StartPongGame()
     {
         await NavigateWithRetriesAsync(_page!, BaseUrl);
         await _page!.EvaluateAsync(@"() => {
@@ -127,13 +127,12 @@ public class HomePageTests
         var teamName = "Aston Villa";
         await _page!.EvaluateAsync(@"() => {
             const el = document.querySelector('.team-name');
-            const tap = () => {
-                const touch = new Touch({ identifier: Date.now(), target: el, clientX: 0, clientY: 0 });
-                el.dispatchEvent(new TouchEvent('touchstart', { touches: [touch], bubbles: true, cancelable: true }));
+            const click = () => {
+                el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
             };
-            tap();
-            setTimeout(tap, 100);
-            setTimeout(tap, 200);
+            click();
+            setTimeout(click, 100);
+            setTimeout(click, 200);
         }");
         await _page!.WaitForSelectorAsync("#pongOverlay");
         await _page!.WaitForSelectorAsync("#pongScore");
@@ -162,13 +161,12 @@ public class HomePageTests
         }");
         await _page!.EvaluateAsync(@"() => {
             const el = document.querySelector('.team-name');
-            const tap = () => {
-                const touch = new Touch({ identifier: Date.now(), target: el, clientX: 0, clientY: 0 });
-                el.dispatchEvent(new TouchEvent('touchstart', { touches: [touch], bubbles: true, cancelable: true }));
+            const click = () => {
+                el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
             };
-            tap();
-            setTimeout(tap, 100);
-            setTimeout(tap, 200);
+            click();
+            setTimeout(click, 100);
+            setTimeout(click, 200);
         }");
         await _page!.WaitForSelectorAsync("#pongOverlay");
         var playerHeight = await _page!.GetAttributeAsync("#pongOverlay", "data-player-paddle-height");
