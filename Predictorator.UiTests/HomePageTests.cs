@@ -121,10 +121,10 @@ public class HomePageTests
     {
         await NavigateWithRetriesAsync(_page!, BaseUrl);
         await _page!.EvaluateAsync(@"() => {
-            document.querySelector('.home-name').textContent = 'Aston Villa';
-            document.querySelector('.away-name').textContent = 'Newcastle';
+            document.querySelector('.home-name').textContent = 'Leeds United';
+            document.querySelector('.away-name').textContent = 'Manchester United';
         }");
-        var teamName = "Aston Villa";
+        var teamName = "Leeds United";
         await _page!.EvaluateAsync(@"() => {
             const el = document.querySelector('.team-name');
             const click = () => {
@@ -149,6 +149,16 @@ public class HomePageTests
         var compFirst = await _page!.EvaluateAsync<string>("document.querySelector('#pongComputerName').children[0].style.color");
         var compSecond = await _page!.EvaluateAsync<string>("document.querySelector('#pongComputerName').children[1].style.color");
         Assert.That(compFirst, Is.Not.EqualTo(compSecond));
+
+        await Task.Delay(100);
+        var compColor = await _page!.EvaluateAsync<string>("document.querySelector('#pongComputerName').style.color");
+        var ballColor = await _page!.EvaluateAsync<string>(@"() => {
+            const canvas = document.querySelector('#pongCanvas');
+            const ctx = canvas.getContext('2d');
+            const data = ctx.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data;
+            return `rgb(${data[0]}, ${data[1]}, ${data[2]})`;
+        }");
+        Assert.That(ballColor, Is.EqualTo(compColor));
     }
 
     [Test]

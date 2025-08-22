@@ -329,10 +329,12 @@ window.app = (() => {
         overlay.dataset.computerPaddleHeight = computerPaddleHeight;
         let playerY = canvas.height / 2 - playerPaddleHeight / 2;
         let computerY = canvas.height / 2 - computerPaddleHeight / 2;
+        const initialBallSpeed = 2;
+        const speedIncrease = 1.05;
         let ballX = canvas.width / 2;
         let ballY = canvas.height / 2;
-        let ballVX = 3;
-        let ballVY = 3;
+        let ballVX = initialBallSpeed;
+        let ballVY = initialBallSpeed;
         let playerScore = 0;
         let compScore = 0;
         let running = true;
@@ -373,8 +375,9 @@ window.app = (() => {
         function resetBall() {
             ballX = canvas.width / 2;
             ballY = canvas.height / 2;
-            ballVX = -ballVX;
-            ballVY = 3 * (Math.random() > 0.5 ? 1 : -1);
+            const dir = -Math.sign(ballVX) || 1;
+            ballVX = dir * initialBallSpeed;
+            ballVY = initialBallSpeed * (Math.random() > 0.5 ? 1 : -1);
         }
 
         canvas.addEventListener('touchmove', e => {
@@ -394,8 +397,8 @@ window.app = (() => {
 
             if (ballX <= paddleWidth) {
                 if (ballY > playerY && ballY < playerY + playerPaddleHeight) {
-                    ballVX = -ballVX;
-                    ballVY += (Math.random() - 0.5);
+                    ballVX = -ballVX * speedIncrease;
+                    ballVY = ballVY * speedIncrease + (Math.random() - 0.5);
                 } else {
                     compScore++;
                     compScoreEl.textContent = compScore;
@@ -405,8 +408,8 @@ window.app = (() => {
 
             if (ballX >= canvas.width - paddleWidth) {
                 if (ballY > computerY && ballY < computerY + computerPaddleHeight) {
-                    ballVX = -ballVX;
-                    ballVY += (Math.random() - 0.5);
+                    ballVX = -ballVX * speedIncrease;
+                    ballVY = ballVY * speedIncrease + (Math.random() - 0.5);
                 } else {
                     playerScore++;
                     playerScoreEl.textContent = playerScore;
@@ -427,8 +430,9 @@ window.app = (() => {
             ctx.fillRect(0, playerY, paddleWidth, playerPaddleHeight);
             ctx.fillStyle = computerFg;
             ctx.fillRect(canvas.width - paddleWidth, computerY, paddleWidth, computerPaddleHeight);
+            const ballColor = ballX < canvas.width / 2 ? playerFg : computerFg;
             ctx.beginPath();
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = ballColor;
             ctx.arc(ballX, ballY, 3, 0, Math.PI * 2);
             ctx.fill();
         }
