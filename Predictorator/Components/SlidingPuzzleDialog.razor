@@ -1,8 +1,9 @@
 @using System.Linq
+@using Microsoft.AspNetCore.Components.Web
 
 <MudDialog>
     <DialogContent>
-        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">Sliding Puzzle</MudText>
+        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">Find the Player</MudText>
         @if (_solved)
         {
             <div class="sliding-puzzle-solved">
@@ -30,6 +31,7 @@
                                     class="sliding-puzzle-tile"
                                     style="@GetTileStyle(tile)"
                                     @onclick="@(() => MoveTile(index))"
+                                    @onpointerdown="@(args => OnTilePointerDown(index, args))"
                                     aria-label="@GetTileLabel(tile)">
                             </button>
                         }
@@ -102,7 +104,7 @@
         }
 
         var blankRowFromBottom = GridSize - (Array.IndexOf(values, BlankTile) / GridSize);
-        return (inversions + blankRowFromBottom) % 2 == 0;
+        return (blankRowFromBottom % 2) != (inversions % 2);
     }
 
     private static bool IsSolved(int[] values)
@@ -126,6 +128,14 @@
         _solved = IsSolved(_tiles);
     }
 
+    private void OnTilePointerDown(int index, PointerEventArgs args)
+    {
+        if (args.PointerType is not null && string.Equals(args.PointerType, "touch", StringComparison.OrdinalIgnoreCase))
+        {
+            MoveTile(index);
+        }
+    }
+
     private static bool IsAdjacent(int first, int second)
     {
         var firstRow = first / GridSize;
@@ -144,9 +154,10 @@
     {
         var row = tile / GridSize;
         var column = tile % GridSize;
-        var x = -100 * column;
-        var y = -100 * row;
-        return $"background-position: {x}% {y}%;";
+        var step = 100d / (GridSize - 1);
+        var x = column * step;
+        var y = row * step;
+        return FormattableString.Invariant($"background-position: {x}% {y}%;");
     }
 
     private void Close() => DialogInstance.Close();
