@@ -160,6 +160,7 @@ html, body {
     cursor: pointer;
     display: block;
     padding: 0;
+    touch-action: manipulation;
     transition: transform 0.15s ease;
 }
 
