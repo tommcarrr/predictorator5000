@@ -1,0 +1,153 @@
+@using System.Linq
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6" Align="Align.Center" Class="mb-2">Sliding Puzzle</MudText>
+        @if (_solved)
+        {
+            <div class="sliding-puzzle-solved">
+                <MudText Typo="Typo.subtitle1" Align="Align.Center">Puzzle complete!</MudText>
+                <img src="@PuzzleImage" alt="Completed DG sliding puzzle" class="sliding-puzzle-solved-image" />
+            </div>
+        }
+        else
+        {
+            <div class="sliding-puzzle-container">
+                <MudText Typo="Typo.subtitle2" Align="Align.Center">
+                    Slide the tiles into the empty space to reveal the full picture.
+                </MudText>
+                <div class="sliding-puzzle-grid" role="grid" aria-label="DG sliding puzzle">
+                    @for (var index = 0; index < TileCount; index++)
+                    {
+                        var tile = _tiles[index];
+                        if (tile == BlankTile)
+                        {
+                            <div class="sliding-puzzle-blank" role="presentation"></div>
+                        }
+                        else
+                        {
+                            <button type="button"
+                                    class="sliding-puzzle-tile"
+                                    style="@GetTileStyle(tile)"
+                                    @onclick="@(() => MoveTile(index))"
+                                    aria-label="@GetTileLabel(tile)">
+                            </button>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close" Color="Color.Secondary">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private const int GridSize = 4;
+    private const int TileCount = GridSize * GridSize;
+    private const int BlankTile = TileCount - 1;
+    private const string PuzzleImage = "images/puzzles/dg.jpg";
+
+    private readonly int[] _tiles = new int[TileCount];
+    private readonly Random _random = new();
+    private int _blankIndex;
+    private bool _solved;
+
+    [CascadingParameter] private MudDialogInstance DialogInstance { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        ShuffleTiles();
+    }
+
+    private void ShuffleTiles()
+    {
+        var values = Enumerable.Range(0, TileCount).ToArray();
+        do
+        {
+            Shuffle(values);
+        } while (!IsSolvable(values) || IsSolved(values));
+
+        Array.Copy(values, _tiles, TileCount);
+        _blankIndex = Array.IndexOf(_tiles, BlankTile);
+        _solved = false;
+    }
+
+    private void Shuffle(int[] values)
+    {
+        for (var i = values.Length - 1; i > 0; i--)
+        {
+            var j = _random.Next(i + 1);
+            (values[i], values[j]) = (values[j], values[i]);
+        }
+    }
+
+    private bool IsSolvable(int[] values)
+    {
+        var inversions = 0;
+        for (var i = 0; i < values.Length; i++)
+        {
+            if (values[i] == BlankTile)
+                continue;
+
+            for (var j = i + 1; j < values.Length; j++)
+            {
+                if (values[j] == BlankTile)
+                    continue;
+
+                if (values[i] > values[j])
+                    inversions++;
+            }
+        }
+
+        var blankRowFromBottom = GridSize - (Array.IndexOf(values, BlankTile) / GridSize);
+        return (inversions + blankRowFromBottom) % 2 == 0;
+    }
+
+    private static bool IsSolved(int[] values)
+    {
+        for (var i = 0; i < values.Length; i++)
+        {
+            if (values[i] != i)
+                return false;
+        }
+
+        return true;
+    }
+
+    private void MoveTile(int index)
+    {
+        if (_solved || !IsAdjacent(index, _blankIndex))
+            return;
+
+        (_tiles[index], _tiles[_blankIndex]) = (_tiles[_blankIndex], _tiles[index]);
+        _blankIndex = index;
+        _solved = IsSolved(_tiles);
+    }
+
+    private static bool IsAdjacent(int first, int second)
+    {
+        var firstRow = first / GridSize;
+        var firstCol = first % GridSize;
+        var secondRow = second / GridSize;
+        var secondCol = second % GridSize;
+
+        var sameRow = firstRow == secondRow && Math.Abs(firstCol - secondCol) == 1;
+        var sameColumn = firstCol == secondCol && Math.Abs(firstRow - secondRow) == 1;
+        return sameRow || sameColumn;
+    }
+
+    private static string GetTileLabel(int tile) => $"Tile {tile + 1}";
+
+    private static string GetTileStyle(int tile)
+    {
+        var row = tile / GridSize;
+        var column = tile % GridSize;
+        var x = -100 * column;
+        var y = -100 * row;
+        return $"background-position: {x}% {y}%;";
+    }
+
+    private void Close() => DialogInstance.Close();
+}
