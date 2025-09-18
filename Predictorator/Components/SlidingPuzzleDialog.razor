@@ -32,6 +32,7 @@
                                     style="@GetTileStyle(tile)"
                                     @onclick="@(() => MoveTile(index))"
                                     @onpointerdown="@(args => OnTilePointerDown(index, args))"
+                                    @ontouchstart="@(args => OnTileTouchStart(index, args))"
                                     aria-label="@GetTileLabel(tile)">
                             </button>
                         }
@@ -134,6 +135,11 @@
         {
             MoveTile(index);
         }
+    }
+
+    private void OnTileTouchStart(int index, TouchEventArgs args)
+    {
+        MoveTile(index);
     }
 
     private static bool IsAdjacent(int first, int second)
