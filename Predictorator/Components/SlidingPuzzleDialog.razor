@@ -20,7 +20,8 @@
                 <div class="sliding-puzzle-grid" role="grid" aria-label="DG sliding puzzle">
                     @for (var index = 0; index < TileCount; index++)
                     {
-                        var tile = _tiles[index];
+                        var currentIndex = index;
+                        var tile = _tiles[currentIndex];
                         if (tile == BlankTile)
                         {
                             <div class="sliding-puzzle-blank" role="presentation"></div>
@@ -30,9 +31,9 @@
                             <button type="button"
                                     class="sliding-puzzle-tile"
                                     style="@GetTileStyle(tile)"
-                                    @onclick="@(() => MoveTile(index))"
-                                    @onpointerdown="@(args => OnTilePointerDown(index, args))"
-                                    @ontouchstart="@(args => OnTileTouchStart(index, args))"
+                                    @onclick="@(() => MoveTile(currentIndex))"
+                                    @onpointerdown="@(args => OnTilePointerDown(currentIndex, args))"
+                                    @ontouchstart="@(args => OnTileTouchStart(currentIndex, args))"
                                     aria-label="@GetTileLabel(tile)">
                             </button>
                         }
