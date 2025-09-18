@@ -121,6 +121,7 @@ else if (_fixtures.Response.Any())
     private List<GameWeek>? _gameWeeks;
     private readonly Dictionary<int, PredictionInput> _predictions = new();
     private DateRange _selectedRange = new(null, null);
+    private int _clearClickCount;
 
     [Parameter] public string? Season { get; set; }
     [Parameter] public int? Week { get; set; }
@@ -248,17 +249,44 @@ else if (_fixtures.Response.Any())
 
     private async Task ClearScores()
     {
-        if (_fixtures == null) return;
-        foreach (var f in _fixtures.Response)
+        _clearClickCount++;
+
+        if (_fixtures != null)
         {
-            var pred = _predictions[f.Fixture.Id];
-            if (f.Score?.Fulltime.Home == null)
-                pred.Home = null;
-            if (f.Score?.Fulltime.Away == null)
-                pred.Away = null;
+            foreach (var f in _fixtures.Response)
+            {
+                var pred = _predictions[f.Fixture.Id];
+                if (f.Score?.Fulltime.Home == null)
+                    pred.Home = null;
+                if (f.Score?.Fulltime.Away == null)
+                    pred.Away = null;
+            }
         }
 
         await Js.InvokeVoidAsync("localStorage.removeItem", PredictionsStorageKey);
+        await MaybeShowSlidingPuzzleAsync();
+    }
+
+    private Task MaybeShowSlidingPuzzleAsync()
+    {
+        if (_clearClickCount < 4)
+            return Task.CompletedTask;
+
+        _clearClickCount = 0;
+        return ShowSlidingPuzzleAsync();
+    }
+
+    private Task ShowSlidingPuzzleAsync()
+    {
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+
+        DialogService.Show<SlidingPuzzleDialog>("Sliding Puzzle", options);
+        return Task.CompletedTask;
     }
 
     private async Task SavePredictions()
