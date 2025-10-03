@@ -373,12 +373,15 @@ else if (_fixtures.Response.Any())
         var sbPre = new StringBuilder();
         sbPre.AppendLine("Hello Helen Lyttle,");
         sbPre.AppendLine("");
-        sbPre.AppendLine("I trust you are well.");
-        sbPre.AppendLine("");
-        sbPre.AppendLine("I would like to take this opportunity to put on record my continuing gratitude for your tireless efforts in administering the Premier League Prediction League.");
+        sbPre.AppendLine("I hope this email finds you in good spirits.");
         sbPre.AppendLine("");
         sbPre.AppendLine(StringProbabilityHelper.Choose(
-            "Here is a funny joke I heard recently that I thought you might enjoy...",
+            "Let me again note my sincere gratitude for your tireless management of the Premier League Prediction League. You are an example to us all.",
+            "Once more, my thanks for your devoted governance of the Prediction League, and please be reassured: your unchecked authority paired with your ongoing success has inspired nothing other than increased trust in both the system and your personal integrity.",
+            0.1));
+        sbPre.AppendLine("");
+        sbPre.AppendLine(StringProbabilityHelper.Choose(
+            "Here is a moderately funny joke I heard recently that I thought you might enjoy...",
             "Here is a limerick I recently composed, I apologize in advance for its mildly ribald tone...",
             0.04));
         sbPre.AppendLine("");
@@ -388,8 +391,10 @@ else if (_fixtures.Response.Any())
         sbPre.AppendLine("");
         var sbPost = new StringBuilder();
         sbPost.AppendLine("");
-        sbPost.AppendLine("Yours sincerely,");
-        sbPost.AppendLine("");
+        sbPre.AppendLine(StringProbabilityHelper.Choose(
+            "Yours sincerely,",
+            "Yours faithfully,",
+            0.5));
         sbPost.AppendLine("<insert name>.");
 
         return $"{sbPre}{body}{sbPost}";
